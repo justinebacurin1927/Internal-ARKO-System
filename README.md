@@ -1,36 +1,97 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Arko — Your Startup OS
 
-## Getting Started
+**Workflows · Finance · Task Management**
 
-First, run the development server:
+A full-stack startup operations system built with Next.js, TypeScript, and tRPC.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## 🚀 Tech Stack
+
+| Layer | Technology |
+|---|---|
+| **Frontend** | Next.js 15 (App Router) + React 19 |
+| **Styling** | Tailwind CSS v4 + shadcn/ui primitives |
+| **API** | tRPC v11 (type-safe, end-to-end) |
+| **Database** | PostgreSQL + Prisma ORM |
+| **Auth** | NextAuth.js v5 (Credentials) |
+| **Monorepo** | Turborepo + pnpm workspaces |
+| **Language** | TypeScript (strict) |
+
+## 📦 Project Structure
+
+```
+arko/
+├── apps/
+│   └── web/              # Next.js application
+│       ├── src/
+│       │   ├── app/      # App Router pages
+│       │   │   ├── auth/        # Login/Register
+│       │   │   ├── dashboard/   # Main dashboard
+│       │   │   ├── finance/     # Finance module
+│       │   │   ├── tasks/       # Task management
+│       │   │   ├── workflows/   # Workflow automation
+│       │   │   └── settings/    # Account settings
+│       │   ├── lib/
+│       │   │   ├── auth.ts           # NextAuth config
+│       │   │   └── trpc/             # tRPC client/server
+│       │   └── server/api/
+│       │       ├── trpc.ts           # tRPC init
+│       │       ├── root.ts           # App router
+│       │       └── routers/          # Route handlers
+│       │           ├── finance.ts
+│       │           ├── tasks.ts
+│       │           └── workflows.ts
+│       └── .env
+├── packages/
+│   ├── config/           # Shared TypeScript config
+│   ├── db/               # Prisma schema + client
+│   │   └── prisma/
+│   │       └── schema.prisma
+│   ├── ui/               # Shared component library
+│   │   └── src/          # Button, Card, Sidebar, etc.
+│   ├── finance/          # Finance engine
+│   ├── workflows/        # Workflow state machine
+│   ├── tasks/            # Task management logic
+│   └── dashboard/        # Dashboard widgets
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🗄️ Database Schema
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **User & Auth** — Users, accounts, sessions (NextAuth compatible)
+- **Workspace** — Multi-workspace support with members
+- **Finance** — Transactions, categories, budgets (bounded context)
+- **Workflows** — Workflow definitions, executions, execution logs
+- **Tasks** — Tasks, subtasks, comments, Kanban status flow
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🔧 Getting Started
 
-## Learn More
+```bash
+# Prerequisites: Node.js 20+, PostgreSQL
 
-To learn more about Next.js, take a look at the following resources:
+# Start PostgreSQL
+sudo systemctl start postgresql
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Create database
+createdb arko
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# Install dependencies
+pnpm install
 
-## Deploy on Vercel
+# Push schema to database
+pnpm db:push
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+# Start development
+pnpm dev
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 📋 Sprint Plan
+
+| Sprint | Focus | Stories |
+|---|---|---|
+| **Sprint 1** | Foundation + Finance MVP | Monorepo, Auth, DB, Finance engine, Dashboard |
+| **Sprint 2** | Workflow Automation | Workflow engine, definitions, execution |
+| **Sprint 3** | Task Management | Kanban board, assignments, comments |
+| **Sprint 4** | Dashboard + Reports | Widgets, charts, export, integrations |
+
+## 📄 License
+
+MIT
