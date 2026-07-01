@@ -38,6 +38,19 @@ const PerformanceChart = memo(function PerformanceChart({
   const [hoverIdx, setHoverIdx] = useState(-1)
   const svgRef = useRef<SVGSVGElement>(null)
 
+  // ── Mouse handlers — MUST be before any early return (Rules of Hooks) ──
+  // Use a ref for the pts count so useCallback doesn't depend on data computation
+  const ptsCountRef = useRef(0)
+  const onMove = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
+    if (!svgRef.current) return
+    const rect = svgRef.current.getBoundingClientRect()
+    const pct = (e.clientX - rect.left) / rect.width
+    const i = Math.round(pct * (ptsCountRef.current - 1))
+    setHoverIdx(Math.max(0, Math.min(i, ptsCountRef.current - 1)))
+  }, [])
+
+  const onLeave = useCallback(() => setHoverIdx(-1), [])
+
   // Guard: need at least 2 months to compute growth rate
   if (labels.length < 2 || incomeData.length < 2 || expenseData.length < 2) {
     return (
@@ -123,23 +136,15 @@ const PerformanceChart = memo(function PerformanceChart({
     label: plotLabels[i],
   }))
 
+  // Store pts count so the hook-before-guard useCallback can read it
+  ptsCountRef.current = pts.length
+
   const benchmarkY = yScale(0)
   const hoverPt = hoverIdx >= 0 && hoverIdx < pts.length ? pts[hoverIdx] : null
 
   // Y-axis ticks (every integer %)
   const yTicks: number[] = []
   for (let v = yMin; v <= yMax; v++) yTicks.push(v)
-
-  // ── Mouse handler ────────────────────────────────────
-  const onMove = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
-    if (!svgRef.current) return
-    const rect = svgRef.current.getBoundingClientRect()
-    const pct = (e.clientX - rect.left) / rect.width
-    const i = Math.round(pct * (pts.length - 1))
-    setHoverIdx(Math.max(0, Math.min(i, pts.length - 1)))
-  }, [pts.length])
-
-  const onLeave = useCallback(() => setHoverIdx(-1), [])
 
   return (
     <div className="relative w-full h-full select-none">
