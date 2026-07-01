@@ -1,6 +1,8 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { NavItem } from '@arko/ui'
 import {
   LayoutDashboard,
@@ -30,6 +32,14 @@ const navItems = [
 
 export function DashboardNav() {
   const pathname = usePathname()
+  const router = useRouter()
+
+  // Prefetch all nav routes so they compile in the background
+  useEffect(() => {
+    navItems.forEach((item) => {
+      router.prefetch(item.href)
+    })
+  }, [router])
 
   return (
     <div className="space-y-1">

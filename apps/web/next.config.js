@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  outputFileTracingRoot: process.cwd(),
+  outputFileTracingRoot: __dirname,
   transpilePackages: [
     '@arko/ui',
     '@arko/db',
@@ -14,7 +14,9 @@ const nextConfig = {
       bodySizeLimit: '2mb',
     },
   },
-  devIndicators: false,
+  devIndicators: {
+    position: 'bottom-right',
+  },
   poweredByHeader: false,
   async redirects() {
     return [
