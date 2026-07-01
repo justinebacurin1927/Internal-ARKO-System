@@ -11,6 +11,8 @@ import {
   MessageSquare,
   Bell,
   FileText,
+  GitCommit,
+  Users,
 } from 'lucide-react'
 
 const navItems = [
@@ -18,6 +20,8 @@ const navItems = [
   { href: '/dashboard/finance', label: 'Finance', icon: <Wallet className="h-5 w-5" /> },
   { href: '/dashboard/workflows', label: 'Workflows', icon: <Workflow className="h-5 w-5" /> },
   { href: '/dashboard/tasks', label: 'Tasks', icon: <CheckSquare className="h-5 w-5" /> },
+  { href: '/dashboard/updates', label: 'Updates', icon: <GitCommit className="h-5 w-5" /> },
+  { href: '/dashboard/users', label: 'Users', icon: <Users className="h-5 w-5" /> },
   { href: '/dashboard/messages', label: 'Messages', icon: <MessageSquare className="h-5 w-5" /> },
   { href: '/dashboard/reminders', label: 'Reminders', icon: <Bell className="h-5 w-5" /> },
   { href: '/dashboard/notes', label: 'Notes', icon: <FileText className="h-5 w-5" /> },

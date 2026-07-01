@@ -14,6 +14,7 @@ const nextConfig = {
       bodySizeLimit: '2mb',
     },
   },
+  devIndicators: false,
   poweredByHeader: false,
   async redirects() {
     return [

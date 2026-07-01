@@ -6,6 +6,7 @@ import { messagesRouter } from './routers/messages'
 import { remindersRouter } from './routers/reminders'
 import { notesRouter } from './routers/notes'
 import { usersRouter } from './routers/users'
+import { githubRouter } from './routers/github'
 
 export const appRouter = router({
   finance: financeRouter,
@@ -15,6 +16,7 @@ export const appRouter = router({
   reminders: remindersRouter,
   notes: notesRouter,
   users: usersRouter,
+  github: githubRouter,
 })
 
 export type AppRouter = typeof appRouter

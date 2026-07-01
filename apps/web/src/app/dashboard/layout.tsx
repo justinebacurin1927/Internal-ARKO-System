@@ -1,5 +1,6 @@
 import { Sidebar } from '@arko/ui'
 import { DashboardNav } from './nav'
+import { DashboardHeader } from './_components/dashboard-header'
 import { auth } from '../../lib/auth'
 import { redirect } from 'next/navigation'
 
@@ -12,13 +13,14 @@ export default async function DashboardLayout({
   if (!session) redirect('/auth/login')
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-screen overflow-hidden w-full">
       <Sidebar>
         <DashboardNav />
       </Sidebar>
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <main className="flex-1 overflow-y-auto bg-surface p-6 lg:p-8">
-          <div className="mx-auto max-w-7xl animate-[fade-in_0.3s_ease-out]">{children}</div>
+      <div className="flex flex-1 flex-col overflow-hidden min-w-0">
+        <DashboardHeader />
+        <main className="flex-1 overflow-hidden bg-surface p-4 lg:p-8">
+          <div className="h-full w-full animate-[fade-in_0.3s_ease-out]">{children}</div>
         </main>
       </div>
     </div>
