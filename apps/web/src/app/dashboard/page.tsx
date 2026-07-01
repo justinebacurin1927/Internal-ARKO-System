@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@arko/ui'
-import { LineChart } from './_components/line-chart'
+import { PerformanceChart } from './_components/performance-chart'
 import {
   Wallet,
   TrendingUp,
@@ -72,6 +72,23 @@ export default function DashboardPage() {
     }
   }, [transactions])
 
+  // ── Growth rate metadata for legend ────────────────────
+  const growthMeta = useMemo(() => {
+    if (chartData.labels.length < 2) return { best: 0, worst: 0, current: 0 }
+    let best = -Infinity, worst = Infinity
+    for (let i = 1; i < chartData.labels.length; i++) {
+      const prev = (chartData.income[i - 1] ?? 0) - (chartData.expenses[i - 1] ?? 0)
+      const curr = (chartData.income[i] ?? 0) - (chartData.expenses[i] ?? 0)
+      const growth = prev !== 0 ? ((curr - prev) / Math.abs(prev)) * 100 : 0
+      if (growth > best) best = growth
+      if (growth < worst) worst = growth
+    }
+    return {
+      best: isFinite(best) ? best : 0,
+      worst: isFinite(worst) ? worst : 0,
+    }
+  }, [chartData])
+
   // ── helpers ──
   const commits = updates?.commits ?? []
   const timeAgo = (dateStr: string) => {
@@ -117,7 +134,7 @@ export default function DashboardPage() {
             <Skeleton className="h-[120px]" />
           </div>
           <div className="flex flex-col gap-4">
-            <Skeleton className="h-[180px]" />
+            <Skeleton className="h-[200px]" />
             <Skeleton className="flex-1 min-h-[200px]" />
           </div>
         </div>
@@ -325,23 +342,27 @@ export default function DashboardPage() {
 
           {/* ══ RIGHT COLUMN ────────────────────────── */}
           <div className="flex flex-col gap-4 min-h-0">
-            {/* ── Income vs Expenses ─────────────────── */}
-            <Card className="shrink-0 h-[180px] overflow-hidden flex flex-col">
+            {/* ── Performance Growth ──────────────────── */}
+            <Card className="shrink-0 h-[200px] overflow-hidden flex flex-col">
               <CardHeader className="p-4 pb-1 flex flex-row items-center justify-between shrink-0">
-                <CardTitle className="text-[11px] font-bold text-gray-800">
-                  Income vs Expenses
-                </CardTitle>
-                <div className="flex items-center gap-2">
-                  <span className="flex items-center gap-1 text-[8px] text-gray-400">
-                    <span className="h-1.5 w-1.5 rounded-full bg-green-500" /> In
-                  </span>
-                  <span className="flex items-center gap-1 text-[8px] text-gray-400">
-                    <span className="h-1.5 w-1.5 rounded-full bg-orange-500" /> Out
-                  </span>
+                <div className="flex items-center gap-3">
+                  <CardTitle className="text-[11px] font-bold text-gray-800">
+                    Net Growth
+                  </CardTitle>
+                  <div className="flex items-center gap-2">
+                    <span className="flex items-center gap-1 text-[8px] font-medium text-green-600">
+                      <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                      +{growthMeta.best.toFixed(2)}%
+                    </span>
+                    <span className="flex items-center gap-1 text-[8px] font-medium text-red-400">
+                      <span className="h-1.5 w-1.5 rounded-full bg-red-400" />
+                      {growthMeta.worst.toFixed(2)}%
+                    </span>
+                  </div>
                 </div>
               </CardHeader>
-              <CardContent className="p-4 pt-1 flex-1 min-h-0">
-                <LineChart
+              <CardContent className="p-4 pt-0 flex-1 min-h-0">
+                <PerformanceChart
                   incomeData={chartData.income}
                   expenseData={chartData.expenses}
                   labels={chartData.labels}
