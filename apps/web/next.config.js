@@ -1,9 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  turbopack: {
-    root: process.cwd(),
-  },
-  outputFileTracingRoot: process.cwd(),
+  outputFileTracingRoot: __dirname,
   transpilePackages: [
     '@arko/ui',
     '@arko/db',
@@ -16,6 +13,9 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: '2mb',
     },
+  },
+  devIndicators: {
+    position: 'bottom-right',
   },
   poweredByHeader: false,
   async redirects() {

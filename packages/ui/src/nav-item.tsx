@@ -18,7 +18,7 @@ const NavItem = React.forwardRef<HTMLAnchorElement, NavItemProps>(
       ref={ref}
       href={href}
       className={cn(
-        'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150 active:scale-[0.97]',
+        'flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all duration-150 active:scale-[0.97]',
         active
           ? 'bg-primary-600/20 text-white'
           : 'text-sidebar-text hover:bg-sidebar-hover hover:text-sidebar-text-active',

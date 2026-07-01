@@ -24,3 +24,5 @@
 2026-07-01 16:37:52.669 PST [58090] LOG:  checkpoint complete: wrote 2 buffers (0.0%), wrote 0 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.202 s, sync=0.003 s, total=0.223 s; sync files=2, longest=0.003 s, average=0.002 s; distance=7 kB, estimate=3397 kB; lsn=0/1CE6B68, redo lsn=0/1CE6B10
 2026-07-01 16:42:52.769 PST [58090] LOG:  checkpoint starting: time
 2026-07-01 16:42:53.201 PST [58090] LOG:  checkpoint complete: wrote 4 buffers (0.0%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.405 s, sync=0.006 s, total=0.433 s; sync files=4, longest=0.003 s, average=0.002 s; distance=1 kB, estimate=3058 kB; lsn=0/1CE6FE8, redo lsn=0/1CE6F90
+2026-07-01 16:58:17.026 PST [98286] FATAL:  terminating connection due to unexpected postmaster exit
+2026-07-01 16:58:17.026 PST [95035] FATAL:  terminating connection due to unexpected postmaster exit

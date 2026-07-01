@@ -183,15 +183,15 @@ function LoginForm() {
 export default function LoginClient() {
   return (
     <>
-      <div className="flex w-1/2 items-center justify-center px-16">
+      <div className="flex w-full lg:w-1/2 items-center justify-center px-6 lg:px-16 py-12 lg:py-0">
         <div className="w-full max-w-lg">
           <p className="mb-4 text-xs font-semibold tracking-[0.2em] text-zinc-500 uppercase font-heading">
             Arko
           </p>
-          <h1 className="text-8xl font-bold tracking-tighter leading-none text-white lg:text-9xl font-heading">
+          <h1 className="text-5xl sm:text-7xl lg:text-9xl font-bold tracking-tighter leading-none text-white font-heading">
             Arko
           </h1>
-          <p className="text-6xl font-bold tracking-tighter leading-none text-primary-400 lg:text-7xl font-heading">
+          <p className="text-3xl sm:text-5xl lg:text-7xl font-bold tracking-tighter leading-none text-primary-400 font-heading">
             <RotatingWord />
           </p>
           <p className="mt-8 max-w-sm text-sm leading-relaxed text-zinc-500">
@@ -201,7 +201,7 @@ export default function LoginClient() {
         </div>
       </div>
 
-      <div className="flex w-1/2 items-center justify-center px-8">
+      <div className="flex w-full lg:w-1/2 items-center justify-center px-6 lg:px-8 py-12 lg:py-0">
         <LoginForm />
       </div>
     </>

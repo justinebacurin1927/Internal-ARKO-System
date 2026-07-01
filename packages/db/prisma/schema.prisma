@@ -10,19 +10,23 @@ datasource db {
 // ===== BASE MODELS =====
 
 model User {
-  id        String   @id @default(cuid())
+  id        String     @id @default(cuid())
   name      String?
-  email     String   @unique
+  email     String     @unique
   password  String?
   image     String?
-  role      Role     @default(USER)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  phone     String?
+  title     String?
+  role      Role       @default(USER)
+  status    UserStatus @default(ACTIVE)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 
   accounts          Account[]
   sessions          Session[]
   workspaceMembers  WorkspaceMember[]
   transactions      Transaction[]
+  splitShares       SplitShare[]
   tasks             Task[]
   comments          Comment[]
   workflows         Workflow[]
@@ -63,6 +67,12 @@ enum Role {
   ADMIN
   MEMBER
   USER
+}
+
+enum UserStatus {
+  ACTIVE
+  RESTRICTED
+  SUSPENDED
 }
 
 // ===== WORKSPACE =====
@@ -115,23 +125,44 @@ enum AccountType {
 }
 
 model Transaction {
-  id          String   @id @default(cuid())
+  id          String           @id @default(cuid())
   amount      Float
   description String?
   type        TransactionType
-  date        DateTime @default(now())
+  scope       TransactionScope @default(PERSONAL)
+  isSplit     Boolean          @default(false)
+  date        DateTime         @default(now())
   categoryId  String
   userId      String
   workspaceId String?
 
-  category AccountCategory @relation(fields: [categoryId], references: [id])
-  user     User            @relation(fields: [userId], references: [id])
+  category    AccountCategory @relation(fields: [categoryId], references: [id])
+  user        User            @relation(fields: [userId], references: [id])
+  splitShares SplitShare[]
 }
 
 enum TransactionType {
   INCOME
   EXPENSE
   TRANSFER
+}
+
+enum TransactionScope {
+  PERSONAL
+  COMPANY
+}
+
+model SplitShare {
+  id            String      @id @default(cuid())
+  transactionId String
+  userId        String
+  amount        Float
+  settled       Boolean     @default(false)
+
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  user          User        @relation(fields: [userId], references: [id])
+
+  @@unique([transactionId, userId])
 }
 
 model Budget {

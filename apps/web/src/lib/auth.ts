@@ -26,6 +26,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         if (!user || !user.password) return null
 
+        // Block restricted / suspended users
+        if (user.status !== 'ACTIVE') return null
+
         const isValid = await compare(credentials.password as string, user.password)
         if (!isValid) return null
 
