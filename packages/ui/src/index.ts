@@ -1,7 +1,0 @@
-export { cn } from './lib/utils'
-export { Button, buttonVariants } from './button'
-export { Card, CardHeader, CardContent, CardTitle, CardDescription, CardFooter } from './card'
-export { Avatar, AvatarImage, AvatarFallback } from './avatar'
-export { Separator } from './separator'
-export { Sidebar } from './sidebar'
-export { NavItem } from './nav-item'
