@@ -20,7 +20,7 @@ export default async function DashboardLayout({
       <div className="flex flex-1 flex-col overflow-hidden min-w-0">
         <DashboardHeader />
         <main className="flex-1 overflow-hidden bg-surface p-4 lg:p-8">
-          <div className="h-full w-full animate-[fade-in_0.3s_ease-out]">{children}</div>
+          <div className="h-full w-full animate-[fade-in_0.15s_ease-out]">{children}</div>
         </main>
       </div>
     </div>
