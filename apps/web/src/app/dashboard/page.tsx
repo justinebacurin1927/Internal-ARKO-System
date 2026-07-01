@@ -34,7 +34,7 @@ export default function DashboardPage() {
   const { data: tasks, isLoading: tasksLoading } = api.tasks.list.useQuery()
   const { data: transactions, isLoading: txLoading } = api.finance.getTransactions.useQuery()
   const { data: users } = api.users.search.useQuery({})
-  const { data: updates } = api.github.recentCommits.useQuery({ limit: 8 })
+  const { data: updates, isLoading: ghLoading } = api.github.recentCommits.useQuery({ limit: 8 })
 
   const loading = balLoading || tasksLoading || txLoading
 
@@ -379,7 +379,17 @@ export default function DashboardPage() {
                 <GitCommit className="h-3 w-3 text-gray-400" />
               </CardHeader>
               <CardContent className="p-0 flex-1 overflow-y-auto min-h-0">
-                {commits.length === 0 ? (
+                {ghLoading ? (
+                  <div className="flex flex-col gap-2 p-4">
+                    {[...Array(5)].map((_, i) => (
+                      <div key={i} className="flex items-center gap-2.5">
+                        <div className="h-5 w-5 shrink-0 rounded-full bg-gray-100 animate-pulse" />
+                        <div className="h-3 flex-1 rounded bg-gray-100 animate-pulse" />
+                        <div className="h-3 w-8 rounded bg-gray-100 animate-pulse" />
+                      </div>
+                    ))}
+                  </div>
+                ) : commits.length === 0 ? (
                   <div className="flex items-center justify-center h-full py-6">
                     <p className="text-[10px] text-gray-400">No recent commits</p>
                   </div>

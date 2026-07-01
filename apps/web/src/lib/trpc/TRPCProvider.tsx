@@ -1,7 +1,7 @@
 'use client'
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { httpBatchLink } from '@trpc/client'
+import { httpBatchLink, httpLink, splitLink } from '@trpc/client'
 import { useState } from 'react'
 import superjson from 'superjson'
 import { api } from './client'
@@ -24,9 +24,11 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
   const [trpcClient] = useState(() =>
     api.createClient({
       links: [
-        httpBatchLink({
-          url: '/api/trpc',
-          transformer: superjson,
+        splitLink({
+          // GitHub API fetches are slow + external — don't block the batch
+          condition: (op) => op.path.startsWith('github.'),
+          true: httpLink({ url: '/api/trpc', transformer: superjson }),
+          false: httpBatchLink({ url: '/api/trpc', transformer: superjson }),
         }),
       ],
     }),
