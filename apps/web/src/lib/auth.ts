@@ -5,6 +5,7 @@ import { compare } from 'bcryptjs'
 import { authLimiter } from './rate-limit'
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  secret: process.env.NEXTAUTH_SECRET,
   providers: [
     Credentials({
       name: 'credentials',

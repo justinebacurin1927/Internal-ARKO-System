@@ -10,7 +10,8 @@
     "db:push": "pnpm --filter @arko/db prisma db push",
     "db:migrate": "pnpm --filter @arko/db prisma migrate dev",
     "db:studio": "pnpm --filter @arko/db prisma studio",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "cleanup": "bash scripts/cleanup.sh"
   },
   "devDependencies": {
     "prettier": "^3.3.0",
