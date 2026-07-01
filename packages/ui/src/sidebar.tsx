@@ -12,25 +12,22 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
     <aside
       ref={ref}
       className={cn(
-        'flex h-screen flex-col border-r border-gray-200 bg-white',
+        'flex h-screen flex-col border-r border-white/10 bg-sidebar',
         collapsed ? 'w-16' : 'w-64',
-        'transition-all duration-200',
+        'transition-all duration-200 shrink-0',
         className,
       )}
       {...props}
     >
-      <div className="flex h-14 items-center border-b border-gray-200 px-4">
-        {collapsed ? (
-          <span className="text-lg font-bold text-primary-600">A</span>
-        ) : (
-          <span className="text-lg font-bold text-gray-900">
-            <span className="text-primary-600">Arko</span>
-          </span>
+      <div className="flex h-14 items-center gap-2.5 border-b border-white/10 px-5">
+        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary-600">
+          <span className="text-xs font-bold text-white">A</span>
+        </div>
+        {!collapsed && (
+          <span className="text-sm font-semibold text-white">Arko</span>
         )}
       </div>
-      <nav className="flex-1 space-y-1 p-2">
-        {children}
-      </nav>
+      <nav className="flex-1 space-y-1 p-3">{children}</nav>
     </aside>
   ),
 )

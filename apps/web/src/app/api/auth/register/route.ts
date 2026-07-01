@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { hash } from 'bcryptjs'
 import { prisma } from '@arko/db'
 import { z } from 'zod'
+import { registerLimiter, requestKey } from '../../../../lib/rate-limit'
 
 const registerSchema = z.object({
   name: z.string().min(1),
@@ -10,6 +11,21 @@ const registerSchema = z.object({
 })
 
 export async function POST(req: Request) {
+  // Rate limit: 5 registrations per minute per IP
+  const ipKey = requestKey(req)
+  const rateCheck = registerLimiter.check(ipKey)
+  if (!rateCheck.success) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please try again later.' },
+      {
+        status: 429,
+        headers: {
+          'Retry-After': String(Math.ceil((rateCheck.resetAt - Date.now()) / 1000)),
+        },
+      },
+    )
+  }
+
   try {
     const json = await req.json()
     const body = registerSchema.parse(json)
@@ -19,8 +35,9 @@ export async function POST(req: Request) {
     })
 
     if (existing) {
+      // Generic error to prevent user enumeration
       return NextResponse.json(
-        { error: 'User with this email already exists' },
+        { error: 'Registration failed. Please check your details and try again.' },
         { status: 409 },
       )
     }

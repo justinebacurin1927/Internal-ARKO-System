@@ -1,7 +1,8 @@
 import NextAuth from 'next-auth'
 import Credentials from 'next-auth/providers/credentials'
-import { prisma } from '@arko/db'
+import { prisma, type Role } from '@arko/db'
 import { compare } from 'bcryptjs'
+import { authLimiter } from './rate-limit'
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
@@ -13,6 +14,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null
+
+        // Rate limit: 10 login attempts per minute per email
+        const rateCheck = authLimiter.check(credentials.email as string)
+        if (!rateCheck.success) return null
 
         const user = await prisma.user.findUnique({
           where: { email: credentials.email as string },
@@ -43,11 +48,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.id = user.id
       }
+      // Load role from DB on every token refresh
+      if (token.id) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { role: true },
+        })
+        if (dbUser) token.role = dbUser.role
+      }
       return token
     },
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string
+        session.user.role = token.role as Role
       }
       return session
     },

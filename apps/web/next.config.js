@@ -14,5 +14,15 @@ const nextConfig = {
       bodySizeLimit: '2mb',
     },
   },
+  poweredByHeader: false,
+  async redirects() {
+    return [
+      {
+        source: '/',
+        destination: '/auth/login',
+        permanent: false,
+      },
+    ]
+  },
 }
 module.exports = nextConfig

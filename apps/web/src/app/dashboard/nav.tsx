@@ -8,14 +8,20 @@ import {
   Workflow,
   CheckSquare,
   Settings,
+  MessageSquare,
+  Bell,
+  FileText,
 } from 'lucide-react'
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
-  { href: '/finance', label: 'Finance', icon: <Wallet className="h-5 w-5" /> },
-  { href: '/workflows', label: 'Workflows', icon: <Workflow className="h-5 w-5" /> },
-  { href: '/tasks', label: 'Tasks', icon: <CheckSquare className="h-5 w-5" /> },
-  { href: '/settings', label: 'Settings', icon: <Settings className="h-5 w-5" /> },
+  { href: '/dashboard/finance', label: 'Finance', icon: <Wallet className="h-5 w-5" /> },
+  { href: '/dashboard/workflows', label: 'Workflows', icon: <Workflow className="h-5 w-5" /> },
+  { href: '/dashboard/tasks', label: 'Tasks', icon: <CheckSquare className="h-5 w-5" /> },
+  { href: '/dashboard/messages', label: 'Messages', icon: <MessageSquare className="h-5 w-5" /> },
+  { href: '/dashboard/reminders', label: 'Reminders', icon: <Bell className="h-5 w-5" /> },
+  { href: '/dashboard/notes', label: 'Notes', icon: <FileText className="h-5 w-5" /> },
+  { href: '/dashboard/settings', label: 'Settings', icon: <Settings className="h-5 w-5" /> },
 ]
 
 export function DashboardNav() {
@@ -29,7 +35,7 @@ export function DashboardNav() {
           href={item.href}
           label={item.label}
           icon={item.icon}
-          active={pathname === item.href}
+          active={pathname === item.href || pathname.startsWith(item.href + '/')}
         />
       ))}
     </div>

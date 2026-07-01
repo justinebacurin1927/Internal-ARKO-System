@@ -5,7 +5,9 @@ export const financeRouter = router({
   getTransactions: protectedProcedure
     .input(z.object({ limit: z.number().default(50) }).optional())
     .query(async ({ ctx }) => {
+      const userId = ctx.user.id!
       return ctx.prisma.transaction.findMany({
+        where: { userId },
         take: 50,
         orderBy: { date: 'desc' },
         include: { category: true },

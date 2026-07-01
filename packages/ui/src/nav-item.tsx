@@ -18,16 +18,18 @@ const NavItem = React.forwardRef<HTMLAnchorElement, NavItemProps>(
       ref={ref}
       href={href}
       className={cn(
-        'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+        'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150 active:scale-[0.97]',
         active
-          ? 'bg-primary-50 text-primary-700'
-          : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900',
+          ? 'bg-primary-600/20 text-white'
+          : 'text-sidebar-text hover:bg-sidebar-hover hover:text-sidebar-text-active',
         collapsed && 'justify-center px-2',
         className,
       )}
       {...props}
     >
-      {icon && <span className="h-5 w-5 shrink-0">{icon}</span>}
+      {icon && (
+        <span className={cn('h-5 w-5 shrink-0', active && 'text-primary-400')}>{icon}</span>
+      )}
       {!collapsed && <span>{label}</span>}
     </Link>
   ),
