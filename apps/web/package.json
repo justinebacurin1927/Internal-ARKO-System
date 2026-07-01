@@ -1,0 +1,52 @@
+{
+  "name": "@arko/web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "next": "^15.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "@arko/ui": "workspace:*",
+    "@arko/db": "workspace:*",
+    "@arko/finance": "workspace:*",
+    "@arko/workflows": "workspace:*",
+    "@arko/tasks": "workspace:*",
+    "@arko/dashboard": "workspace:*",
+    "@trpc/server": "^11.0.0",
+    "@trpc/client": "^11.0.0",
+    "@trpc/react-query": "^11.0.0",
+    "@trpc/next": "^11.0.0",
+    "@tanstack/react-query": "^5.60.0",
+    "next-auth": "^5.0.0-beta.25",
+    "zod": "^3.23.0",
+    "superjson": "^2.2.0",
+    "bcryptjs": "^2.4.3",
+    "lucide-react": "^0.460.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^2.6.0",
+    "@radix-ui/react-slot": "^1.1.1",
+    "@radix-ui/react-dialog": "^1.1.4",
+    "@radix-ui/react-dropdown-menu": "^2.1.4",
+    "@radix-ui/react-tabs": "^1.1.2",
+    "@radix-ui/react-avatar": "^1.1.2",
+    "@radix-ui/react-separator": "^1.1.1",
+    "@radix-ui/react-toast": "^1.2.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/bcryptjs": "^2.4.6",
+    "typescript": "^5.6.0",
+    "tailwindcss": "^4.0.0",
+    "@tailwindcss/postcss": "^4.0.0",
+    "postcss": "^8.4.0"
+  }
+}
