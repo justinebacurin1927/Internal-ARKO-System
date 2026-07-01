@@ -71,6 +71,23 @@ export default function DashboardHome() {
     }
   }, [transactions])
 
+  // Growth rate metadata
+  const growthMeta = useMemo(() => {
+    if (!chartData || chartData.labels.length < 2) return { best: 0, worst: 0 }
+    let best = -Infinity, worst = Infinity
+    for (let i = 1; i < chartData.labels.length; i++) {
+      const prev = (chartData.income[i - 1] ?? 0) - (chartData.expenses[i - 1] ?? 0)
+      const curr = (chartData.income[i] ?? 0) - (chartData.expenses[i] ?? 0)
+      const growth = prev !== 0 ? ((curr - prev) / Math.abs(prev)) * 100 : 0
+      if (growth > best) best = growth
+      if (growth < worst) worst = growth
+    }
+    return {
+      best: isFinite(best) ? best : 0,
+      worst: isFinite(worst) ? worst : 0,
+    }
+  }, [chartData])
+
   const teamAvatars = users?.slice(0, 6) ?? []
 
   const priorityBars = [
@@ -80,7 +97,81 @@ export default function DashboardHome() {
     { label: 'Low', value: tasks?.filter((t: any) => t.priority === 'LOW').length ?? 0, color: '#9ca3af' },
   ]
 
-  const maxChartValue = Math.max(...chartData.income, ...chartData.expenses, 1)
+  // Compute net growth rates for the SVG chart
+  const plotRates = useMemo(() => {
+    if (chartData.labels.length < 2) return []
+    const rates: number[] = []
+    for (let i = 1; i < chartData.labels.length; i++) {
+      const prevNet = (chartData.income[i - 1] ?? 0) - (chartData.expenses[i - 1] ?? 0)
+      const currNet = (chartData.income[i] ?? 0) - (chartData.expenses[i] ?? 0)
+      const growth = prevNet !== 0 ? ((currNet - prevNet) / Math.abs(prevNet)) * 100 : 0
+      rates.push(parseFloat(growth.toFixed(2)))
+    }
+    return rates
+  }, [chartData])
+
+  const chartLabels = chartData.labels.slice(1) // skip first month for growth rates
+  const isFlat = plotRates.length > 0 && plotRates.every((r) => r === plotRates[0])
+
+  // SVG chart geometry
+  const vw = 560
+  const vh = 180
+  const padL = 40
+  const padR = 10
+  const padT = 6
+  const padB = 22
+  const chartW = vw - padL - padR
+  const chartH = vh - padT - padB
+  const chartL = padL
+  const chartT = padT
+
+  const rawMin = Math.min(0, ...plotRates)
+  const rawMax = Math.max(0, ...plotRates)
+  let dataMin: number, dataMax: number
+  if (isFlat && plotRates.length > 0) {
+    const val = plotRates[0]
+    dataMin = val - 2
+    dataMax = val + 2.5
+  } else {
+    dataMin = rawMin >= 0 ? -1 : rawMin - Math.max(Math.abs(rawMin) * 0.2, 0.5)
+    dataMax = rawMax <= 0 ? 4 : rawMax + Math.max(rawMax * 0.2, 0.5)
+  }
+  const yMin = Math.floor(dataMin)
+  const yMax = Math.ceil(dataMax)
+  const yRange = Math.max(yMax - yMin, 3)
+  const yScale = (v: number) => chartT + chartH - ((v - yMin) / yRange) * chartH
+  const xStep = chartW / Math.max(plotRates.length - 1, 1)
+
+  const pts = plotRates.map((v, i) => ({
+    x: chartL + i * xStep,
+    y: yScale(v),
+    val: v,
+    label: chartLabels[i] ?? '',
+  }))
+
+  // Smooth path
+  const smoothPath = (points: { x: number; y: number }[]) => {
+    if (points.length < 2) return ''
+    if (points.length === 2) return `M${points[0].x},${points[0].y}L${points[1].x},${points[1].y}`
+    let d = `M${points[0].x},${points[0].y}`
+    for (let i = 0; i < points.length - 1; i++) {
+      const p0 = points[Math.max(0, i - 1)]
+      const p1 = points[i]
+      const p2 = points[i + 1]
+      const p3 = points[Math.min(points.length - 1, i + 2)]
+      const t = 0.35
+      const c1x = p1.x + (p2.x - p0.x) * t
+      const c1y = p1.y + (p2.y - p0.y) * t
+      const c2x = p2.x - (p3.x - p1.x) * t
+      const c2y = p2.y - (p3.y - p1.y) * t
+      d += `C${c1x},${c1y} ${c2x},${c2y} ${p2.x},${p2.y}`
+    }
+    return d
+  }
+
+  const benchmarkY = yScale(0)
+  const yTicks: number[] = []
+  for (let v = yMin; v <= yMax; v++) yTicks.push(v)
 
   return (
     <div className="h-full flex flex-col">
@@ -246,33 +337,80 @@ export default function DashboardHome() {
 
         {/* RIGHT COLUMN */}
         <div className="flex flex-col gap-4 min-h-0">
-          {/* Performance Chart */}
+          {/* Net Growth Chart */}
           <Card className="shrink-0 h-[200px] overflow-hidden flex flex-col">
             <CardHeader className="p-4 pb-1 flex flex-row items-center justify-between shrink-0">
               <div className="flex items-center gap-3">
-                <CardTitle className="text-[11px] font-bold text-gray-800">Income & Expenses</CardTitle>
+                <CardTitle className="text-[11px] font-bold text-gray-800">Net Growth</CardTitle>
+                <div className="flex items-center gap-2">
+                  <span className="flex items-center gap-1 text-[8px] font-medium text-green-600">
+                    <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                    +{growthMeta.best.toFixed(2)}%
+                  </span>
+                  <span className="flex items-center gap-1 text-[8px] font-medium text-red-400">
+                    <span className="h-1.5 w-1.5 rounded-full bg-red-400" />
+                    {growthMeta.worst.toFixed(2)}%
+                  </span>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="p-4 pt-0 flex-1 min-h-0">
-              <div className="h-full flex items-end gap-2">
-                {chartData.labels.map((label, i) => {
-                  const incH = (chartData.income[i] / maxChartValue) * 100
-                  const expH = (chartData.expenses[i] / maxChartValue) * 100
-                  return (
-                    <div key={label} className="flex-1 flex flex-col items-center gap-0.5 h-full justify-end">
-                      <div className="relative w-full flex flex-col items-center gap-0.5" style={{ maxHeight: '85%' }}>
-                        <div className="w-full rounded-t-sm transition-all duration-500" style={{ height: `${Math.max(incH, 0)}%`, minHeight: chartData.income[i] > 0 ? 4 : 0, backgroundColor: '#22c55e' }} />
-                        <div className="w-full rounded-t-sm transition-all duration-500" style={{ height: `${Math.max(expH, 0)}%`, minHeight: chartData.expenses[i] > 0 ? 4 : 0, backgroundColor: '#f87171' }} />
-                      </div>
-                      <span className="text-[8px] text-gray-400 shrink-0">{label}</span>
-                    </div>
-                  )
-                })}
-              </div>
+              {chartData.labels.length < 2 || plotRates.length === 0 ? (
+                <div className="flex items-center justify-center h-full text-[11px] text-gray-300 select-none">
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="text-2xl font-light text-gray-200">—</span>
+                    <span>Loading data...</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="relative w-full h-full select-none">
+                  <svg
+                    viewBox={`0 0 ${vw} ${vh}`}
+                    className="w-full h-full"
+                    preserveAspectRatio="xMidYMid meet"
+                  >
+                    {/* Horizontal grid */}
+                    {yTicks.map((v) => {
+                      const y = yScale(v)
+                      return (
+                        <g key={v}>
+                          <line x1={chartL} y1={y} x2={chartL + chartW} y2={y} stroke="#e5e7eb" strokeWidth="0.5" />
+                          <text x={chartL - 5} y={y + 3} textAnchor="end" className="fill-gray-400" fontSize="8" fontFamily="Inter, system-ui, sans-serif" fontWeight="500">
+                            {v > 0 ? `+${v}%` : `${v}%`}
+                          </text>
+                        </g>
+                      )
+                    })}
+
+                    {/* Benchmark 0% line */}
+                    <line x1={chartL} y1={benchmarkY} x2={chartL + chartW} y2={benchmarkY} stroke="#d1d5db" strokeWidth="1" strokeDasharray="5 4" strokeLinecap="round" />
+
+                    {/* Data line */}
+                    <path d={smoothPath(pts)} fill="none" stroke="#1f2937" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+
+                    {/* Data points */}
+                    {pts.map((pt, i) => (
+                      <g key={i}>
+                        <circle cx={pt.x} cy={pt.y} r={2.5} fill="#4b5563" stroke="#fff" strokeWidth={1.5} />
+                      </g>
+                    ))}
+
+                    {/* X-axis labels */}
+                    {pts.map((pt, i) => {
+                      if (i !== 0 && i !== pts.length - 1 && i % 2 !== 0) return null
+                      return (
+                        <text key={i} x={pt.x} y={chartT + chartH + 14} textAnchor="middle" className="fill-gray-400" fontSize="8" fontFamily="Inter, system-ui, sans-serif" fontWeight="500">
+                          {pt.label}
+                        </text>
+                      )
+                    })}
+                  </svg>
+                </div>
+              )}
             </CardContent>
           </Card>
 
-          {/* Overview / Recent Updates */}
+          {/* Recent Updates */}
           <Card className="flex-1 min-h-0 overflow-hidden flex flex-col">
             <CardHeader className="p-4 pb-1 flex flex-row items-center justify-between shrink-0">
               <CardTitle className="text-[11px] font-bold text-gray-800">Recent Updates</CardTitle>
@@ -283,7 +421,8 @@ export default function DashboardHome() {
                 <div className="text-center px-4">
                   <p className="text-[11px] font-medium text-gray-700">{totalTasks} total tasks</p>
                   <p className="text-[10px] text-gray-400 mt-1">
-                    {completedTasks} done · {openTasks} open{balance ? ` · ₱${balance.balance.toLocaleString()}` : ''}
+                    {completedTasks} done · {openTasks} open · {reviewTasks} review
+                    {balance ? ` · ${formatCurrency(balance.balance)}` : ''}
                   </p>
                 </div>
               </div>
