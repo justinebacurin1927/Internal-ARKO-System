@@ -10,7 +10,7 @@ export default function DashboardLoading() {
       </div>
 
       {/* Right column skeleton */}
-      <div className="flex flex-col gap-3 min-h-0">
+      <div className="flex flex-col gap-4 min-h-0">
         <div className="h-[180px] rounded-xl bg-gray-100" />
         <div className="flex-1 rounded-xl bg-gray-100" />
       </div>

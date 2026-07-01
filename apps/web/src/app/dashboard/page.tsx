@@ -1,8 +1,8 @@
 'use client'
 
 import { useMemo } from 'react'
-import dynamic from 'next/dynamic'
 import { Card, CardContent, CardHeader, CardTitle } from '@arko/ui'
+import { LineChart } from './_components/line-chart'
 import {
   Wallet,
   TrendingUp,
@@ -10,25 +10,10 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Plus,
+  GitCommit,
+  ExternalLink,
 } from 'lucide-react'
 import { api } from '../../lib/trpc/client'
-
-// ── Dynamically imported charts (code-split, SSR opt-out) ─
-const LineChart = dynamic(
-  () => import('./_components/line-chart').then((m) => ({ default: m.LineChart })),
-  {
-    ssr: false,
-    loading: () => <div className="w-full h-full rounded-xl bg-gray-100 animate-pulse" />,
-  },
-)
-
-const CategoryChart = dynamic(
-  () => import('./_components/category-chart').then((m) => ({ default: m.CategoryChart })),
-  {
-    ssr: false,
-    loading: () => <div className="w-full h-full rounded-xl bg-gray-100 animate-pulse" />,
-  },
-)
 
 // ── helpers ──────────────────────────────────────────────
 function formatCurrency(n: number) {
@@ -39,8 +24,8 @@ function formatCurrency(n: number) {
   }).format(n)
 }
 
-function Skeleton() {
-  return <div className="animate-pulse rounded-xl bg-gray-100" />
+function Skeleton({ className }: { className?: string }) {
+  return <div className={`animate-pulse rounded-xl bg-gray-100 ${className ?? ''}`} />
 }
 
 // ── Dashboard page ───────────────────────────────────────
@@ -49,6 +34,7 @@ export default function DashboardPage() {
   const { data: tasks, isLoading: tasksLoading } = api.tasks.list.useQuery()
   const { data: transactions, isLoading: txLoading } = api.finance.getTransactions.useQuery()
   const { data: users } = api.users.search.useQuery({})
+  const { data: updates } = api.github.recentCommits.useQuery({ limit: 8 })
 
   const loading = balLoading || tasksLoading || txLoading
 
@@ -86,23 +72,15 @@ export default function DashboardPage() {
     }
   }, [transactions])
 
-  // ── Category breakdown for bottom chart ────────────────
-  const categoryData = useMemo(() => {
-    if (!transactions) return []
-    const expenses = transactions.filter((t) => t.type === 'EXPENSE')
-    const grouped: Record<string, { amount: number; color: string }> = {}
-    expenses.forEach((tx) => {
-      const name = tx.category?.name ?? 'Uncategorized'
-      const color = tx.category?.color ?? '#9ca3af'
-      if (!grouped[name]) grouped[name] = { amount: 0, color }
-      grouped[name].amount += tx.amount
-    })
-    return Object.entries(grouped).map(([name, data]) => ({
-      name,
-      amount: data.amount,
-      color: data.color,
-    }))
-  }, [transactions])
+  // ── helpers ──
+  const commits = updates?.commits ?? []
+  const timeAgo = (dateStr: string) => {
+    const diff = Date.now() - new Date(dateStr).getTime()
+    const mins = Math.floor(diff / 60000)
+    if (mins < 1) return 'now'
+    if (mins < 60) return `${mins}m`
+    return `${Math.floor(mins / 60)}h`
+  }
 
   const teamAvatars = users?.slice(0, 6) ?? []
 
@@ -131,9 +109,17 @@ export default function DashboardPage() {
 
       {/* ── Main grid ───────────────────────────────── */}
       {loading ? (
-        <div className="grid grid-cols-[1fr_1.4fr] gap-4 flex-1 min-h-0">
-          <Skeleton />
-          <Skeleton />
+        <div className="grid grid-cols-[1fr_1.4fr] gap-4 flex-1 min-h-0 animate-pulse">
+          <div className="flex flex-col gap-4">
+            <Skeleton className="h-[92px]" />
+            <Skeleton className="h-[88px]" />
+            <Skeleton className="h-32" />
+            <Skeleton className="h-[120px]" />
+          </div>
+          <div className="flex flex-col gap-4">
+            <Skeleton className="h-[180px]" />
+            <Skeleton className="flex-1 min-h-[200px]" />
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-[1fr_1.4fr] gap-4 flex-1 min-h-0">
@@ -337,9 +323,9 @@ export default function DashboardPage() {
             </Card>
           </div>
 
-          {/* ══ RIGHT COLUMN (dual-chart stack) ════════ */}
-          <div className="flex flex-col gap-0 min-h-0">
-            {/* ── Income vs Expenses (smaller) ────────── */}
+          {/* ══ RIGHT COLUMN ────────────────────────── */}
+          <div className="flex flex-col gap-4 min-h-0">
+            {/* ── Income vs Expenses ─────────────────── */}
             <Card className="shrink-0 h-[180px] overflow-hidden flex flex-col">
               <CardHeader className="p-4 pb-1 flex flex-row items-center justify-between shrink-0">
                 <CardTitle className="text-[11px] font-bold text-gray-800">
@@ -363,15 +349,57 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
-            {/* ── Expense Breakdown (new chart) ───────── */}
-            <Card className="flex-1 min-h-0 overflow-hidden flex flex-col rounded-t-none border-t-0 shadow-none">
-              <CardHeader className="p-4 pb-1 shrink-0">
+            {/* ── Recent Updates ─────────────────────── */}
+            <Card className="flex-1 min-h-0 overflow-hidden flex flex-col">
+              <CardHeader className="p-4 pb-1 flex flex-row items-center justify-between shrink-0">
                 <CardTitle className="text-[11px] font-bold text-gray-800">
-                  Expense Breakdown
+                  Recent Updates
                 </CardTitle>
+                <GitCommit className="h-3 w-3 text-gray-400" />
               </CardHeader>
-              <CardContent className="p-4 pt-1 flex-1 min-h-0">
-                <CategoryChart categories={categoryData} />
+              <CardContent className="p-0 flex-1 overflow-y-auto min-h-0">
+                {commits.length === 0 ? (
+                  <div className="flex items-center justify-center h-full py-6">
+                    <p className="text-[10px] text-gray-400">No recent commits</p>
+                  </div>
+                ) : (
+                  commits.map((commit) => {
+                    const msg = commit.commit.message.split('\n')[0]
+                    const cat = msg.match(/^(\w+)/)?.[1]?.toLowerCase() ?? ''
+                    const isFeature = cat === 'feat'
+                    const isFix = cat === 'fix'
+                    return (
+                      <a
+                        key={commit.sha}
+                        href={commit.html_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2.5 px-4 py-2 transition-colors hover:bg-gray-50 border-b border-gray-50 last:border-0 group"
+                      >
+                        <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gray-100 group-hover:bg-gray-200 transition-colors">
+                          <GitCommit className="h-2.5 w-2.5 text-gray-400" />
+                        </div>
+                        <p className="flex-1 text-[10px] text-gray-700 truncate min-w-0">
+                          {msg}
+                        </p>
+                        {isFeature && (
+                          <span className="shrink-0 rounded px-1 py-0.5 text-[7px] font-semibold uppercase bg-primary-50 text-primary-700 leading-none">
+                            feat
+                          </span>
+                        )}
+                        {isFix && (
+                          <span className="shrink-0 rounded px-1 py-0.5 text-[7px] font-semibold uppercase bg-green-50 text-green-700 leading-none">
+                            fix
+                          </span>
+                        )}
+                        <span className="shrink-0 text-[9px] tabular-nums text-gray-400">
+                          {timeAgo(commit.commit.author.date)}
+                        </span>
+                        <ExternalLink className="h-2.5 w-2.5 shrink-0 text-gray-300 group-hover:text-gray-500 transition-colors" />
+                      </a>
+                    )
+                  })
+                )}
               </CardContent>
             </Card>
           </div>
