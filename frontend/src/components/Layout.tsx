@@ -1,5 +1,6 @@
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
+import { api } from '../lib/api'
 import { useState, useRef, useEffect } from 'react'
 import {
   LayoutDashboard,
@@ -10,6 +11,7 @@ import {
   FileText,
   Search,
   LogOut,
+  Settings,
 } from 'lucide-react'
 
 const today = new Date()
@@ -53,8 +55,17 @@ export default function DashboardLayout() {
   const location = useLocation()
   const [showMenu, setShowMenu] = useState(false)
   const [showSearch, setShowSearch] = useState(false)
+  const [connected, setConnected] = useState<boolean | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
   const searchRef = useRef<HTMLInputElement>(null)
+
+  // Health check polling
+  useEffect(() => {
+    const check = () => api.health().then(() => setConnected(true)).catch(() => setConnected(false))
+    check()
+    const interval = setInterval(check, 30000)
+    return () => clearInterval(interval)
+  }, [])
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -121,6 +132,13 @@ export default function DashboardLayout() {
                   <p className="text-xs text-text-tertiary truncate">{user?.email ?? ''}</p>
                 </div>
                 <button
+                  onClick={() => { setShowMenu(false); navigate('/dashboard/settings') }}
+                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-text-secondary transition-colors hover:bg-accent-50/60 cursor-pointer"
+                >
+                  <Settings className="h-4 w-4" />
+                  Settings
+                </button>
+                <button
                   onClick={handleLogout}
                   className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-neg transition-colors hover:bg-neg-bg cursor-pointer"
                 >
@@ -143,6 +161,16 @@ export default function DashboardLayout() {
               </span>
               <span className="hidden sm:block text-xs text-text-tertiary font-medium">
                 {dateStr}
+              </span>
+              <span className={`flex items-center gap-1.5 text-[10px] font-medium ${
+                connected === null ? 'text-text-tertiary' :
+                connected ? 'text-pos' : 'text-neg'
+              }`}>
+                <span className={`h-1.5 w-1.5 rounded-full ${
+                  connected === null ? 'bg-text-tertiary animate-pulse' :
+                  connected ? 'bg-pos' : 'bg-neg'
+                }`} />
+                {connected === null ? 'Connecting…' : connected ? 'Connected' : 'Disconnected'}
               </span>
             </div>
 

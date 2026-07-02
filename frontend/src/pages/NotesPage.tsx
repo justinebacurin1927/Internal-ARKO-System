@@ -3,10 +3,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../lib/api'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/Card'
 import { Button } from '../components/Button'
+import { useToast } from '../lib/toast'
+import ConfirmDialog from '../components/ConfirmDialog'
 import { Plus, Trash2, FileText, AlertCircle } from 'lucide-react'
 
 export default function NotesPage() {
   const queryClient = useQueryClient()
+  const { toast } = useToast()
   const { data: notes, isLoading, error } = useQuery({
     queryKey: ['notes'],
     queryFn: () => api.getNotes(),
@@ -15,18 +18,23 @@ export default function NotesPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   const createNote = useMutation({
     mutationFn: () => api.createNote({ title: 'Untitled', content: '' }),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['notes'] })
       selectNote(data)
+      toast('Note created')
     },
   })
 
   const updateNote = useMutation({
     mutationFn: () => api.updateNote(selectedId!, { title, content }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notes'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notes'] })
+      toast('Note saved')
+    },
   })
 
   const deleteNote = useMutation({
@@ -38,6 +46,7 @@ export default function NotesPage() {
         setTitle('')
         setContent('')
       }
+      toast('Note deleted')
     },
   })
 
@@ -138,7 +147,7 @@ export default function NotesPage() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => deleteNote.mutate(selectedId!)}
+                  onClick={() => setConfirmDelete(true)}
                   className="text-gray-300 hover:text-red-500 shrink-0"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -167,6 +176,18 @@ export default function NotesPage() {
           )}
         </Card>
       </div>
+
+      <ConfirmDialog
+        open={confirmDelete}
+        title="Delete note?"
+        message={`Are you sure you want to delete "${title || 'Untitled'}"? This cannot be undone.`}
+        onConfirm={() => {
+          deleteNote.mutate(selectedId!)
+          setConfirmDelete(false)
+        }}
+        onCancel={() => setConfirmDelete(false)}
+        loading={deleteNote.isPending}
+      />
     </div>
   )
 }

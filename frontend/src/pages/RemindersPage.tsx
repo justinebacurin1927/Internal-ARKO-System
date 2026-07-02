@@ -3,10 +3,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../lib/api'
 import { Card, CardContent } from '../components/Card'
 import { Button } from '../components/Button'
+import { useToast } from '../lib/toast'
+import ConfirmDialog from '../components/ConfirmDialog'
 import { Plus, Trash2, CheckCircle2, Circle, AlertCircle, Bell } from 'lucide-react'
 
 export default function RemindersPage() {
   const queryClient = useQueryClient()
+  const { toast } = useToast()
   const { data: reminders, isLoading, error } = useQuery({
     queryKey: ['reminders'],
     queryFn: () => api.getReminders(),
@@ -16,6 +19,7 @@ export default function RemindersPage() {
   const [title, setTitle] = useState('')
   const [note, setNote] = useState('')
   const [dueAt, setDueAt] = useState('')
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
 
   const createReminder = useMutation({
     mutationFn: () =>
@@ -30,17 +34,24 @@ export default function RemindersPage() {
       setTitle('')
       setNote('')
       setDueAt('')
+      toast('Reminder set')
     },
   })
 
   const toggleReminder = useMutation({
     mutationFn: (id: string) => api.toggleReminder(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['reminders'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reminders'] })
+      toast('Reminder updated')
+    },
   })
 
   const deleteReminder = useMutation({
     mutationFn: (id: string) => api.deleteReminder(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['reminders'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reminders'] })
+      toast('Reminder deleted')
+    },
   })
 
   if (error) {
@@ -131,7 +142,7 @@ export default function RemindersPage() {
         {overdue.length > 0 && (
           <Section title="Overdue" count={overdue.length}>
             {overdue.map((r: any) => (
-              <ReminderItem key={r.id} reminder={r} onToggle={toggleReminder.mutate} onDelete={deleteReminder.mutate} />
+              <ReminderItem key={r.id} reminder={r} onToggle={toggleReminder.mutate} onDelete={(id) => setConfirmDeleteId(id)} />
             ))}
           </Section>
         )}
@@ -139,7 +150,7 @@ export default function RemindersPage() {
         {upcoming.length > 0 && (
           <Section title="Upcoming" count={upcoming.length}>
             {upcoming.map((r: any) => (
-              <ReminderItem key={r.id} reminder={r} onToggle={toggleReminder.mutate} onDelete={deleteReminder.mutate} />
+              <ReminderItem key={r.id} reminder={r} onToggle={toggleReminder.mutate} onDelete={(id) => setConfirmDeleteId(id)} />
             ))}
           </Section>
         )}
@@ -147,11 +158,23 @@ export default function RemindersPage() {
         {done.length > 0 && (
           <Section title="Completed" count={done.length}>
             {done.map((r: any) => (
-              <ReminderItem key={r.id} reminder={r} onToggle={toggleReminder.mutate} onDelete={deleteReminder.mutate} />
+              <ReminderItem key={r.id} reminder={r} onToggle={toggleReminder.mutate} onDelete={(id) => setConfirmDeleteId(id)} />
             ))}
           </Section>
         )}
       </div>
+
+      <ConfirmDialog
+        open={!!confirmDeleteId}
+        title="Delete reminder?"
+        message="Are you sure you want to delete this reminder? This cannot be undone."
+        onConfirm={() => {
+          if (confirmDeleteId) deleteReminder.mutate(confirmDeleteId)
+          setConfirmDeleteId(null)
+        }}
+        onCancel={() => setConfirmDeleteId(null)}
+        loading={deleteReminder.isPending}
+      />
     </div>
   )
 }
@@ -193,7 +216,7 @@ function ReminderItem({
           </p>
         )}
       </div>
-      <button onClick={() => onDelete(reminder.id)} className="p-1.5 text-gray-300 hover:text-red-500 transition-colors">
+      <button onClick={() => onDelete(reminder.id)} className="p-1.5 text-gray-300 hover:text-red-500 transition-colors cursor-pointer">
         <Trash2 className="h-4 w-4" />
       </button>
     </div>

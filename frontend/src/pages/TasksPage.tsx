@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../lib/api'
 import { Card, CardContent } from '../components/Card'
 import { Button } from '../components/Button'
+import { useToast } from '../lib/toast'
 import { Plus, ListTodo, AlertCircle, User, Loader2 } from 'lucide-react'
 
 const columns = ['TODO', 'IN_PROGRESS', 'REVIEW', 'DONE'] as const
@@ -32,6 +33,8 @@ export default function TasksPage() {
   const [showAssigneeSearch, setShowAssigneeSearch] = useState(false)
   const [assigneeSearch, setAssigneeSearch] = useState('')
 
+  const { toast } = useToast()
+
   const createTask = useMutation({
     mutationFn: () =>
       api.createTask({
@@ -47,6 +50,7 @@ export default function TasksPage() {
       setNewAssignee('')
       setShowNew(false)
       queryClient.invalidateQueries({ queryKey: ['tasks'] })
+      toast('Task created')
     },
   })
 

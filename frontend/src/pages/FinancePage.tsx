@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../lib/api'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/Card'
 import { Button } from '../components/Button'
+import { useToast } from '../lib/toast'
 import { Plus, ArrowUpRight, ArrowDownRight, AlertCircle } from 'lucide-react'
 
 function formatCurrency(n: number) {
@@ -16,6 +17,7 @@ function formatCurrency(n: number) {
 
 export default function FinancePage() {
   const queryClient = useQueryClient()
+  const { toast } = useToast()
   const { data: balance } = useQuery({
     queryKey: ['balance'],
     queryFn: () => api.getBalance(),
@@ -45,6 +47,7 @@ export default function FinancePage() {
       setAmount('')
       setDescription('')
       setType('EXPENSE')
+      toast('Transaction added')
     },
   })
 

@@ -4,9 +4,33 @@ function getToken(): string | null {
   return localStorage.getItem('token')
 }
 
+function getRefreshToken(): string | null {
+  return localStorage.getItem('refresh')
+}
+
+async function attemptRefresh(): Promise<boolean> {
+  const refresh = getRefreshToken()
+  if (!refresh) return false
+  try {
+    const res = await fetch(`${BASE}/auth/refresh/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh }),
+    })
+    if (!res.ok) return false
+    const data = await res.json()
+    localStorage.setItem('token', data.access)
+    return true
+  } catch {
+    return false
+  }
+}
+
+let refreshing: Promise<boolean> | null = null
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = getToken()
-  const res = await fetch(`${BASE}${path}`, {
+  let res = await fetch(`${BASE}${path}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -14,6 +38,26 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
       ...options.headers,
     },
   })
+
+  // 401 → try refreshing the token once
+  if (res.status === 401 && getRefreshToken()) {
+    // Deduplicate concurrent refresh attempts
+    if (!refreshing) refreshing = attemptRefresh()
+    const ok = await refreshing
+    refreshing = null
+    if (ok) {
+      const newToken = getToken()
+      res = await fetch(`${BASE}${path}`, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          ...(newToken ? { Authorization: `Bearer ${newToken}` } : {}),
+          ...options.headers,
+        },
+      })
+    }
+  }
+
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: 'Request failed' }))
     throw new Error(err.detail || err.message || 'Request failed')
@@ -22,18 +66,27 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 }
 
 export const api = {
+  health: () => request<{ status: string }>('/health/'),
+
   // Auth
   login: (email: string, password: string) =>
-    request<{ token: string; user: any }>('/auth/login/', {
+    request<{ token: string; refresh: string; user: any }>('/auth/login/', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     }),
   register: (email: string, password: string, name?: string) =>
-    request<{ token: string; user: any }>('/auth/register/', {
+    request<{ token: string; refresh: string; user: any }>('/auth/register/', {
       method: 'POST',
       body: JSON.stringify({ email, password, name }),
     }),
   me: () => request<any>('/auth/me/'),
+  updateProfile: (data: any) =>
+    request<any>('/auth/me/', { method: 'PATCH', body: JSON.stringify(data) }),
+  changePassword: (old_password: string, new_password: string) =>
+    request<any>('/auth/change-password/', {
+      method: 'POST',
+      body: JSON.stringify({ old_password, new_password }),
+    }),
 
   // Tasks
   getTasks: () => request<any[]>('/tasks/'),

@@ -44,8 +44,28 @@ def login(request):
         'user': user_ser.data,
     })
 
-@api_view(['GET'])
+@api_view(['GET', 'PATCH'])
 @permission_classes([IsAuthenticated])
 def me(request):
+    if request.method == 'PATCH':
+        serializer = UserSerializer(request.user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
     serializer = UserSerializer(request.user)
     return Response(serializer.data)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def change_password(request):
+    old = request.data.get('old_password')
+    new = request.data.get('new_password')
+    if not old or not new:
+        return Response({'detail': 'Both old_password and new_password are required'}, status=status.HTTP_400_BAD_REQUEST)
+    if not request.user.check_password(old):
+        return Response({'detail': 'Current password is incorrect'}, status=status.HTTP_400_BAD_REQUEST)
+    if len(new) < 6:
+        return Response({'detail': 'Password must be at least 6 characters'}, status=status.HTTP_400_BAD_REQUEST)
+    request.user.set_password(new)
+    request.user.save()
+    return Response({'detail': 'Password changed'})

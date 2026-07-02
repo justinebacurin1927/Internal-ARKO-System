@@ -239,6 +239,8 @@ export default function DashboardHome() {
   const { data: tasks, isLoading: tasksLoading } = useQuery({ queryKey: ['tasks'], queryFn: () => api.getTasks() })
   const { data: notes } = useQuery({ queryKey: ['notes'], queryFn: () => api.getNotes() })
   const { data: reminders } = useQuery({ queryKey: ['reminders'], queryFn: () => api.getReminders() })
+  const { data: balance } = useQuery({ queryKey: ['balance'], queryFn: () => api.getBalance() })
+  const { data: transactions } = useQuery({ queryKey: ['transactions'], queryFn: () => api.getTransactions(1) })
   const todo = tasks?.filter((t: any) => t.status === 'TODO') ?? []
   const inProgress = tasks?.filter((t: any) => t.status === 'IN_PROGRESS') ?? []
   const review = tasks?.filter((t: any) => t.status === 'REVIEW') ?? []
@@ -256,11 +258,27 @@ export default function DashboardHome() {
   const taskSegments = distCounts.map((v, i) => ({ value: v, color: distColors[i] }))
   const assignees = new Set(tasks?.map((t: any) => t.assignee_name).filter(Boolean) ?? [])
 
-  // Finance chart data — weekly aggregation from real data, fallback to sample curve
-  const financeData = financeCurve()
-  const incomeTotal = financeData.reduce((s, d) => s + d.income, 0)
-  const expenseTotal = financeData.reduce((s, d) => s + d.expenses, 0)
+  // Finance chart — aggregate real transactions into daily buckets
+  const last7 = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date()
+    d.setDate(d.getDate() - (6 - i))
+    const day = d.toISOString().split('T')[0]
+    const dayTxs = (transactions ?? []).filter((tx: any) => {
+      const txDate = typeof tx.date === 'string' ? tx.date.split('T')[0] : tx.date
+      return txDate === day
+    })
+    return {
+      income: dayTxs.filter((tx: any) => tx.type === 'INCOME').reduce((s: number, tx: any) => s + tx.amount, 0),
+      expenses: dayTxs.filter((tx: any) => tx.type === 'EXPENSE').reduce((s: number, tx: any) => s + tx.amount, 0),
+    }
+  })
+  const financeData = balance ? [{ income: balance.income, expenses: balance.expenses }] : financeCurve()
+  const incomeTotal = last7.reduce((s, d) => s + d.income, 0)
+  const expenseTotal = last7.reduce((s, d) => s + d.expenses, 0)
   const netTotal = incomeTotal - expenseTotal
+  // Use real data if available, fall back to sample curve
+  const hasTx = (transactions?.length ?? 0) > 0
+  const chartData = hasTx ? last7 : financeCurve()
 
   return (
     <div className="h-full flex flex-col gap-3">
@@ -300,8 +318,8 @@ export default function DashboardHome() {
 
             <SmoothChart
               series={[
-                { name: 'Income', data: financeData.map((d) => ({ label: '', value: d.income })), color: '#2D6A4F', gradientId: 'income-fill' },
-                { name: 'Expenses', data: financeData.map((d) => ({ label: '', value: d.expenses })), color: '#C28B5E', gradientId: 'expense-fill' },
+                { name: 'Income', data: chartData.map((d) => ({ label: '', value: d.income })), color: '#2D6A4F', gradientId: 'income-fill' },
+                { name: 'Expenses', data: chartData.map((d) => ({ label: '', value: d.expenses })), color: '#C28B5E', gradientId: 'expense-fill' },
               ]}
               labels={days}
               height={130}

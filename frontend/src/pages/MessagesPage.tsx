@@ -4,11 +4,13 @@ import { api } from '../lib/api'
 import { useAuth } from '../lib/auth'
 import { Card, CardContent } from '../components/Card'
 import { Button } from '../components/Button'
+import { useToast } from '../lib/toast'
 import { Send, Search, Plus, Loader2, AlertCircle, MessageSquare } from 'lucide-react'
 
 export default function MessagesPage() {
   const { user } = useAuth()
   const queryClient = useQueryClient()
+  const { toast } = useToast()
   const [selectedConv, setSelectedConv] = useState<string | null>(null)
   const [message, setMessage] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
@@ -38,6 +40,7 @@ export default function MessagesPage() {
       queryClient.invalidateQueries({ queryKey: ['messages', selectedConv] })
       queryClient.invalidateQueries({ queryKey: ['conversations'] })
       setMessage('')
+      toast('Message sent')
     },
   })
 
