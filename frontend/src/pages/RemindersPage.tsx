@@ -59,8 +59,8 @@ export default function RemindersPage() {
   const done = reminders?.filter((r: any) => r.is_done) || []
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between">
+    <div className="h-full flex flex-col gap-3">
+      <div className="flex items-start justify-between shrink-0">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Reminders</h1>
           <p className="text-sm text-gray-500 mt-1">Never miss a thing</p>
@@ -72,7 +72,7 @@ export default function RemindersPage() {
       </div>
 
       {showNew && (
-        <Card className="overflow-hidden">
+        <Card className="overflow-hidden shrink-0">
           <CardContent className="p-5 space-y-4">
             <div>
               <label className="mb-1.5 block text-sm font-medium text-gray-700">Title</label>
@@ -119,7 +119,7 @@ export default function RemindersPage() {
       )}
 
       {reminders?.length === 0 && (
-        <div className="text-center py-12">
+        <div className="text-center py-12 shrink-0">
           <div className="h-12 w-12 mx-auto mb-3 rounded-full bg-gray-100 flex items-center justify-center">
             <Bell className="h-5 w-5 text-gray-300" />
           </div>
@@ -127,7 +127,7 @@ export default function RemindersPage() {
         </div>
       )}
 
-      <div className="space-y-6">
+      <div className="flex-1 overflow-y-auto space-y-6">
         {overdue.length > 0 && (
           <Section title="Overdue" count={overdue.length}>
             {overdue.map((r: any) => (

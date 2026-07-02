@@ -256,7 +256,7 @@ export default function DashboardHome() {
       </div>
 
       {/* ═══ 12-col grid fills remaining height — no scroll ═══ */}
-      <div className="grid grid-cols-12 gap-3 flex-1 min-h-0">
+      <div className="grid grid-cols-12 gap-3 flex-1 min-h-0 grid-rows-1fr">
 
         {/* ── Main (8 cols) ── */}
         <div className="col-span-8 flex flex-col gap-3 min-h-0">
@@ -308,8 +308,8 @@ export default function DashboardHome() {
             </div>
           </Ring>
 
-          {/* Category cards — 2-col grid, fills remaining height */}
-          <div className="grid grid-cols-2 gap-3 flex-1 min-h-0">
+          {/* Category cards — 2-col × 2-row grid, fills remaining height */}
+          <div className="grid grid-cols-2 gap-3 flex-1 min-h-0 grid-rows-2">
             {/* Tasks */}
             <div className="flex flex-col min-h-0">
               <div className="flex items-center justify-between mb-2 shrink-0">
@@ -318,17 +318,20 @@ export default function DashboardHome() {
                   View all <ArrowRight className="h-3 w-3" />
                 </button>
               </div>
-              <Ring className="flex-1 overflow-hidden">
+              <Ring className="flex flex-col flex-1 overflow-hidden">
                 {tasksLoading ? (
                   <div className="space-y-2">{[1, 2, 3].map((i) => <div key={i} className="h-6 animate-pulse rounded bg-gray-100" />)}</div>
                 ) : (tasks?.length ?? 0) === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full text-center">
+                  <div className="flex flex-col items-center justify-center flex-1 text-center">
                     <CheckSquare className="h-5 w-5 text-gray-200 mb-1" />
                     <p className="text-sm text-text-tertiary">No tasks yet</p>
                     <button onClick={() => navigate('/dashboard/tasks')} className="mt-1 text-xs font-medium text-accent-500 cursor-pointer">Create one</button>
                   </div>
                 ) : (
-                  <div className="divide-y divide-gray-100/70">{tasks?.slice(0, 5).map((t: any) => <TaskRow key={t.id} task={t} />)}</div>
+                  <div className="flex flex-col flex-1">
+                    <div className="divide-y divide-gray-100/70">{tasks?.slice(0, 5).map((t: any) => <TaskRow key={t.id} task={t} />)}</div>
+                    <div className="flex-1" />
+                  </div>
                 )}
               </Ring>
             </div>
@@ -341,15 +344,18 @@ export default function DashboardHome() {
                   View all <ArrowRight className="h-3 w-3" />
                 </button>
               </div>
-              <Ring className="flex-1 overflow-hidden">
+              <Ring className="flex flex-col flex-1 overflow-hidden">
                 {(notes?.length ?? 0) === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full text-center">
+                  <div className="flex flex-col items-center justify-center flex-1 text-center">
                     <FileText className="h-5 w-5 text-gray-200 mb-1" />
                     <p className="text-sm text-text-tertiary">No notes yet</p>
                     <button onClick={() => navigate('/dashboard/notes')} className="mt-1 text-xs font-medium text-accent-500 cursor-pointer">Write one</button>
                   </div>
                 ) : (
-                  <div className="divide-y divide-gray-100/70">{notes?.slice(0, 5).map((n: any) => <NoteRow key={n.id} note={n} />)}</div>
+                  <div className="flex flex-col flex-1">
+                    <div className="divide-y divide-gray-100/70">{notes?.slice(0, 5).map((n: any) => <NoteRow key={n.id} note={n} />)}</div>
+                    <div className="flex-1" />
+                  </div>
                 )}
               </Ring>
             </div>
@@ -362,15 +368,18 @@ export default function DashboardHome() {
                   View all <ArrowRight className="h-3 w-3" />
                 </button>
               </div>
-              <Ring className="flex-1 overflow-hidden">
+              <Ring className="flex flex-col flex-1 overflow-hidden">
                 {(incompleteReminders.length ?? 0) === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full text-center">
+                  <div className="flex flex-col items-center justify-center flex-1 text-center">
                     <Bell className="h-5 w-5 text-gray-200 mb-1" />
                     <p className="text-sm text-text-tertiary">No reminders</p>
                     <button onClick={() => navigate('/dashboard/reminders')} className="mt-1 text-xs font-medium text-accent-500 cursor-pointer">Add one</button>
                   </div>
                 ) : (
-                  <div className="divide-y divide-gray-100/70">{incompleteReminders.slice(0, 5).map((r: any) => <ReminderRow key={r.id} reminder={r} />)}</div>
+                  <div className="flex flex-col flex-1">
+                    <div className="divide-y divide-gray-100/70">{incompleteReminders.slice(0, 5).map((r: any) => <ReminderRow key={r.id} reminder={r} />)}</div>
+                    <div className="flex-1" />
+                  </div>
                 )}
               </Ring>
             </div>
@@ -383,15 +392,18 @@ export default function DashboardHome() {
                   View all <ArrowRight className="h-3 w-3" />
                 </button>
               </div>
-              <Ring className="flex-1 overflow-hidden">
+              <Ring className="flex flex-col flex-1 overflow-hidden">
                 {(conversations?.length ?? 0) === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full text-center">
+                  <div className="flex flex-col items-center justify-center flex-1 text-center">
                     <MessageSquare className="h-5 w-5 text-gray-200 mb-1" />
                     <p className="text-sm text-text-tertiary">No conversations</p>
                     <button onClick={() => navigate('/dashboard/messages')} className="mt-1 text-xs font-medium text-accent-500 cursor-pointer">Start one</button>
                   </div>
                 ) : (
-                  <div className="divide-y divide-gray-100/70">{conversations?.slice(0, 5).map((c: any) => <MessageRow key={c.id} conv={c} userId={user?.id ?? ''} />)}</div>
+                  <div className="flex flex-col flex-1">
+                    <div className="divide-y divide-gray-100/70">{conversations?.slice(0, 5).map((c: any) => <MessageRow key={c.id} conv={c} userId={user?.id ?? ''} />)}</div>
+                    <div className="flex-1" />
+                  </div>
                 )}
               </Ring>
             </div>
@@ -418,8 +430,8 @@ export default function DashboardHome() {
           </Ring>
 
           {/* Quick stats */}
-          <Ring className="flex-1 overflow-hidden">
-            <div className="space-y-2">
+          <Ring className="flex flex-col flex-1 overflow-hidden">
+            <div className="flex flex-col justify-between flex-1">
               {[
                 { icon: Target, label: 'Completion', value: `${completionRate}%`, color: 'text-pos' },
                 { icon: BarChart3, label: 'In Progress', value: inProgress.length, color: 'text-accent-500' },

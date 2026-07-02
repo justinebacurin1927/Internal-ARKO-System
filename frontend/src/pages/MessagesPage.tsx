@@ -71,8 +71,8 @@ export default function MessagesPage() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-start justify-between">
+    <div className="h-full flex flex-col gap-3">
+      <div className="flex items-start justify-between shrink-0">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Messages</h1>
           <p className="text-sm text-gray-500 mt-1">Chat with your team</p>
@@ -85,7 +85,7 @@ export default function MessagesPage() {
 
       {/* New conversation search */}
       {showNewConv && (
-        <Card className="overflow-hidden">
+        <Card className="overflow-hidden shrink-0">
           <CardContent className="p-4 space-y-3">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -124,7 +124,7 @@ export default function MessagesPage() {
       )}
 
       {/* Chat area */}
-      <Card className="h-[calc(100vh-16rem)] overflow-hidden flex flex-row">
+      <Card className="flex-1 min-h-0 overflow-hidden flex flex-row">
         {/* Conversations list */}
         <div className="w-72 shrink-0 border-r border-gray-200 flex flex-col">
           <div className="p-3 border-b border-gray-100">

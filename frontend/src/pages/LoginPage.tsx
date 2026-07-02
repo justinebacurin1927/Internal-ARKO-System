@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../lib/auth'
+import { Loader2 } from 'lucide-react'
 
 const taglines = ['Create', 'Elevate', 'Ship', 'Build', 'Launch', 'Innovate']
 
@@ -29,7 +30,7 @@ function AnimatedWord({ text }: { text: string }) {
             : phase === 'in'
               ? 'opacity-100 translate-y-0 scale-100'
               : 'opacity-100 translate-y-0'
-        } text-primary-400`}
+        } text-amber-400`}
       >
         {displayText}
       </span>
@@ -42,6 +43,7 @@ function LoginClient() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
   const [taglineIndex, setTaglineIndex] = useState(0)
 
   useEffect(() => {
@@ -53,11 +55,14 @@ function LoginClient() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setSubmitting(true)
     try {
       setError('')
       await login(email, password)
     } catch (err: any) {
       setError(err.message || 'Login failed')
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -95,7 +100,7 @@ function LoginClient() {
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-8">
             <div className="inline-flex items-center gap-2 mb-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-600">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-600">
                 <span className="text-sm font-bold text-white">A</span>
               </div>
               <span className="text-lg font-bold text-white">Arko</span>
@@ -121,7 +126,7 @@ function LoginClient() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 required
-                className="block w-full rounded-lg border border-zinc-800 bg-[#121218] px-3 py-2.5 text-sm text-white placeholder:text-zinc-600 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-colors"
+                className="block w-full rounded-lg border border-zinc-800 bg-[#121218] px-3 py-2.5 text-sm text-white placeholder:text-zinc-600 focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20 transition-colors"
               />
             </div>
             <div>
@@ -132,20 +137,21 @@ function LoginClient() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
                 required
-                className="block w-full rounded-lg border border-zinc-800 bg-[#121218] px-3 py-2.5 text-sm text-white placeholder:text-zinc-600 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-colors"
+                className="block w-full rounded-lg border border-zinc-800 bg-[#121218] px-3 py-2.5 text-sm text-white placeholder:text-zinc-600 focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20 transition-colors"
               />
             </div>
             <button
               type="submit"
-              className="w-full rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-button hover:bg-primary-700 transition-colors active:scale-[0.97]"
+              disabled={submitting}
+              className="w-full rounded-lg bg-accent-600 px-4 py-2.5 text-sm font-semibold text-white shadow-button hover:bg-accent-700 transition-colors active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
             >
-              Sign in
+              {submitting ? <><Loader2 className="h-4 w-4 animate-spin inline mr-1.5" />Signing in…</> : 'Sign in'}
             </button>
           </form>
 
           <p className="mt-5 text-center text-sm text-zinc-500">
             Don&apos;t have an account?{' '}
-            <a href="/register" className="font-medium text-primary-500 hover:text-primary-400 transition-colors">
+            <a href="/register" className="font-medium text-accent-500 hover:text-accent-400 transition-colors">
               Create one
             </a>
           </p>

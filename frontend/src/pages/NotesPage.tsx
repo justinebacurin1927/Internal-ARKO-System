@@ -65,8 +65,8 @@ export default function NotesPage() {
   if (isLoading) return <div className="text-sm text-gray-400">Loading notes...</div>
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-start justify-between">
+    <div className="h-full flex flex-col gap-3">
+      <div className="flex items-start justify-between shrink-0">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Notes</h1>
           <p className="text-sm text-gray-500 mt-1">Write and manage your notes</p>
@@ -78,7 +78,7 @@ export default function NotesPage() {
       </div>
 
       {notes?.length === 0 && (
-        <div className="text-center py-12">
+        <div className="text-center py-12 shrink-0">
           <div className="h-12 w-12 mx-auto mb-3 rounded-full bg-gray-100 flex items-center justify-center">
             <FileText className="h-5 w-5 text-gray-300" />
           </div>
@@ -86,7 +86,7 @@ export default function NotesPage() {
         </div>
       )}
 
-      <div className="flex gap-4 h-[calc(100vh-16rem)]">
+      <div className="flex gap-4 flex-1 min-h-0">
         {/* Notes list */}
         <Card className="w-64 shrink-0 overflow-hidden flex flex-col">
           <CardHeader className="p-3 border-b border-gray-100">

@@ -89,8 +89,8 @@ export default function TasksPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between">
+    <div className="h-full flex flex-col gap-3">
+      <div className="flex items-start justify-between shrink-0">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Tasks</h1>
           <p className="text-sm text-gray-500 mt-1">Manage your tasks and projects</p>
@@ -211,7 +211,7 @@ export default function TasksPage() {
       )}
 
       {/* Kanban columns */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid grid-cols-4 gap-3 flex-1 min-h-0 grid-rows-1fr">
         {columns.map((column) => {
           const colTasks = tasks?.filter((t: any) => t.status === column) ?? []
           const isEmpty = !isLoading && colTasks.length === 0
@@ -219,14 +219,14 @@ export default function TasksPage() {
           return (
             <div
               key={column}
-              className="space-y-3"
+              className="flex flex-col min-h-0"
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => {
                 const taskId = e.dataTransfer.getData('taskId')
                 if (taskId) handleDrop(taskId, column)
               }}
             >
-              <div className="flex items-center justify-between px-1">
+              <div className="flex items-center justify-between px-1 mb-2 shrink-0">
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500">
                   {columnLabels[column]}
                 </h3>
@@ -238,7 +238,7 @@ export default function TasksPage() {
               </div>
 
               {isLoading ? (
-                <Card aria-hidden="true">
+                <Card aria-hidden="true" className="shrink-0">
                   <CardContent className="space-y-3 py-6">
                     {[...Array(3)].map((_, i) => (
                       <div key={i} className="space-y-1.5">
@@ -249,34 +249,37 @@ export default function TasksPage() {
                   </CardContent>
                 </Card>
               ) : isEmpty ? (
-                <Card className="border-dashed border-gray-200">
-                  <CardContent>
-                    <div className="flex flex-col items-center py-8 text-gray-300">
-                      <ListTodo className="mb-2 h-7 w-7" />
-                      <p className="text-xs">No tasks</p>
-                    </div>
-                  </CardContent>
-                </Card>
+                <div className="flex flex-col flex-1 items-center justify-center">
+                  <Card className="border-dashed border-gray-200 w-full">
+                    <CardContent>
+                      <div className="flex flex-col items-center py-8 text-gray-300">
+                        <ListTodo className="mb-2 h-7 w-7" />
+                        <p className="text-xs">No tasks</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               ) : (
-                <div className="space-y-2">
-                  {colTasks.map((task: any) => (
-                    <Card
-                      key={task.id}
-                      className="cursor-grab active:cursor-grabbing select-none"
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, task.id)}
-                    >
-                      <CardContent className="p-4">
-                        <p className="text-sm font-medium text-gray-900">{task.title}</p>
-                        {task.description && (
-                          <p className="mt-1.5 text-xs text-gray-500 line-clamp-2">
-                            {task.description}
-                          </p>
-                        )}
-                        <div className="mt-3 flex flex-wrap items-center gap-2">
-                          {task.priority && (
-                            <span
-                              className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${
+                <div className="flex flex-col flex-1 overflow-y-auto">
+                  <div className="space-y-2">
+                    {colTasks.map((task: any) => (
+                      <Card
+                        key={task.id}
+                        className="cursor-grab active:cursor-grabbing select-none"
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, task.id)}
+                      >
+                        <CardContent className="p-4">
+                          <p className="text-sm font-medium text-gray-900">{task.title}</p>
+                          {task.description && (
+                            <p className="mt-1.5 text-xs text-gray-500 line-clamp-2">
+                              {task.description}
+                            </p>
+                          )}
+                          <div className="mt-3 flex flex-wrap items-center gap-2">
+                            {task.priority && (
+                              <span
+                                className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${
                                 task.priority === 'URGENT'
                                   ? 'bg-red-50 text-red-700'
                                   : task.priority === 'HIGH'
@@ -300,6 +303,7 @@ export default function TasksPage() {
                     </Card>
                   ))}
                 </div>
+              </div>
               )}
             </div>
           )
