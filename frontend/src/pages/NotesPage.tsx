@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/Card'
 import { Button } from '../components/Button'
 import { useToast } from '../lib/toast'
 import ConfirmDialog from '../components/ConfirmDialog'
-import { Plus, Trash2, FileText, AlertCircle } from 'lucide-react'
+import { Plus, Trash2, FileText, AlertCircle, Search } from 'lucide-react'
 
 export default function NotesPage() {
   const queryClient = useQueryClient()
@@ -19,6 +19,7 @@ export default function NotesPage() {
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [noteSearch, setNoteSearch] = useState('')
 
   const createNote = useMutation({
     mutationFn: () => api.createNote({ title: 'Untitled', content: '' }),
@@ -71,7 +72,36 @@ export default function NotesPage() {
     )
   }
 
-  if (isLoading) return <div className="text-sm text-gray-400">Loading notes...</div>
+  if (isLoading) return (
+    <div className="h-full flex flex-col gap-3">
+      <div className="flex items-start justify-between shrink-0">
+        <div>
+          <div className="h-7 w-24 animate-pulse rounded bg-gray-100" />
+          <div className="h-4 w-40 animate-pulse rounded bg-gray-100 mt-1" />
+        </div>
+        <div className="h-9 w-28 animate-pulse rounded-lg bg-gray-100" />
+      </div>
+      <div className="flex gap-4 flex-1 min-h-0">
+        <div className="w-64 shrink-0 rounded-2xl bg-gray-50 p-3 space-y-2 overflow-hidden">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="flex items-start gap-2">
+              <div className="h-4 w-4 shrink-0 animate-pulse rounded bg-gray-100" />
+              <div className="flex-1 space-y-1.5">
+                <div className="h-4 w-3/4 animate-pulse rounded bg-gray-100" />
+                <div className="h-3 w-1/3 animate-pulse rounded bg-gray-100" />
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="flex-1 rounded-2xl bg-gray-50 p-5 space-y-3">
+          <div className="h-6 w-1/3 animate-pulse rounded bg-gray-100" />
+          <div className="h-4 w-full animate-pulse rounded bg-gray-100" />
+          <div className="h-4 w-5/6 animate-pulse rounded bg-gray-100" />
+          <div className="h-4 w-3/4 animate-pulse rounded bg-gray-100" />
+        </div>
+      </div>
+    </div>
+  )
 
   return (
     <div className="h-full flex flex-col gap-3">
@@ -98,11 +128,22 @@ export default function NotesPage() {
       <div className="flex gap-4 flex-1 min-h-0">
         {/* Notes list */}
         <Card className="w-64 shrink-0 overflow-hidden flex flex-col">
-          <CardHeader className="p-3 border-b border-gray-100">
+          <CardHeader className="p-3 border-b border-gray-100 space-y-2">
             <CardTitle className="text-xs font-semibold text-gray-500 uppercase tracking-wider">All Notes</CardTitle>
+            <div className="relative">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+              <input
+                value={noteSearch}
+                onChange={(e) => setNoteSearch(e.target.value)}
+                placeholder="Filter notes..."
+                className="block w-full rounded-md border border-gray-200 pl-7 pr-2 py-1.5 text-xs focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500/20"
+              />
+            </div>
           </CardHeader>
           <CardContent className="p-0 flex-1 overflow-y-auto">
-            {notes?.map((note: any) => (
+            {(notes ?? []).filter((n: any) =>
+              !noteSearch || n.title?.toLowerCase().includes(noteSearch.toLowerCase())
+            ).map((note: any) => (
               <button
                 key={note.id}
                 onClick={() => selectNote(note)}

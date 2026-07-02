@@ -103,6 +103,11 @@ export const api = {
     request<any[]>(`/finance/transactions/${months ? `?months=${months}` : ''}`),
   createTransaction: (data: any) =>
     request<any>('/finance/transactions/', { method: 'POST', body: JSON.stringify(data) }),
+  updateTransaction: (id: number, data: any) =>
+    request<any>(`/finance/transactions/${id}/`, { method: 'PATCH', body: JSON.stringify(data) }),
+  deleteTransaction: (id: number) =>
+    request<void>(`/finance/transactions/${id}/`, { method: 'DELETE' }),
+  getCategories: () => request<any[]>('/finance/categories/'),
 
   // Messages
   getConversations: () => request<any[]>('/messages/conversations/'),

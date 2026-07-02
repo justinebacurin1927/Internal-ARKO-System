@@ -63,7 +63,34 @@ export default function RemindersPage() {
     )
   }
 
-  if (isLoading) return <div className="text-sm text-gray-400">Loading reminders...</div>
+  if (isLoading) return (
+    <div className="h-full flex flex-col gap-3">
+      <div className="flex items-start justify-between shrink-0">
+        <div>
+          <div className="h-7 w-28 animate-pulse rounded bg-gray-100" />
+          <div className="h-4 w-36 animate-pulse rounded bg-gray-100 mt-1" />
+        </div>
+        <div className="h-9 w-32 animate-pulse rounded-lg bg-gray-100" />
+      </div>
+      <div className="space-y-3">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="space-y-2">
+            <div className="h-4 w-20 animate-pulse rounded bg-gray-100" />
+            {[...Array(2)].map((_, j) => (
+              <div key={j} className="flex items-center gap-3 rounded-lg border border-gray-100 px-4 py-3">
+                <div className="h-5 w-5 shrink-0 animate-pulse rounded-full bg-gray-100" />
+                <div className="flex-1 space-y-1.5">
+                  <div className="h-4 w-2/3 animate-pulse rounded bg-gray-100" />
+                  <div className="h-3 w-1/4 animate-pulse rounded bg-gray-100" />
+                </div>
+                <div className="h-4 w-4 animate-pulse rounded bg-gray-100" />
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 
   const overdue = reminders?.filter((r: any) => !r.is_done && r.due_at && new Date(r.due_at) < new Date()) || []
   const upcoming = reminders?.filter((r: any) => !r.is_done && (!r.due_at || new Date(r.due_at) >= new Date())) || []

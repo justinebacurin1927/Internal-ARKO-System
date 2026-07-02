@@ -2,8 +2,8 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .models import Transaction
-from .serializers import TransactionSerializer
+from .models import Transaction, AccountCategory
+from .serializers import TransactionSerializer, AccountCategorySerializer
 from django.db.models import Sum, Q
 
 class BalanceView(APIView):
@@ -30,7 +30,6 @@ class TransactionView(APIView):
     def post(self, request):
         data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
         if not data.get('category'):
-            from .models import AccountCategory
             cat, _ = AccountCategory.objects.get_or_create(
                 name='Uncategorized',
                 defaults={'type': 'CASH', 'color': '#6b7280'},
@@ -40,3 +39,34 @@ class TransactionView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save(user=request.user)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def patch(self, request, pk=None):
+        try:
+            tx = Transaction.objects.get(pk=pk, user=request.user)
+        except Transaction.DoesNotExist:
+            return Response({'detail': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
+        serializer = TransactionSerializer(tx, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    def delete(self, request, pk=None):
+        try:
+            tx = Transaction.objects.get(pk=pk, user=request.user)
+        except Transaction.DoesNotExist:
+            return Response({'detail': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
+        tx.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(['GET', 'POST'])
+def categories(request):
+    if request.method == 'GET':
+        qs = AccountCategory.objects.all().order_by('name')
+        serializer = AccountCategorySerializer(qs, many=True)
+        return Response(serializer.data)
+    # POST
+    serializer = AccountCategorySerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    serializer.save()
+    return Response(serializer.data, status=status.HTTP_201_CREATED)

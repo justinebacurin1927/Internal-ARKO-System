@@ -3,8 +3,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../lib/api'
 import { Card, CardContent } from '../components/Card'
 import { Button } from '../components/Button'
+import ConfirmDialog from '../components/ConfirmDialog'
 import { useToast } from '../lib/toast'
-import { Plus, ListTodo, AlertCircle, User, Loader2 } from 'lucide-react'
+import { Plus, ListTodo, AlertCircle, User, Loader2, Trash2, Search } from 'lucide-react'
 
 const columns = ['TODO', 'IN_PROGRESS', 'REVIEW', 'DONE'] as const
 const columnLabels: Record<string, string> = {
@@ -32,6 +33,8 @@ export default function TasksPage() {
   const [newAssignee, setNewAssignee] = useState('')
   const [showAssigneeSearch, setShowAssigneeSearch] = useState(false)
   const [assigneeSearch, setAssigneeSearch] = useState('')
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [taskSearch, setTaskSearch] = useState('')
 
   const { toast } = useToast()
 
@@ -58,6 +61,14 @@ export default function TasksPage() {
     mutationFn: ({ id, status }: { id: string; status: string }) =>
       api.updateTask(id, { status }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
+  })
+
+  const deleteTask = useMutation({
+    mutationFn: (id: string) => api.deleteTask(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] })
+      toast('Task deleted')
+    },
   })
 
   const handleDrop = (taskId: string, newStatus: string) => {
@@ -214,10 +225,23 @@ export default function TasksPage() {
         </Card>
       )}
 
+      {/* Search */}
+      <div className="relative shrink-0">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <input
+          value={taskSearch}
+          onChange={(e) => setTaskSearch(e.target.value)}
+          placeholder="Search tasks..."
+          className="block w-full rounded-lg border border-gray-200 pl-9 pr-3 py-2 text-sm focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20 bg-white"
+        />
+      </div>
+
       {/* Kanban columns */}
       <div className="grid grid-cols-4 gap-3 flex-1 min-h-0 grid-rows-1fr">
         {columns.map((column) => {
-          const colTasks = tasks?.filter((t: any) => t.status === column) ?? []
+          const colTasks = (tasks?.filter((t: any) => t.status === column) ?? []).filter((t: any) =>
+            !taskSearch || t.title.toLowerCase().includes(taskSearch.toLowerCase())
+          )
           const isEmpty = !isLoading && colTasks.length === 0
 
           return (
@@ -302,6 +326,12 @@ export default function TasksPage() {
                               {task.assignee_name}
                             </span>
                           )}
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(task.id) }}
+                            className="ml-auto p-1 text-gray-300 hover:text-red-500 transition-colors cursor-pointer"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
                         </div>
                       </CardContent>
                     </Card>
@@ -313,6 +343,18 @@ export default function TasksPage() {
           )
         })}
       </div>
+
+      <ConfirmDialog
+        open={!!confirmDeleteId}
+        title="Delete task?"
+        message="Are you sure you want to delete this task? This cannot be undone."
+        onConfirm={() => {
+          if (confirmDeleteId) deleteTask.mutate(confirmDeleteId)
+          setConfirmDeleteId(null)
+        }}
+        onCancel={() => setConfirmDeleteId(null)}
+        loading={deleteTask.isPending}
+      />
     </div>
   )
 }
