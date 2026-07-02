@@ -61,8 +61,8 @@ DATABASES = {
         'NAME': 'arko',
         'USER': 'nami',
         'PASSWORD': '',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'HOST': '/home/nami/pgdata/sockets',
+        'PORT': '',
     }
 }
 

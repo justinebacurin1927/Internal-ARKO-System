@@ -1,122 +1,128 @@
-import { Outlet, NavLink, useNavigate } from 'react-router-dom'
+import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { useState, useRef, useEffect } from 'react'
 import {
   LayoutDashboard,
-  Wallet,
+  TrendingUp,
   CheckSquare,
   MessageSquare,
   Bell,
   FileText,
+  Search,
   LogOut,
-  ChevronDown,
-  Loader2,
 } from 'lucide-react'
 
-const navItems = [
+const today = new Date()
+const dateStr = today.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+
+const categories = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', end: true },
-  { to: '/dashboard/finance', icon: Wallet, label: 'Finance' },
+  { to: '/dashboard/finance', icon: TrendingUp, label: 'Analytics', end: false },
   { to: '/dashboard/tasks', icon: CheckSquare, label: 'Tasks' },
+  { to: '/dashboard/notes', icon: FileText, label: 'Notes' },
   { to: '/dashboard/messages', icon: MessageSquare, label: 'Messages' },
   { to: '/dashboard/reminders', icon: Bell, label: 'Reminders' },
-  { to: '/dashboard/notes', icon: FileText, label: 'Notes' },
 ]
+
+/* ─── Floating circle — ring-based, no bg fill ─── */
+
+function CircleBtn({ children, active, title, onClick }: {
+  children: React.ReactNode
+  active?: boolean
+  title?: string
+  onClick?: () => void
+}) {
+  return (
+    <button
+      onClick={onClick}
+      title={title}
+      className={`flex h-10 w-10 items-center justify-center rounded-full transition-all duration-150 cursor-pointer ${
+        active
+          ? 'ring-2 ring-accent-500 text-accent-500 shadow-[0_2px_8px_rgba(45,106,79,0.25)]'
+          : 'ring-1 ring-black/[0.06] text-text-tertiary hover:ring-accent-400 hover:text-accent-500 hover:shadow-[0_2px_8px_rgba(45,106,79,0.15)]'
+      }`}
+    >
+      {children}
+    </button>
+  )
+}
 
 export default function DashboardLayout() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const [showMenu, setShowMenu] = useState(false)
+  const [showSearch, setShowSearch] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+  const searchRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setShowMenu(false)
-      }
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setShowMenu(false)
     }
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
-  const handleLogout = () => {
-    logout()
-    navigate('/login')
-  }
+  useEffect(() => {
+    if (showSearch && searchRef.current) searchRef.current.focus()
+  }, [showSearch])
 
+  const handleLogout = () => { logout(); navigate('/login') }
   const initial = (user?.name ?? user?.email ?? '?').charAt(0).toUpperCase()
-  const hour = new Date().getHours()
+
+  const currentCategory = categories.find(
+    (c) => (c.end ? location.pathname === c.to : location.pathname.startsWith(c.to)),
+  )
 
   return (
-    <div className="flex h-screen overflow-hidden w-full">
-      {/* Dark sidebar */}
-      <aside className="w-52 flex h-screen flex-col border-r border-white/10 bg-sidebar shrink-0">
-        <div className="flex h-12 items-center gap-2 border-b border-white/10 px-4">
-          <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-primary-600">
-            <span className="text-[10px] font-bold text-white">A</span>
+    /* ── h-dvh = no scroll on the whole app ── */
+    <div className="h-dvh bg-bg-app">
+      <div className="flex h-full">
+
+        {/* ── Left navigation rail ── */}
+        <nav className="sticky top-0 z-40 flex h-full w-[72px] shrink-0 flex-col items-center gap-3 pt-4">
+          <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-accent-500 shadow-sm">
+            <span className="text-sm font-bold text-white">A</span>
           </div>
-          <span className="text-sm font-semibold text-white">Arko</span>
-        </div>
-        <nav className="flex-1 space-y-0.5 p-2">
-          {navItems.map((item) => (
+
+          {categories.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
               end={item.end}
               className={({ isActive }) =>
-                `flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all duration-150 active:scale-[0.97] ${
+                `flex h-10 w-10 items-center justify-center rounded-full transition-all duration-150 cursor-pointer ${
                   isActive
-                    ? 'bg-primary-600/20 text-white'
-                    : 'text-sidebar-text hover:bg-sidebar-hover hover:text-sidebar-text-active'
+                    ? 'ring-2 ring-accent-500 text-accent-500 shadow-[0_2px_8px_rgba(45,106,79,0.25)]'
+                    : 'ring-1 ring-black/[0.06] text-text-tertiary hover:ring-accent-400 hover:text-accent-500 hover:shadow-[0_2px_8px_rgba(45,106,79,0.15)]'
                 }`
               }
+              title={item.label}
             >
-              {<item.icon className="h-5 w-5 shrink-0" />}
-              <span>{item.label}</span>
+              <item.icon className="h-[18px] w-[18px]" />
             </NavLink>
           ))}
-        </nav>
-      </aside>
 
-      {/* Main area */}
-      <div className="flex flex-1 flex-col overflow-hidden min-w-0">
-        {/* Header */}
-        <header className="flex h-12 shrink-0 items-center justify-between border-b border-gray-200 bg-white px-4 lg:px-6">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-gray-800">
-            Good{' '}
-            {hour < 12 ? 'Morning' : hour < 18 ? 'Afternoon' : 'Evening'}
-            , {user?.name?.split(' ')[0] ?? 'User'}
-          </span>
-          </div>
+          <div className="flex-1" />
 
-          <div className="relative" ref={menuRef}>
+          <div className="relative mb-4" ref={menuRef}>
             <button
               onClick={() => setShowMenu(!showMenu)}
-              className="flex items-center gap-2.5 rounded-xl px-3 py-1.5 transition-colors hover:bg-gray-100"
+              className="flex h-10 w-10 items-center justify-center rounded-full ring-1 ring-black/[0.06] text-text-tertiary text-xs font-bold hover:ring-accent-300 hover:text-accent-500 transition-all cursor-pointer"
+              title="User menu"
             >
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-primary-400 to-primary-500 text-[10px] font-bold text-white shrink-0">
-                {initial}
-              </div>
-              <div className="hidden sm:block text-left">
-                <p className="text-xs font-medium text-gray-900 leading-tight truncate max-w-[120px]">
-                  {user?.name ?? 'User'}
-                </p>
-                <p className="text-[10px] text-gray-400 leading-tight truncate max-w-[120px]">
-                  {user?.email ?? ''}
-                </p>
-              </div>
-              <ChevronDown className="h-3.5 w-3.5 text-gray-400" />
+              {initial}
             </button>
-
             {showMenu && (
-              <div className="absolute right-0 top-full z-30 mt-1.5 w-56 rounded-xl border border-gray-200 bg-white p-1.5 shadow-xl">
-                <div className="border-b border-gray-100 px-3 py-2 mb-1">
-                  <p className="text-sm font-medium text-gray-900 truncate">{user?.name ?? 'User'}</p>
-                  <p className="text-xs text-gray-500 truncate">{user?.email ?? ''}</p>
+              <div className="absolute left-full z-30 ml-3 bottom-0 w-56 rounded-xl border border-border-subtle bg-white p-1.5 shadow-lg">
+                <div className="border-b border-border-subtle px-3 py-2 mb-1">
+                  <p className="text-sm font-semibold text-text-primary truncate">{user?.name ?? 'User'}</p>
+                  <p className="text-xs text-text-tertiary truncate">{user?.email ?? ''}</p>
                 </div>
                 <button
                   onClick={handleLogout}
-                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-red-600 transition-colors hover:bg-red-50"
+                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-neg transition-colors hover:bg-neg-bg cursor-pointer"
                 >
                   <LogOut className="h-4 w-4" />
                   Sign out
@@ -124,14 +130,48 @@ export default function DashboardLayout() {
               </div>
             )}
           </div>
-        </header>
+        </nav>
 
-        {/* Page content */}
-        <main className="flex-1 overflow-hidden bg-surface p-4 lg:p-8">
-          <div className="h-full w-full animate-[fade-in_0.15s_ease-out] overflow-auto">
-            <Outlet />
+        {/* ── Main area ── */}
+        <div className="flex flex-1 flex-col min-w-0">
+
+          {/* Floating header */}
+          <div className="sticky top-0 z-30 mx-6 mt-4 mb-4 flex items-center justify-between rounded-full ring-1 ring-black/[0.08] px-5 h-12 shrink-0">
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-semibold text-text-primary">
+                {currentCategory?.label ?? 'Dashboard'}
+              </span>
+              <span className="hidden sm:block text-xs text-text-tertiary font-medium">
+                {dateStr}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              {showSearch ? (
+                <div className="flex items-center rounded-full bg-bg-app ring-1 ring-black/[0.06] px-3 py-1.5">
+                  <Search className="h-4 w-4 text-text-tertiary shrink-0" />
+                  <input
+                    ref={searchRef}
+                    type="text"
+                    placeholder="Search..."
+                    className="ml-2 bg-transparent text-sm text-text-primary outline-none placeholder:text-text-tertiary w-32 lg:w-44"
+                    onBlur={() => setShowSearch(false)}
+                    onKeyDown={(e) => e.key === 'Escape' && setShowSearch(false)}
+                  />
+                </div>
+              ) : (
+                <CircleBtn title="Search" onClick={() => setShowSearch(true)}>
+                  <Search className="h-[18px] w-[18px]" />
+                </CircleBtn>
+              )}
+            </div>
           </div>
-        </main>
+
+          {/* Content fills remaining space — no scroll */}
+          <main className="flex-1 min-h-0 px-6 pb-4 overflow-hidden">
+            <Outlet />
+          </main>
+        </div>
       </div>
     </div>
   )

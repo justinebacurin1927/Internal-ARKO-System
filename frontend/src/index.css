@@ -1,61 +1,69 @@
 @import "tailwindcss";
 
 @theme {
-  /* Green primary palette */
-  --color-primary-50: #f0fdf4;
-  --color-primary-100: #dcfce7;
-  --color-primary-200: #bbf7d0;
-  --color-primary-300: #86efac;
-  --color-primary-400: #4ade80;
-  --color-primary-500: #22c55e;
-  --color-primary-600: #16a34a;
-  --color-primary-700: #15803d;
-  --color-primary-800: #166534;
-  --color-primary-900: #14532d;
-  --color-primary-950: #052e16;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
 
-  /* Domain colors */
-  --color-finance-50: #f0fdf4;
-  --color-finance-500: #22c55e;
-  --color-finance-600: #16a34a;
+  /* Backgrounds */
+  --color-bg-app: #F4F5F2;
+  --color-bg-sidebar: #FFFFFF;
+  --color-bg-sidebar-active: #1A1D1A;
 
-  --color-workflow-50: #fffbeb;
-  --color-workflow-500: #f59e0b;
-  --color-workflow-600: #d97706;
+  /* Text */
+  --color-text-primary: #1A1D1A;
+  --color-text-secondary: #4A5B4E;
+  --color-text-tertiary: #7A8B7E;
 
-  --color-task-50: #f5f3ff;
-  --color-task-500: #8b5cf6;
-  --color-task-600: #7c3aed;
+  /* Borders */
+  --color-border-subtle: #D8DCD6;
 
-  /* Sidebar — off-black */
-  --color-sidebar: #0a0a0a;
-  --color-sidebar-hover: #141414;
-  --color-sidebar-active: #16a34a;
-  --color-sidebar-text: #525252;
-  --color-sidebar-text-active: #ffffff;
+  /* Accent — forest green */
+  --color-accent-50: #EAF5EF;
+  --color-accent-100: #D1E8DA;
+  --color-accent-200: #A8D1B9;
+  --color-accent-300: #72B08C;
+  --color-accent-400: #40916C;
+  --color-accent-500: #2D6A4F;
+  --color-accent-600: #1B4332;
+  --color-accent-700: #143828;
 
-  /* Surfaces */
-  --color-surface: #f5f5f5;
-  --color-surface-card: #ffffff;
+  /* Complement — warm amber */
+  --color-amber-400: #C28B5E;
+  --color-amber-500: #B87D4E;
+  --color-amber-600: #A06B3E;
 
-  /* Tinted shadows */
-  --shadow-card: 0 1px 3px 0 color-mix(in srgb, var(--color-primary-800) 12%, transparent),
-    0 1px 2px -1px color-mix(in srgb, var(--color-primary-800) 6%, transparent);
-  --shadow-card-hover: 0 4px 12px 0 color-mix(in srgb, var(--color-primary-800) 15%, transparent),
-    0 2px 4px -2px color-mix(in srgb, var(--color-primary-800) 8%, transparent);
-  --shadow-button: 0 1px 2px 0 color-mix(in srgb, var(--color-primary-800) 14%, transparent);
+  /* Status */
+  --color-pos: #5FA87A;
+  --color-pos-bg: #EEF6F0;
+  --color-warn: #C9954A;
+  --color-warn-bg: #FBF3EB;
+  --color-neg: #C2655C;
+  --color-neg-bg: #F9EDEC;
+
+  /* Override Tailwind's default radii to match spec */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+
+  /* Shadows — green-tinted */
+  --shadow-card: 0 1px 2px rgba(26, 29, 26, 0.04), 0 1px 3px rgba(26, 29, 26, 0.06);
 }
 
 @layer base {
   * {
-    @apply border-gray-200;
+    @apply border-border-subtle;
   }
   body {
-    @apply bg-surface text-gray-900 antialiased;
+    @apply bg-bg-app text-text-primary antialiased;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
 }
 
 @keyframes fade-in {
   from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }

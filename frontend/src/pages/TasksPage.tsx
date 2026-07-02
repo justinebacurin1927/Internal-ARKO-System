@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../lib/api'
-import { Card, CardContent, CardHeader, CardTitle } from '../components/Card'
+import { Card, CardContent } from '../components/Card'
 import { Button } from '../components/Button'
-import { Plus, ListTodo, AlertCircle, User, Search, Loader2 } from 'lucide-react'
+import { Plus, ListTodo, AlertCircle, User, Loader2 } from 'lucide-react'
 
 const columns = ['TODO', 'IN_PROGRESS', 'REVIEW', 'DONE'] as const
 const columnLabels: Record<string, string> = {

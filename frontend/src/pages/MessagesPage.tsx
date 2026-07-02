@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../lib/api'
 import { useAuth } from '../lib/auth'
-import { Card, CardContent, CardHeader, CardTitle } from '../components/Card'
+import { Card, CardContent } from '../components/Card'
 import { Button } from '../components/Button'
 import { Send, Search, Plus, Loader2, AlertCircle, MessageSquare } from 'lucide-react'
 
