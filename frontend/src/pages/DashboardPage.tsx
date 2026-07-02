@@ -6,6 +6,7 @@ import {
   Target, BarChart3, Users, AlertCircle,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
 
 /* ─── Ring container ─── */
 
@@ -54,6 +55,8 @@ function SmoothChart({
   const pad = { top: 8, bottom: 16, left: 0, right: 0 }
   const plotH = height - pad.top - pad.bottom
   const w = (series[0]?.data.length ?? 7) * 36
+  const lineRefs = useRef<(SVGPathElement | null)[]>([])
+  const [ready, setReady] = useState(false)
 
   // Global min/max across all series
   let allMin = Infinity, allMax = -Infinity
@@ -72,8 +75,25 @@ function SmoothChart({
   const toX = (_i: number) => pad.left + (_i / (series[0].data.length - 1)) * (w - pad.left - pad.right)
   const toY = (v: number) => pad.top + (1 - (v - yMin) / yRange) * plotH
 
+  // Trigger line-draw animation on mount
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      setReady(true)
+      lineRefs.current.forEach((el) => {
+        if (el) {
+          const len = el.getTotalLength()
+          el.style.strokeDasharray = `${len}`
+          el.style.strokeDashoffset = `${len}`
+          el.getBoundingClientRect() // force reflow
+          el.style.transition = 'stroke-dashoffset 900ms cubic-bezier(0.16, 1, 0.3, 1)'
+          el.style.strokeDashoffset = '0'
+        }
+      })
+    })
+  }, [])
+
   return (
-    <svg viewBox={`0 0 ${w} ${height}`} className="w-full" style={{ height }}>
+    <svg viewBox={`0 0 ${w} ${height}`} className="w-full" style={{ height }} preserveAspectRatio="none">
       <defs>
         {series.map((s) => (
           <linearGradient key={s.gradientId} id={s.gradientId} x1="0" y1="0" x2="0" y2="1">
@@ -93,14 +113,16 @@ function SmoothChart({
       })}
 
       {/* Area + Line for each series */}
-      {series.map((s) => {
+      {series.map((s, si) => {
         const pts = s.data.map((d, i) => ({ x: toX(i), y: toY(d.value) }))
         const line = smoothPath(pts)
         const area = `${line} L${pts[pts.length - 1].x},${height} L${pts[0].x},${height} Z`
         return (
           <g key={s.name}>
-            <path d={area} fill={`url(#${s.gradientId})`} />
-            <path d={line} fill="none" stroke={s.color} strokeWidth="2"
+            <path d={area} fill={`url(#${s.gradientId})`}
+              className="transition-opacity duration-700"
+              style={{ opacity: ready ? 1 : 0 }} />
+            <path ref={el => { lineRefs.current[si] = el }} d={line} fill="none" stroke={s.color} strokeWidth="2"
               strokeLinecap="round" strokeLinejoin="round" />
           </g>
         )
