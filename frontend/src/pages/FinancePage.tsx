@@ -74,20 +74,20 @@ export default function FinancePage() {
       <div className="grid grid-cols-3 gap-3 shrink-0">
         <Card className="overflow-hidden">
           <CardContent className="p-4">
-            <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Balance</p>
-            <p className="text-lg font-black text-gray-900 mt-0.5">{formatCurrency(balance?.balance ?? 0)}</p>
+            <p className="text-[10px] font-medium text-text-tertiary uppercase tracking-wider">Balance</p>
+            <p className="text-lg font-black text-text-primary mt-0.5">{formatCurrency(balance?.balance ?? 0)}</p>
           </CardContent>
         </Card>
         <Card className="overflow-hidden">
           <CardContent className="p-4">
-            <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Income</p>
-            <p className="text-lg font-black text-finance-600 mt-0.5">{formatCurrency(balance?.income ?? 0)}</p>
+            <p className="text-[10px] font-medium text-text-tertiary uppercase tracking-wider">Income</p>
+            <p className="text-lg font-black text-pos mt-0.5">{formatCurrency(balance?.income ?? 0)}</p>
           </CardContent>
         </Card>
         <Card className="overflow-hidden">
           <CardContent className="p-4">
-            <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Expenses</p>
-            <p className="text-lg font-black text-red-500 mt-0.5">{formatCurrency(balance?.expenses ?? 0)}</p>
+            <p className="text-[10px] font-medium text-text-tertiary uppercase tracking-wider">Expenses</p>
+            <p className="text-lg font-black text-neg mt-0.5">{formatCurrency(balance?.expenses ?? 0)}</p>
           </CardContent>
         </Card>
       </div>
@@ -105,7 +105,7 @@ export default function FinancePage() {
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="0.00"
-                  className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                  className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20"
                 />
               </div>
               <div>
@@ -113,7 +113,7 @@ export default function FinancePage() {
                 <select
                   value={type}
                   onChange={(e) => setType(e.target.value)}
-                  className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 bg-white"
+                  className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20 bg-white"
                 >
                   <option value="INCOME">Income</option>
                   <option value="EXPENSE">Expense</option>
@@ -126,7 +126,7 @@ export default function FinancePage() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="What was this for?"
-                className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20"
               />
             </div>
             <div className="flex gap-2">
@@ -146,35 +146,35 @@ export default function FinancePage() {
 
       {/* Transactions list */}
       <Card className="flex flex-col flex-1 min-h-0 overflow-hidden">
-        <CardHeader className="px-5 py-3 border-b border-gray-100 shrink-0">
-          <CardTitle className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Transactions</CardTitle>
+        <CardHeader className="px-5 py-3 border-b border-border-subtle shrink-0">
+          <CardTitle className="text-xs font-semibold text-text-tertiary uppercase tracking-wider">Transactions</CardTitle>
         </CardHeader>
         <div className="flex-1 overflow-y-auto">
           {isLoading ? (
-            <div className="text-sm text-gray-400 text-center py-8">Loading...</div>
+            <div className="text-sm text-text-tertiary text-center py-8">Loading...</div>
           ) : transactions?.length === 0 ? (
             <div className="text-center py-8">
-              <div className="h-12 w-12 mx-auto mb-3 rounded-full bg-gray-100 flex items-center justify-center">
-                <ArrowUpRight className="h-5 w-5 text-gray-300" />
+              <div className="h-12 w-12 mx-auto mb-3 rounded-full bg-pos-bg flex items-center justify-center">
+                <ArrowUpRight className="h-5 w-5 text-text-tertiary" />
               </div>
-              <p className="text-sm text-gray-400">No transactions yet</p>
+              <p className="text-sm text-text-tertiary">No transactions yet</p>
             </div>
           ) : (
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-border-subtle">
               {transactions?.map((tx: any) => {
                 const isIncome = tx.type === 'INCOME'
                 return (
-                  <div key={tx.id} className="flex items-center justify-between px-5 py-3 hover:bg-gray-50 transition-colors">
+                  <div key={tx.id} className="flex items-center justify-between px-5 py-3 hover:bg-accent-50/40 transition-colors">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${isIncome ? 'bg-finance-50 text-finance-600' : 'bg-red-50 text-red-500'}`}>
+                      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${isIncome ? 'bg-pos-bg text-pos' : 'bg-neg-bg text-neg'}`}>
                         {isIncome ? <ArrowUpRight className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">{tx.description || 'Transaction'}</p>
-                        <p className="text-xs text-gray-500">{new Date(tx.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
+                        <p className="text-sm font-medium text-text-primary truncate">{tx.description || 'Transaction'}</p>
+                        <p className="text-xs text-text-tertiary">{new Date(tx.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
                       </div>
                     </div>
-                    <span className={`text-sm font-bold shrink-0 ${isIncome ? 'text-finance-600' : 'text-red-500'}`}>
+                    <span className={`text-sm font-bold shrink-0 ${isIncome ? 'text-pos' : 'text-neg'}`}>
                       {isIncome ? '+' : '-'}{formatCurrency(tx.amount)}
                     </span>
                   </div>

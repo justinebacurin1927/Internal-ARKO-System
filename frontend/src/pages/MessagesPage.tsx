@@ -94,7 +94,7 @@ export default function MessagesPage() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search users..."
                 autoFocus
-                className="block w-full rounded-lg border border-gray-300 pl-9 pr-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                className="block w-full rounded-lg border border-gray-300 pl-9 pr-3 py-2 text-sm focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20"
               />
             </div>
             {searchResults && searchResults.length > 0 && (
@@ -148,7 +148,7 @@ export default function MessagesPage() {
                     key={conv.id}
                     onClick={() => setSelectedConv(conv.id)}
                     className={`w-full px-4 py-3 text-left transition-colors ${
-                      selectedConv === conv.id ? 'bg-primary-50' : 'hover:bg-gray-50'
+                      selectedConv === conv.id ? 'bg-accent-50' : 'hover:bg-gray-50'
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -211,12 +211,12 @@ export default function MessagesPage() {
                         <div
                           className={`max-w-[70%] rounded-2xl px-4 py-2.5 text-sm ${
                             isMe
-                              ? 'bg-primary-500 text-white rounded-br-md'
+                              ? 'bg-accent-500 text-white rounded-br-md'
                               : 'bg-gray-100 text-gray-900 rounded-bl-md'
                           }`}
                         >
                           <p>{msg.content}</p>
-                          <p className={`text-xs mt-1 ${isMe ? 'text-primary-100' : 'text-gray-400'}`}>
+                          <p className={`text-xs mt-1 ${isMe ? 'text-accent-100' : 'text-gray-400'}`}>
                             {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </p>
                         </div>
@@ -237,7 +237,7 @@ export default function MessagesPage() {
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder="Type a message..."
-                    className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                    className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20"
                   />
                   <Button
                     type="submit"

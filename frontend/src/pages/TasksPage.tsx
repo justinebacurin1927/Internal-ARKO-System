@@ -115,7 +115,7 @@ export default function TasksPage() {
                   placeholder="What needs to be done?"
                   required
                   autoFocus
-                  className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                  className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20"
                 />
               </div>
               <div>
@@ -125,7 +125,7 @@ export default function TasksPage() {
                   onChange={(e) => setNewDesc(e.target.value)}
                   placeholder="Add details..."
                   rows={2}
-                  className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                  className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20"
                 />
               </div>
               <div className="flex gap-4">
@@ -134,7 +134,7 @@ export default function TasksPage() {
                   <select
                     value={newPriority}
                     onChange={(e) => setNewPriority(e.target.value)}
-                    className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                    className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20"
                   >
                     <option value="LOW">Low</option>
                     <option value="MEDIUM">Medium</option>
@@ -161,7 +161,7 @@ export default function TasksPage() {
                           onChange={(e) => setAssigneeSearch(e.target.value)}
                           placeholder="Search users..."
                           autoFocus
-                          className="mb-2 w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs focus:border-primary-500 focus:outline-none"
+                          className="mb-2 w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs focus:border-accent-500 focus:outline-none"
                         />
                         <div className="max-h-32 space-y-0.5 overflow-y-auto">
                           <button
@@ -285,7 +285,7 @@ export default function TasksPage() {
                                   : task.priority === 'HIGH'
                                     ? 'bg-orange-50 text-orange-700'
                                     : task.priority === 'MEDIUM'
-                                      ? 'bg-primary-50 text-primary-700'
+                                      ? 'bg-accent-50 text-accent-700'
                                       : 'bg-gray-50 text-gray-600'
                               }`}
                             >

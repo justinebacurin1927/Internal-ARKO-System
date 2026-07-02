@@ -98,7 +98,7 @@ export default function NotesPage() {
                 key={note.id}
                 onClick={() => selectNote(note)}
                 className={`w-full px-4 py-3 text-left transition-colors ${
-                  selectedId === note.id ? 'bg-primary-50' : 'hover:bg-gray-50'
+                  selectedId === note.id ? 'bg-accent-50' : 'hover:bg-gray-50'
                 }`}
               >
                 <div className="flex items-start gap-2">
