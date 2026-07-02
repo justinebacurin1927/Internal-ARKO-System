@@ -52,11 +52,25 @@ function SmoothChart({
   labels: string[]
   height?: number
 }) {
-  const pad = { top: 8, bottom: 16, left: 0, right: 0 }
+  const svgRef = useRef<SVGSVGElement | null>(null)
+  const [vw, setVw] = useState(400) // reasonable initial guess
+  const pad = { top: 8, bottom: 16, left: 8, right: 8 }
   const plotH = height - pad.top - pad.bottom
-  const w = (series[0]?.data.length ?? 7) * 36
   const lineRefs = useRef<(SVGPathElement | null)[]>([])
   const [ready, setReady] = useState(false)
+
+  // Sync viewBox width to container width so no stretching is needed
+  useEffect(() => {
+    const el = svgRef.current
+    if (!el) return
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) setVw(entry.contentRect.width)
+    })
+    ro.observe(el)
+    // Fire synchronously too
+    setVw(el.getBoundingClientRect().width || 400)
+    return () => ro.disconnect()
+  }, [])
 
   // Global min/max across all series
   let allMin = Infinity, allMax = -Infinity
@@ -71,8 +85,9 @@ function SmoothChart({
   const yMin = allMin - margin
   const yMax = allMax + margin
   const yRange = yMax - yMin || 1
+  const n = series[0]?.data.length ?? 7
 
-  const toX = (_i: number) => pad.left + (_i / (series[0].data.length - 1)) * (w - pad.left - pad.right)
+  const toX = (_i: number) => pad.left + (_i / Math.max(n - 1, 1)) * (vw - pad.left - pad.right)
   const toY = (v: number) => pad.top + (1 - (v - yMin) / yRange) * plotH
 
   // Trigger line-draw animation on mount
@@ -93,7 +108,7 @@ function SmoothChart({
   }, [])
 
   return (
-    <svg viewBox={`0 0 ${w} ${height}`} className="w-full" style={{ height }} preserveAspectRatio="none">
+    <svg ref={svgRef} viewBox={`0 0 ${vw} ${height}`} className="w-full" style={{ height }}>
       <defs>
         {series.map((s) => (
           <linearGradient key={s.gradientId} id={s.gradientId} x1="0" y1="0" x2="0" y2="1">
@@ -107,7 +122,7 @@ function SmoothChart({
       {[0.25, 0.5, 0.75].map((pct) => {
         const y = pad.top + (1 - pct) * plotH
         return (
-          <line key={pct} x1={pad.left} y1={y} x2={w - pad.right} y2={y}
+          <line key={pct} x1={pad.left} y1={y} x2={vw - pad.right} y2={y}
             stroke="currentColor" className="text-black/[0.05]" strokeWidth="1" />
         )
       })}
