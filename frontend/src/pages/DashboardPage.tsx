@@ -1,9 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../lib/api'
-import { useAuth } from '../lib/auth'
 import {
-  FileText, Bell, MessageSquare, ArrowRight, CheckSquare, Clock,
-  Target, BarChart3, Users, AlertCircle,
+  FileText, Bell, ArrowRight, CheckSquare, Clock,
+  Target, BarChart3, Users, AlertCircle, GitCommitHorizontal,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useEffect, useRef, useState } from 'react'
@@ -217,22 +216,6 @@ function ReminderRow({ reminder }: { reminder: any }) {
   )
 }
 
-function MessageRow({ conv, userId }: { conv: any; userId: string }) {
-  const other = conv.participants?.find((p: any) => p.id !== userId)
-  const lastMsg = conv.messages?.[0]
-  return (
-    <div className="flex items-center gap-2.5 py-1.5 transition-colors hover:bg-black/[0.02] cursor-pointer -mx-1 px-1 rounded-lg">
-      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full ring-1 ring-black/[0.06] text-accent-600 text-[10px] font-bold">
-        {(other?.name || other?.email || '?').charAt(0).toUpperCase()}
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-text-primary truncate">{other?.name || other?.email || 'Unknown'}</p>
-        {lastMsg && <p className="text-xs text-text-tertiary truncate">{lastMsg.content}</p>}
-      </div>
-    </div>
-  )
-}
-
 /* ─── Sample finance data for chart visual ─── */
 
 function financeCurve(): { income: number; expenses: number }[] {
@@ -252,12 +235,10 @@ function financeCurve(): { income: number; expenses: number }[] {
 
 export default function DashboardHome() {
   const navigate = useNavigate()
-  const { user } = useAuth()
 
   const { data: tasks, isLoading: tasksLoading } = useQuery({ queryKey: ['tasks'], queryFn: () => api.getTasks() })
   const { data: notes } = useQuery({ queryKey: ['notes'], queryFn: () => api.getNotes() })
   const { data: reminders } = useQuery({ queryKey: ['reminders'], queryFn: () => api.getReminders() })
-  const { data: conversations } = useQuery({ queryKey: ['conversations'], queryFn: () => api.getConversations() })
   const todo = tasks?.filter((t: any) => t.status === 'TODO') ?? []
   const inProgress = tasks?.filter((t: any) => t.status === 'IN_PROGRESS') ?? []
   const review = tasks?.filter((t: any) => t.status === 'REVIEW') ?? []
@@ -421,27 +402,34 @@ export default function DashboardHome() {
               </Ring>
             </div>
 
-            {/* Messages */}
+            {/* New Updates */}
             <div className="flex flex-col min-h-0">
               <div className="flex items-center justify-between mb-2 shrink-0">
-                <h2 className="text-[11px] font-semibold text-text-tertiary uppercase tracking-wider">Messages</h2>
-                <button onClick={() => navigate('/dashboard/messages')} className="inline-flex items-center gap-1 text-[11px] font-medium text-accent-500 hover:text-accent-600 transition-colors cursor-pointer shrink-0">
-                  View all <ArrowRight className="h-3 w-3" />
-                </button>
+                <h2 className="text-[11px] font-semibold text-text-tertiary uppercase tracking-wider">New Updates</h2>
               </div>
               <Ring className="flex flex-col flex-1 overflow-hidden">
-                {(conversations?.length ?? 0) === 0 ? (
-                  <div className="flex flex-col items-center justify-center flex-1 text-center">
-                    <MessageSquare className="h-5 w-5 text-gray-200 mb-1" />
-                    <p className="text-sm text-text-tertiary">No conversations</p>
-                    <button onClick={() => navigate('/dashboard/messages')} className="mt-1 text-xs font-medium text-accent-500 cursor-pointer">Start one</button>
+                <div className="flex flex-col flex-1">
+                  <div className="divide-y divide-gray-100/70">
+                    {[
+                      { hash: 'c97a838', msg: 'chart: replace preserveAspectRatio=none with ResizeObserver-synced viewBox width' },
+                      { hash: 'fc8e022', msg: 'chart: fill full card width with preserveAspectRatio=none, add line-draw animation' },
+                      { hash: 'ecf316b', msg: 'layout: fill viewport on all pages, login/register forest green palette' },
+                      { hash: '9fc2d7a', msg: 'frontend: forest green + amber palette, smooth financial chart, compact layout' },
+                      { hash: '2427421', msg: 'broken changes' },
+                    ].map((c) => (
+                      <div key={c.hash} className="flex items-center gap-2.5 py-1.5 -mx-1 px-1 rounded-lg">
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full ring-1 ring-black/[0.06]">
+                          <GitCommitHorizontal className="h-3.5 w-3.5 text-accent-500" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <code className="text-[11px] font-mono font-bold text-accent-500">{c.hash}</code>
+                          <p className="text-xs text-text-tertiary truncate">{c.msg}</p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ) : (
-                  <div className="flex flex-col flex-1">
-                    <div className="divide-y divide-gray-100/70">{conversations?.slice(0, 5).map((c: any) => <MessageRow key={c.id} conv={c} userId={user?.id ?? ''} />)}</div>
-                    <div className="flex-1" />
-                  </div>
-                )}
+                  <div className="flex-1" />
+                </div>
               </Ring>
             </div>
           </div>
