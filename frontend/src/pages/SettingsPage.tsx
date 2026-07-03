@@ -7,7 +7,7 @@ import { Button } from '../components/Button'
 import { User, Lock, Loader2, AlertCircle } from 'lucide-react'
 
 export default function SettingsPage() {
-  const { user, token } = useAuth()
+  const { user, refreshUser } = useAuth()
   const { toast } = useToast()
 
   const [name, setName] = useState(user?.name ?? '')

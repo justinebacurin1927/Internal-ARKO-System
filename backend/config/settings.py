@@ -57,13 +57,13 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'arko',
-        'USER': 'nami',
-        'PASSWORD': '',
-        'HOST': '/home/nami/pgdata/sockets',
-        'PORT': '',
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "arko",
+        "USER": "arko",
+        "PASSWORD": "arko",
+        "HOST": "localhost",
+        "PORT": "5434",
     }
 }
 
