@@ -436,7 +436,7 @@ function MonthView({days,eventsByDate,onDayClick,isInSprint}:{
 }) {
   return (
     <div className="flex-1 rounded-lg ring-1 ring-black/[0.06] bg-white overflow-hidden">
-      <div className="grid h-full auto-rows-1fr" style={{gridTemplateColumns:'repeat(7,1fr)'}}>
+      <div className="grid h-full" style={{gridTemplateColumns:'repeat(7,1fr)',gridAutoRows:'1fr'}}>
         {/* Day headers */}
         {DAY_ABBRS.map((a,i)=>(
           <div key={i} className="h-[30px] flex items-center justify-center border-b border-border-subtle">
@@ -477,7 +477,7 @@ function YearView({focusYear,eventsByDate,onMonthClick}:{
   onMonthClick:(y:number,m:number)=>void
 }) {
   return (
-    <div className="flex-1 overflow-y-auto">
+    <div className="flex-1 rounded-lg ring-1 ring-black/[0.06] bg-white p-4 overflow-y-auto">
       <div className="grid grid-cols-3 gap-4">
         {Array.from({length:12},(_,m)=>{
           const days=getMonthGrid(focusYear,m)
