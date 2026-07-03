@@ -1,97 +1,102 @@
-# Arko — Your Startup OS
+# ARKO — Internal Operations System
 
-**Workflows · Finance · Task Management**
+**ARKO** is a full-stack internal operations platform that combines finance tracking, task management, messaging, notes, and reminders into one cohesive system for small teams.
 
-A full-stack startup operations system built with Next.js, TypeScript, and tRPC.
-
-## 🚀 Tech Stack
+## Tech Stack
 
 | Layer | Technology |
 |---|---|
-| **Frontend** | Next.js 15 (App Router) + React 19 |
-| **Styling** | Tailwind CSS v4 + shadcn/ui primitives |
-| **API** | tRPC v11 (type-safe, end-to-end) |
-| **Database** | PostgreSQL + Prisma ORM |
-| **Auth** | NextAuth.js v5 (Credentials) |
-| **Monorepo** | Turborepo + pnpm workspaces |
-| **Language** | TypeScript (strict) |
+| **Frontend** | Vite + React 19 + TypeScript + Tailwind CSS v4 |
+| **Backend** | Django 6 + Django REST Framework + JWT (SimpleJWT) |
+| **Database** | Neon Postgres (production) / Docker PostgreSQL (local) |
+| **File Storage** | Supabase Storage (production) / MinIO (local) |
+| **Hosting** | Vercel (frontend SPA + Django serverless functions) |
+| **Email** | SMTP (MailHog for local dev) |
 
-## 📦 Project Structure
+## Project Structure
 
 ```
 arko/
-├── apps/
-│   └── web/              # Next.js application
-│       ├── src/
-│       │   ├── app/      # App Router pages
-│       │   │   ├── auth/        # Login/Register
-│       │   │   ├── dashboard/   # Main dashboard
-│       │   │   ├── finance/     # Finance module
-│       │   │   ├── tasks/       # Task management
-│       │   │   ├── workflows/   # Workflow automation
-│       │   │   └── settings/    # Account settings
-│       │   ├── lib/
-│       │   │   ├── auth.ts           # NextAuth config
-│       │   │   └── trpc/             # tRPC client/server
-│       │   └── server/api/
-│       │       ├── trpc.ts           # tRPC init
-│       │       ├── root.ts           # App router
-│       │       └── routers/          # Route handlers
-│       │           ├── finance.ts
-│       │           ├── tasks.ts
-│       │           └── workflows.ts
-│       └── .env
-├── packages/
-│   ├── config/           # Shared TypeScript config
-│   ├── db/               # Prisma schema + client
-│   │   └── prisma/
-│   │       └── schema.prisma
-│   ├── ui/               # Shared component library
-│   │   └── src/          # Button, Card, Sidebar, etc.
-│   ├── finance/          # Finance engine
-│   ├── workflows/        # Workflow state machine
-│   ├── tasks/            # Task management logic
-│   └── dashboard/        # Dashboard widgets
+├── frontend/                  # Vite React SPA
+│   ├── src/
+│   │   ├── components/        # Reusable UI (Button, Card, Layout, etc.)
+│   │   ├── lib/               # API client, auth context, toast
+│   │   └── pages/             # Dashboard, Finance, Tasks, Notes, etc.
+│   ├── api/                   # Vercel serverless: Django WSGI entry point
+│   └── dist/                  # Build output (Vercel deploy)
+├── backend/                    # Django API
+│   ├── config/                 # Django settings (local + production)
+│   ├── auth_app/               # User auth, JWT login/register
+│   ├── tasks_app/              # Task CRUD + status management
+│   ├── finance_app/            # Transactions, budgets, accounts
+│   ├── messages_app/           # Team conversations
+│   ├── notes_app/              # Note-taking
+│   ├── reminders_app/          # Reminders
+│   └── users_app/              # User profiles
+├── apps/                       # Monorepo packages (Next.js org)
+│   ├── web/                    # Next.js app (legacy / migration)
+│   ├── dashboard/
+│   └── ...
+├── packages/                   # Shared packages (legacy)
+├── api/                        # Vercel serverless function root
+├── docker-compose.yml          # Local infra (Postgres, MinIO, MailHog)
+└── vercel.json                 # Vercel deployment config
 ```
 
-## 🗄️ Database Schema
-
-- **User & Auth** — Users, accounts, sessions (NextAuth compatible)
-- **Workspace** — Multi-workspace support with members
-- **Finance** — Transactions, categories, budgets (bounded context)
-- **Workflows** — Workflow definitions, executions, execution logs
-- **Tasks** — Tasks, subtasks, comments, Kanban status flow
-
-## 🔧 Getting Started
+## Getting Started (Local Dev)
 
 ```bash
-# Prerequisites: Node.js 20+, PostgreSQL
+# Prerequisites: Docker, Node.js 20+, Python 3.12+
 
-# Start PostgreSQL
-sudo systemctl start postgresql
+# 1. Start local infrastructure
+docker compose up -d
 
-# Create database
-createdb arko
+# 2. Set up Python backend
+cd backend
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py runserver
 
-# Install dependencies
-pnpm install
-
-# Push schema to database
-pnpm db:push
-
-# Start development
-pnpm dev
+# 3. Set up frontend (separate terminal)
+cd frontend
+npm install
+npm run dev
 ```
 
-## 📋 Sprint Plan
+The frontend runs on **http://localhost:5173** and proxies `/api/*` to Django at **http://localhost:8000**.
 
-| Sprint | Focus | Stories |
+## Deployment
+
+| Service | Platform | URL |
 |---|---|---|
-| **Sprint 1** | Foundation + Finance MVP | Monorepo, Auth, DB, Finance engine, Dashboard |
-| **Sprint 2** | Workflow Automation | Workflow engine, definitions, execution |
-| **Sprint 3** | Task Management | Kanban board, assignments, comments |
-| **Sprint 4** | Dashboard + Reports | Widgets, charts, export, integrations |
+| Frontend + API | Vercel | https://arko-internal-system.vercel.app |
+| Database | Neon Postgres | ap-southeast-2 region |
+| File Storage | Supabase Storage | Project: Internal-ARKO-System |
 
-## 📄 License
+### Deploy
+
+```bash
+vercel deploy --prod --scope justinebacurin1927s-projects
+```
+
+Environment variables are managed via Vercel CLI (`vercel env add`).
+
+## Features
+
+- **Dashboard** — Time-aware greeting, metric pills, real-time financial chart
+- **Finance** — Transaction tracking, income/expense categories, budgets, monthly calendar view
+- **Tasks** — Kanban board with drag-and-drop (To Do / In Progress / Review / Done), priorities, assignees
+- **Messages** — Team conversations
+- **Notes** — Lightweight note-taking
+- **Reminders** — Reminder management with status tracking
+- **Settings** — Profile editing, password change
+
+## Auth
+
+Django JWT authentication (Bearer tokens via SimpleJWT). Token refresh on expiry.
+
+## License
 
 MIT

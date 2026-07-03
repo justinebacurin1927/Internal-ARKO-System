@@ -4,6 +4,7 @@ tags:
   - arko
   - architecture
 created: 2026-07-01
+updated: 2026-07-04
 ---
 
 # ARKO Architecture
@@ -12,26 +13,41 @@ created: 2026-07-01
 
 ```mermaid
 graph TD
-    Client[Browser] --> Next[Next.js 15 App Router]
-    Next --> TRPC[tRPC v11 Router]
-    Next --> Auth[NextAuth v5]
-    Next --> SS[Server Components]
+    Browser[Browser] --> Vercel[Vercel Edge]
+    Vercel --> SPA[React SPA (Vite)]
+    Vercel --> API[Django Serverless WSGI]
     
-    TRPC --> Finance[Finance Engine]
-    TRPC --> Workflows[Workflow Engine]
-    TRPC --> Tasks[Task Manager]
-    TRPC --> DB[(PostgreSQL via Prisma)]
+    SPA --> APIClient[API Client (fetch)]
+    APIClient --> API
     
-    Auth --> DB
+    API --> AuthJWT[JWT Authentication]
+    API --> DRF[Django REST Framework]
     
-    subgraph Packages
-        Finance
-        Workflows
-        Tasks
-        UI[UI Components]
+    DRF --> Tasks[Tasks App]
+    DRF --> Finance[Finance App]
+    DRF --> Messages[Messages App]
+    DRF --> Notes[Notes App]
+    DRF --> Reminders[Reminders App]
+    DRF --> Users[Users App]
+    
+    Tasks --> DB[(Neon PostgreSQL)]
+    Finance --> DB
+    Messages --> DB
+    Notes --> DB
+    Reminders --> DB
+    Users --> DB
+    
+    subgraph Local Dev
+        Docker[Docker Compose]
+        Docker --> Pg[(Postgres 16)]
+        Docker --> MinIO[S3 (MinIO)]
+        Docker --> MH[MailHog]
     end
     
-    UI --> Next
+    subgraph Production
+        DB
+        SupaStorage[S3 (Supabase Storage)]
+    end
 ```
 
 ## Data Model
@@ -46,7 +62,6 @@ erDiagram
     User ||--o{ Workflow : creates
     
     Workspace ||--o{ WorkspaceMember : has
-    
     AccountCategory ||--o{ Transaction : categorizes
     Budget ||--o{ AccountCategory : includes
     
@@ -64,15 +79,35 @@ erDiagram
 
 | Decision | Choice | Rationale |
 |---|---|---|
-| Monorepo | Turborepo + pnpm | Shared packages, consistent tooling |
-| API layer | tRPC v11 | End-to-end type safety, no codegen |
-| Auth | NextAuth v5 Credentials | Simple password-based auth, JWT sessions |
-| Database ORM | Prisma | Type-safe queries, migrations, studio |
-| Styling | Tailwind CSS v4 | Utility-first, fast iteration |
-| State | Server Components + React Query | Minimize client JS, cache on server |
+| Frontend | Vite + React 19 | Lightweight SPA, fast HMR, no SSR complexity |
+| Backend | Django 6 + DRF | Mature ORM, admin interface, JWT auth via SimpleJWT |
+| API layer | Django REST Framework + JWT | Type-safe serializers, browsable API, token auth |
+| Database | PostgreSQL (Neon) | Serverless Postgres with IPv4 + IPv6, free tier |
+| Hosting | Vercel | Both static SPA and Python serverless on one platform |
+| ORM | Django ORM | Native Django, migrations built in |
+| Styling | Tailwind CSS v4 | Utility-first, consistent design system |
+| State | React Query (TanStack Query) | Server state caching, invalidation, mutations |
 
-## Deployment
+## Deployment Architecture
 
-- **Database**: PostgreSQL (local dev → Supabase)
-- **Hosting**: Vercel (planned)
-- **File storage**: S3-compatible (MinIO local → Supabase Storage planned)
+```
+Vercel (arko-internal-system.vercel.app)
+├── / (root)          → Vite React SPA (frontend/dist/)
+├── /api/*            → Django WSGI serverless function (api/index.py)
+│
+Backing Services:
+├── Neon Postgres     → Database (ap-southeast-2)
+└── Supabase Storage  → File storage (S3-compatible API)
+```
+
+### How API routing works
+
+1. Vercel rewrites `/{path}` → `index.html` (SPA handles all client routes)
+2. Vercel rewrites `/api/{path}` → `api/index.py` serverless function
+3. `api/index.py` loads Django WSGI app with production settings (`config.production`)
+4. Django routes the request through URL dispatcher
+
+### Django settings split
+
+- **`config/settings.py`** — Local dev: Docker Postgres (`localhost:5434`), MinIO, MailHog
+- **`config/production.py`** — Production: Neon Postgres via `DATABASE_URL`, Supabase Storage, locked CORS

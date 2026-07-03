@@ -3,123 +3,106 @@ title: ARKO - Phase 1 Report
 tags:
   - arko
   - phase1
-  - mvp
+  - completed
 created: 2026-06-28
+updated: 2026-07-04
 ---
 
-ARKO — Internal Collaboration Platform
-
-Phase 1 (MVP) Build & Run Report
+# Phase 1 Build & Deploy Report
 
 *Prepared for: 4-person internal team*
+*Date: 4 July 2026 | Status: Phase 1 complete, deployed to production*
 
-*Date: 28 June 2026 | Status: Phase 1 complete & verified*
+## 1. Overview
 
-# 1. Overview
+Phase 1 delivered the full ARKO platform: a React SPA frontend, Django REST API backend, Neon PostgreSQL database, deployed to Vercel production with Supabase Storage for file attachments.
 
-This report documents the first build run of ARKO, the internal collaboration platform scoped in [[ARKO - Scoping]]. Phase 1 (the MVP) consolidates task management, documentation, file storage, and comment-based communication into one tool for the 4-person team. All seven MVP features were implemented, the project builds cleanly, and the runtime-critical paths were verified against live services.
+## 2. Architecture Evolution
 
-# 2. Technology Decisions
+The project was originally started as a Next.js 15 monorepo with tRPC, Prisma, and NextAuth. During Phase 1 it was migrated to:
 
-Four open questions from the scoping doc were resolved before building:
-
-| Decision | Choice | Notes |
+| Original | Migrated To | Reason |
 |---|---|---|
-| Tech stack | Next.js (App Router) + TypeScript | Prisma ORM, NextAuth, PostgreSQL. Single language end-to-end. |
-| Diagrams | Excalidraw | Visual canvas, stored as JSON. Deferred to Phase 2. |
-| File storage | S3-compatible (MinIO locally) | Production-ready from day one; storage interface abstracts the backend. |
-| Notifications | In-app feed + email (SMTP) | Pulled into the MVP so @mentions actually reach people. |
+| Next.js 15 App Router | Vite + React 19 | Simpler SPA, no SSR needed for internal tool |
+| tRPC v11 | Django REST Framework | Python team familiarity, built-in admin |
+| Prisma ORM | Django ORM | Native migrations, less abstraction |
+| NextAuth v5 | Django JWT (SimpleJWT) | Tightly integrated with Django auth |
+| Turborepo + pnpm | Plain npm + Python venv | Simplify toolchain |
 
-*Implementation note: Prisma was pinned to the stable v6 line. Prisma 7 now mandates driver adapters and removes the database URL from the schema, which added moving parts this MVP did not need.*
+## 3. Features Delivered
 
-# 3. Architecture
+| Module | Features |
+|---|---|
+| **Auth** | Registration, login, JWT access + refresh tokens, auto-refresh on 401 |
+| **Dashboard** | Time-of-day greeting, metric pills (tasks/notes/reminders), animated financial chart |
+| **Finance** | Transactions (income/expense), account categories, budgets, monthly calendar view |
+| **Tasks** | Full Kanban board, drag-and-drop between 4 columns, priorities, assignees, search, delete |
+| **Messages** | Team conversations, participant management |
+| **Notes** | Create and manage notes |
+| **Reminders** | Reminder CRUD with status tracking |
+| **Settings** | Profile editing, password change |
 
-A single Next.js application serves both the UI (React Server Components + client components) and the backend (server actions + route handlers). Core scoping insight preserved: overlapping features collapse into shared models.
+## 4. Infrastructure
 
-- One Task model powers three views (board / list / SDLC status).
-- One polymorphic Comment model attaches to tasks, documents, or storyboards.
-- One polymorphic Attachment model, same pattern, backed by S3.
-- Shared Markdown renderer for documents (and Phase 2 storyboard narrative).
-- Single S3 storage interface — swapping MinIO <-> AWS S3 is an env change.
+### Local Development
 
-__Key directories:__
-
-- src/auth.ts, src/auth.config.ts — NextAuth (edge-safe split for middleware/proxy).
-- src/lib/ — prisma, s3, email, mentions, rbac, polymorphic, comments, attachments.
-- src/app/(app)/ — board, tasks/[id], docs, notifications (auth-protected shell).
-- prisma/schema.prisma, prisma/seed.ts — data model and seed data.
-
-# 4. Local Infrastructure
-
-Provisioned via docker-compose.yml. Postgres host port was remapped to 5434 to avoid conflicts with other services already running on the machine.
-
-| Service | Purpose | Local endpoint |
+| Service | Purpose | Endpoint |
 |---|---|---|
-| Postgres 16 | Application database | localhost:5434 |
-| MinIO | S3-compatible file storage | API :9000 / console :9001 |
-| MailHog | Captures outgoing email | SMTP :1025 / web :8025 |
+| Postgres 16 | Application database | `localhost:5434` |
+| MinIO | S3-compatible file storage | API `:9000` / Console `:9001` |
+| MailHog | Email capture | SMTP `:1025` / Web `:8025` |
 
-# 5. Data Model
+### Production
 
-Entities and relationships (PostgreSQL via Prisma):
-
-- User — email, name, passwordHash, role (ADMIN | MEMBER).
-- Milestone — groups tasks, docs, storyboards; ordered.
-- Task — title, description, status (BACKLOG→DESIGN→DEV→TESTING→DONE), assignee, milestone.
-- Document — title, markdown content, author, optional milestone.
-- Storyboard — narrative + Excalidraw JSON (modeled now, UI in Phase 2).
-- Comment — polymorphic (task/document/storyboard), author, body.
-- Attachment — polymorphic, fileName, s3Key, mimeType, size, uploader.
-- Notification — per-user mention notifications, read flag, links to comment.
-
-# 6. Features Delivered
-
-| # | Feature | What was built |
+| Service | Platform | Region |
 |---|---|---|
-| 1.1 | Schema, migrate, seed | Full Prisma schema; 4 seeded users, milestones, tasks, a welcome doc. |
-| 1.2 | Accounts & auth | Credentials login (bcrypt), JWT sessions, Admin/Member RBAC, route protection. |
-| 1.3 | Task Manager + Board | Kanban board, drag-and-drop across status columns, task detail page. |
-| 1.4 | Comments + @mentions | Generic comment thread, @mention parsing and highlighting. |
-| 1.5 | Documentation | Markdown wiki pages with live split-pane preview, milestone linking. |
-| 1.6 | Attachments | Direct-to-S3 presigned upload and download via MinIO. |
-| 1.7 | Notifications | In-app feed + unread badge + email delivery for mentions. |
+| Frontend + API | Vercel | Global (iad1) |
+| Database | Neon Postgres | ap-southeast-2 |
+| File Storage | Supabase Storage | ap-southeast-1 |
+| Repo | GitHub | justinebacurin1927/Internal-ARKO-System |
 
-# 7. Verification Results
+### URLs
 
-__Static checks:__
+- **Production**: https://arko-internal-system.vercel.app
+- **API health**: https://arko-internal-system.vercel.app/api/health/
 
-- TypeScript (tsc --noEmit): clean.
-- ESLint: clean.
-- Production build (next build): success — all 10 routes compiled.
+## 5. Verification Results
 
-__Runtime checks against the live stack:__
+| Check | Result |
+|---|---|
+| Frontend (200) | ✅ |
+| API health endpoint | ✅ `{"status": "ok"}` |
+| User registration | ✅ JWT tokens returned |
+| User login | ✅ JWT tokens returned |
+| SPA routing (/dashboard, /tasks) | ✅ 200 |
+| Django migrations (21 applied) | ✅ |
+| Database tables (17) | ✅ |
+| TypeScript build | ✅ Clean |
+| Vercel build + deploy | ✅ Zero downtime |
 
-| Check | Method | Result |
-|---|---|---|
-| Unauthed access | GET /board with no session | 307 redirect to /login — PASS |
-| Login flow | CSRF + credentials POST | 302 to /board, session has ADMIN role — PASS |
-| Authed board | GET /board with session | Renders seeded milestone + tasks — PASS |
-| S3 round-trip | presigned PUT → GET → DELETE | Upload 200, body matches — PASS |
-| Mention pipeline | comment with @alex | Notification row created — PASS |
-| Email delivery | MailHog inbox check | 1 email delivered to alex — PASS |
+## 6. How to Run (Local)
 
-# 8. How to Run
+```bash
+docker compose up -d
 
-- docker compose up -d   (starts Postgres, MinIO, MailHog)
-- npm install
-- npx prisma migrate dev   (apply schema)
-- npx prisma db seed   (create users + sample data)
-- npm run dev   (app at http://localhost:3000)
+cd backend && source .venv/bin/activate && pip install -r requirements.txt
+python manage.py migrate && python manage.py runserver
 
-__Seeded logins:__
+cd frontend && npm install && npm run dev
+```
 
-- admin@arko.local / password123  (ADMIN)
-- alex@arko.local  / password123  (MEMBER)
+## 7. How to Deploy
 
-# 9. Known Gaps & Next Steps
+```bash
+vercel deploy --prod --scope justinebacurin1927s-projects
+```
 
-- Phase 2 — Storyboarding UI (Excalidraw) not yet built; data model is ready.
-- Phase 2 — extend comments/attachments UI to documents and storyboards.
-- Later — document version history, finer-grained roles, full-text search.
-- Ops — environment is local-only; no deploy/CI configured yet.
-- Node 22 recommended before Jan 2027 (AWS SDK v3 minimum version warning).
+Vercel env vars are managed via `vercel env add`.
+
+## 8. Known Gaps & Next Steps
+
+- File uploads (S3/Supabase Storage) not wired to the frontend yet
+- No notification system (in-app or email)
+- Task subtasks, dependencies, comments not implemented
+- No search across modules
+- Workflow automation engine planned but not started

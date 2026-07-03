@@ -4,50 +4,58 @@ tags:
   - arko
   - overview
 created: 2026-07-01
+updated: 2026-07-04
 ---
 
-# ARKO — Your Startup OS
+# ARKO — Internal Operations System
 
-**ARKO** is a full-stack startup operations system that connects money, tasks, and team in one place.
+**ARKO** is a full-stack internal operations platform that connects money, tasks, messages, notes, and reminders in one place for small teams.
 
 ## What it does
 
-- **Finance** — Track transactions, budgets, and categories
-- **Tasks** — Kanban-style task management with priorities and subtasks
-- **Workflows** — Automation with custom workflow definitions and executions
-- **Messaging** — Team conversations and reminders
-- **Notes** — Lightweight note-taking per workspace
+- **Finance** — Track transactions, budgets, account categories, income vs expenses
+- **Tasks** — Kanban-style board with drag-and-drop, priorities, assignees, search
+- **Messages** — Team conversations with participants
+- **Notes** — Lightweight note-taking
+- **Reminders** — Reminder management with status tracking
+- **Dashboard** — Time-aware greeting, metric pills, live financial chart
 
 ## Tech Stack
 
 | Layer | Technology |
 |---|---|
-| Frontend | Next.js 15 (App Router) + React 19 |
-| Styling | Tailwind CSS v4 |
-| API | tRPC v11 (end-to-end typesafe) |
-| Database | PostgreSQL + Prisma ORM |
-| Auth | NextAuth.js v5 (Credentials) |
-| Monorepo | Turborepo + pnpm |
+| Frontend | Vite + React 19 + TypeScript + Tailwind CSS v4 |
+| Backend | Django 6 + Django REST Framework + JWT (SimpleJWT) |
+| Database | Neon Postgres (production) / Docker PostgreSQL (local) |
+| File Storage | Supabase Storage (S3-compatible, production) / MinIO (local) |
+| Hosting | Vercel (SPA + Python serverless functions) |
+| API Client | Native fetch with auto token refresh |
 
 ## Project Structure
 
 ```
 arko/
-├── apps/web/          # Next.js application
-│   └── src/
-│       ├── app/       # Pages (auth, dashboard, finance, tasks, workflows)
-│       ├── lib/       # Auth, tRPC, rate-limit
-│       └── server/    # tRPC routers
-├── packages/
-│   ├── db/            # Prisma schema + client
-│   ├── ui/            # Shared components (Button, Card, Sidebar)
-│   ├── finance/       # Finance engine
-│   ├── workflows/     # Workflow state machine
-│   ├── tasks/         # Task logic
-│   └── dashboard/     # Dashboard widgets
-└── scripts/           # Utility scripts
+├── frontend/              # Vite React SPA
+│   ├── src/
+│   │   ├── components/    # Button, Card, Layout, ConfirmDialog, ui/
+│   │   ├── lib/           # api.ts, auth.tsx, toast.tsx
+│   │   └── pages/         # Dashboard, Finance, Tasks, Messages, etc.
+│   └── api/               # Vercel serverless WSGI entry point
+├── backend/                # Django API
+│   ├── config/            # settings.py, production.py, urls.py
+│   ├── auth_app/          # Registration, login, token refresh
+│   ├── tasks_app/         # Task CRUD, status management
+│   ├── finance_app/       # Transactions, budgets, categories
+│   ├── messages_app/      # Conversations, messages
+│   ├── notes_app/         # Notes
+│   ├── reminders_app/     # Reminders
+│   └── users_app/         # User profiles and search
+├── api/                   # Vercel serverless function root
+└── vercel.json            # Vercel deployment config
 ```
 
 ## Status
 
-Active development. Sprint-based progression.
+**Live in production.** Deployed on Vercel with Neon Postgres. Active development continues.
+
+- https://arko-internal-system.vercel.app
