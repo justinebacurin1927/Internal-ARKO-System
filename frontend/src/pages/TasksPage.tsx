@@ -11,6 +11,10 @@ import {
 import {
   DragDropContext, Droppable, Draggable,
   type DropResult,
+  type DraggableProvided,
+  type DraggableStateSnapshot,
+  type DroppableProvided,
+  type DroppableStateSnapshot,
 } from '@hello-pangea/dnd'
 
 const columns = ['TODO', 'IN_PROGRESS', 'REVIEW', 'DONE'] as const
@@ -40,10 +44,10 @@ function PriorityBadge({ priority }: { priority: string }) {
 
 /* ─── Task card ─── */
 
-function TaskCard({ task, index }: { task: any; index: number; onDelete: (id: string) => void }) {
+function TaskCard({ task, index, onDelete }: { task: any; index: number; onDelete: (id: string) => void }) {
   return (
     <Draggable draggableId={task.id.toString()} index={index}>
-      {(provided, snapshot) => (
+      {(provided: DraggableProvided, snapshot: DraggableStateSnapshot) => (
         <div
           ref={provided.innerRef}
           {...provided.draggableProps}
@@ -85,7 +89,7 @@ function TaskCard({ task, index }: { task: any; index: number; onDelete: (id: st
                 </span>
               )}
               <button
-                onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(task.id) }}
+                onClick={(e) => { e.stopPropagation(); onDelete(task.id) }}
                 className="ml-auto p-1 text-[#D8DCD6] hover:text-neg transition-colors cursor-pointer rounded-md hover:bg-neg-bg"
               >
                 <Trash2 className="h-3 w-3" />
@@ -105,11 +109,13 @@ function TaskColumn({
   tasks,
   isLoading,
   search,
+  onDelete,
 }: {
   column: string
   tasks: any[]
   isLoading: boolean
   search: string
+  onDelete: (id: string) => void
 }) {
   const meta = columnMeta[column]
   const filtered = tasks.filter((t: any) =>
@@ -145,7 +151,7 @@ function TaskColumn({
         </div>
       ) : (
         <Droppable droppableId={column}>
-          {(provided, snapshot) => (
+          {(provided: DroppableProvided, snapshot: DroppableStateSnapshot) => (
             <div
               ref={provided.innerRef}
               {...provided.droppableProps}
@@ -166,8 +172,8 @@ function TaskColumn({
                 </div>
               ) : (
                 filtered.map((task: any, i: number) => (
-                  <TaskCard key={task.id} task={task} index={i} onDelete={(id) => setConfirmDeleteId(id)} />
-                })
+                  <TaskCard key={task.id} task={task} index={i} onDelete={(id) => onDelete(id)} />
+                ))
               )}
               {provided.placeholder}
             </div>
@@ -410,6 +416,7 @@ export default function TasksPage() {
               tasks={tasks ?? []}
               isLoading={isLoading}
               search={taskSearch}
+              onDelete={(id) => setConfirmDeleteId(id)}
             />
           ))}
         </div>
