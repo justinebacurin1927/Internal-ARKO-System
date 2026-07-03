@@ -38,15 +38,19 @@ updated: 2026-07-04
 - [x] Production Django settings (locked CORS, SSL)
 - [x] CI/CD: git push → Vercel deploy
 
-## Sprint 3 — Enhancements 🚧 (in progress)
+## Sprint 3 — Platform Enhancements 🚧 (in progress)
 
-- [ ] Task subtasks and dependencies
+- [ ] File uploads (Supabase Storage → frontend)
+- [ ] Task subtasks & dependencies
 - [ ] Task comments
-- [ ] File uploads (Supabase Storage integration)
-- [ ] Notification system
-- [ ] Search across all modules
-- [ ] Workflow automation engine
-- [ ] Charts and reports export
+- [ ] In-app notifications
+
+## Sprint 3.5 — Personal & Creative Tools 🔜
+
+- [ ] Quote of the Day (dashboard widget)
+- [ ] Personal Journal (private per-user)
+- [ ] R&D Ideas Board (brainstorm → task spawning)
+- [ ] Resource Library (links + files, tagged collections)
 
 ## Future
 
