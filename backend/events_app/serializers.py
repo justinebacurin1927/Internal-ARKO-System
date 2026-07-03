@@ -4,7 +4,7 @@ from .models import Event, Sprint
 class EventSerializer(serializers.ModelSerializer):
     class Meta:
         model = Event
-        fields = ('id', 'title', 'description', 'date', 'start_time', 'end_time', 'color', 'created_at', 'updated_at')
+        fields = ('id', 'title', 'description', 'date', 'end_date', 'start_time', 'end_time', 'color', 'created_at', 'updated_at')
         read_only_fields = ('user', 'created_at', 'updated_at')
 
 

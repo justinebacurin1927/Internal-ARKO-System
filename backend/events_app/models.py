@@ -5,6 +5,7 @@ class Event(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     date = models.DateField()
+    end_date = models.DateField(null=True, blank=True)
     start_time = models.TimeField()
     end_time = models.TimeField()
     color = models.CharField(max_length=7, default='#2D6A4F')
