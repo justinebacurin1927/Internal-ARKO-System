@@ -1,0 +1,27 @@
+# generated: 2026-07-04
+# last_updated: 2026-07-04
+# project: ARKO
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: _bmad/stories
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status: backlog → in-progress → done
+# Story Status: backlog → ready-for-dev → in-progress → review → done
+# Retrospective: optional ↔ done
+
+generated: 2026-07-04
+last_updated: 2026-07-04
+project: ARKO
+project_key: NOKEY
+tracking_system: file-system
+story_location: _bmad/stories
+
+development_status:
+  epic-3: in-progress
+  3-1-file-uploads-supabase: backlog
+  3-2-task-subtasks-dependencies: backlog
+  3-3-task-comments: backlog
+  3-4-in-app-notifications: backlog
+  epic-3-retrospective: optional

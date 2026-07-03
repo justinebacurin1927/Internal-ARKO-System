@@ -38,7 +38,7 @@ updated: 2026-07-04
 - [x] Production Django settings (locked CORS, SSL)
 - [x] CI/CD: git push → Vercel deploy
 
-## Sprint 3 — Enhancements 🔜
+## Sprint 3 — Enhancements 🚧 (in progress)
 
 - [ ] Task subtasks and dependencies
 - [ ] Task comments
