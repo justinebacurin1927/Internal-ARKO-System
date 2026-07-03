@@ -56,6 +56,10 @@ arko/
 
 ## Status
 
-**Live in production.** Deployed on Vercel with Neon Postgres. Active development continues.
+**v1.0.0 — Live in production.** Deployed on Vercel with Neon Postgres. [Sprint 3](https://github.com/justinebacurin1927/Internal-ARKO-System/projects) in progress.
 
 - https://arko-internal-system.vercel.app
+
+---
+
+**v1.0.0** — Phase 1 complete · [[ARKO - Architecture]] · [[ARKO - Phase 1 Report]] · [[ARKO - Roadmap]]

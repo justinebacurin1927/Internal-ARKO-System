@@ -1,5 +1,8 @@
 # ARKO — Internal Operations System
 
+**Version:** v1.0.0 — [Phase 1 production release](https://github.com/justinebacurin1927/Internal-ARKO-System/releases/tag/v1.0.0)
+**Status:** Live on Vercel · [Sprint 3](https://github.com/justinebacurin1927/Internal-ARKO-System/projects) in progress
+
 **ARKO** is a full-stack internal operations platform that combines finance tracking, task management, messaging, notes, and reminders into one cohesive system for small teams.
 
 ## Tech Stack
@@ -100,3 +103,7 @@ Django JWT authentication (Bearer tokens via SimpleJWT). Token refresh on expiry
 ## License
 
 MIT
+
+---
+
+**v1.0.0** — Phase 1 complete · [[ARKO - Architecture]] · [[ARKO - Brief]] · [[ARKO - Roadmap]]
