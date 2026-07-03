@@ -22,6 +22,7 @@ INSTALLED_APPS = [
     'messages_app',
     'reminders_app',
     'notes_app',
+    'events_app',
     'users_app',
 ]
 

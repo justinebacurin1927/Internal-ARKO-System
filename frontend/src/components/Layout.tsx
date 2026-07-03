@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   TrendingUp,
   CheckSquare,
+  CalendarDays,
   MessageSquare,
   Bell,
   FileText,
@@ -20,6 +21,7 @@ const dateStr = today.toLocaleDateString('en-US', { weekday: 'short', month: 'sh
 const categories = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', end: true },
   { to: '/dashboard/finance', icon: TrendingUp, label: 'Analytics', end: false },
+  { to: '/dashboard/calendar', icon: CalendarDays, label: 'Calendar', end: false },
   { to: '/dashboard/tasks', icon: CheckSquare, label: 'Tasks' },
   { to: '/dashboard/notes', icon: FileText, label: 'Notes' },
   { to: '/dashboard/messages', icon: MessageSquare, label: 'Messages' },

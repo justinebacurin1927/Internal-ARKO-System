@@ -143,6 +143,22 @@ export const api = {
   deleteNote: (id: string) =>
     request<void>(`/notes/${id}/`, { method: 'DELETE' }),
 
+  // Calendar events
+  getEvents: (dateFrom?: string, dateTo?: string) =>
+    request<any[]>(`/events/${dateFrom || dateTo ? `?${dateFrom ? `date_from=${dateFrom}` : ''}${dateFrom && dateTo ? '&' : ''}${dateTo ? `date_to=${dateTo}` : ''}` : ''}`),
+  createEvent: (data: any) =>
+    request<any>('/events/', { method: 'POST', body: JSON.stringify(data) }),
+  updateEvent: (id: string, data: any) =>
+    request<any>(`/events/${id}/`, { method: 'PATCH', body: JSON.stringify(data) }),
+  deleteEvent: (id: string) =>
+    request<void>(`/events/${id}/`, { method: 'DELETE' }),
+
+  // Sprints
+  getSprints: (activeOnly?: boolean) =>
+    request<any[]>(`/events/sprints/${activeOnly ? '?active=true' : ''}`),
+  createSprint: (data: any) =>
+    request<any>('/events/sprints/', { method: 'POST', body: JSON.stringify(data) }),
+
   // Users
   searchUsers: (query?: string) =>
     request<any[]>(`/users/search/${query ? `?query=${query}` : ''}`),
