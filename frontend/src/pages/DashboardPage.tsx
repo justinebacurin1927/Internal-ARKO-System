@@ -1,18 +1,83 @@
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../lib/api'
+import { useAuth } from '../lib/auth'
 import {
   FileText, Bell, ArrowRight, CheckSquare, Clock,
   Target, BarChart3, Users, AlertCircle, GitCommitHorizontal,
+  Sparkles, Sun, Moon,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useEffect, useRef, useState } from 'react'
+import { Card } from '../components/Card'
 
-/* ─── Ring container ─── */
+/* ─── Time-of-day greeting ─── */
 
-function Ring({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+function getGreeting(): { text: string; icon: typeof Sun } {
+  const h = new Date().getHours()
+  if (h < 12) return { text: 'Good morning', icon: Sparkles }
+  if (h < 17) return { text: 'Good afternoon', icon: Sun }
+  return { text: 'Good evening', icon: Moon }
+}
+
+/* ─── Stat pill (compact metric badge) ─── */
+
+function StatPill({ icon: Icon, value, label }: { icon: any; value: number; label: string }) {
   return (
-    <div className={`rounded-2xl ring-1 ring-black/[0.08] p-4 ${className}`}>
-      {children}
+    <div className="flex items-center gap-1.5 rounded-full ring-1 ring-black/[0.06] bg-white px-3 py-1.5">
+      <Icon className="h-3.5 w-3.5 text-text-tertiary" />
+      <span className="text-sm font-semibold text-text-primary tabular-nums">{value}</span>
+      <span className="text-[10px] text-text-tertiary font-medium hidden sm:inline">{label}</span>
+    </div>
+  )
+}
+
+/* ─── Greeting band — time-aware, counts tasks-in-flight with a subtle tick ─── */
+
+function GreetingBand({ totalTasks, noteCount, reminderCount }: { totalTasks: number; noteCount: number; reminderCount: number }) {
+  const { user } = useAuth()
+  const { text, icon: Icon } = getGreeting()
+  const [displayCount, setDisplayCount] = useState(0)
+
+  useEffect(() => {
+    const target = totalTasks
+    if (target === 0) { setDisplayCount(0); return }
+    let current = 0
+    const step = Math.max(1, Math.ceil(target / 30))
+    const interval = setInterval(() => {
+      current += step
+      if (current >= target) {
+        setDisplayCount(target)
+        clearInterval(interval)
+      } else setDisplayCount(current)
+    }, 16)
+    return () => clearInterval(interval)
+  }, [totalTasks])
+
+  const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+
+  return (
+    <div className="flex items-center justify-between shrink-0 min-h-0 animate-[slide-up_0.4s_ease-out_forwards]">
+      <div className="flex items-center gap-3">
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-accent-500/10 text-accent-500 ring-1 ring-accent-500/20">
+          <Icon className="h-[18px] w-[18px]" />
+        </div>
+        <div>
+          <h1 className="text-lg font-semibold text-text-primary tracking-tight">
+            {text}, <span className="text-accent-500">{user?.name?.split(' ')[0] ?? 'Founder'}</span>
+          </h1>
+          <p className="text-xs text-text-tertiary">
+            {today}
+            {totalTasks > 0 && (
+              <> · <span className="text-accent-500 font-medium tabular-nums">{displayCount}</span> tasks in flight</>
+            )}
+          </p>
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <StatPill icon={CheckSquare} value={totalTasks} label="Tasks" />
+        <StatPill icon={FileText} value={noteCount} label="Notes" />
+        <StatPill icon={Bell} value={reminderCount} label="Pending" />
+      </div>
     </div>
   )
 }
@@ -52,13 +117,12 @@ function SmoothChart({
   height?: number
 }) {
   const svgRef = useRef<SVGSVGElement | null>(null)
-  const [vw, setVw] = useState(400) // reasonable initial guess
+  const [vw, setVw] = useState(400)
   const pad = { top: 8, bottom: 16, left: 8, right: 8 }
   const plotH = height - pad.top - pad.bottom
   const lineRefs = useRef<(SVGPathElement | null)[]>([])
   const [ready, setReady] = useState(false)
 
-  // Sync viewBox width to container width so no stretching is needed
   useEffect(() => {
     const el = svgRef.current
     if (!el) return
@@ -66,12 +130,10 @@ function SmoothChart({
       for (const entry of entries) setVw(entry.contentRect.width)
     })
     ro.observe(el)
-    // Fire synchronously too
     setVw(el.getBoundingClientRect().width || 400)
     return () => ro.disconnect()
   }, [])
 
-  // Global min/max across all series
   let allMin = Infinity, allMax = -Infinity
   for (const s of series) {
     for (const d of s.data) {
@@ -89,7 +151,6 @@ function SmoothChart({
   const toX = (_i: number) => pad.left + (_i / Math.max(n - 1, 1)) * (vw - pad.left - pad.right)
   const toY = (v: number) => pad.top + (1 - (v - yMin) / yRange) * plotH
 
-  // Trigger line-draw animation on mount
   useEffect(() => {
     requestAnimationFrame(() => {
       setReady(true)
@@ -98,7 +159,7 @@ function SmoothChart({
           const len = el.getTotalLength()
           el.style.strokeDasharray = `${len}`
           el.style.strokeDashoffset = `${len}`
-          el.getBoundingClientRect() // force reflow
+          el.getBoundingClientRect()
           el.style.transition = 'stroke-dashoffset 900ms cubic-bezier(0.16, 1, 0.3, 1)'
           el.style.strokeDashoffset = '0'
         }
@@ -117,7 +178,6 @@ function SmoothChart({
         ))}
       </defs>
 
-      {/* Horizontal grid lines */}
       {[0.25, 0.5, 0.75].map((pct) => {
         const y = pad.top + (1 - pct) * plotH
         return (
@@ -126,7 +186,6 @@ function SmoothChart({
         )
       })}
 
-      {/* Area + Line for each series */}
       {series.map((s, si) => {
         const pts = s.data.map((d, i) => ({ x: toX(i), y: toY(d.value) }))
         const line = smoothPath(pts)
@@ -142,7 +201,6 @@ function SmoothChart({
         )
       })}
 
-      {/* Day labels */}
       <g className="text-[10px] text-text-tertiary font-medium">
         {labels.map((label, i) => (
           <text key={i} x={toX(i)} y={height - 2} textAnchor="middle"
@@ -185,18 +243,9 @@ function DonutChart({ segments, size = 36 }: { segments: { value: number; color:
 function TaskRow({ task }: { task: any }) {
   const dot: Record<string, string> = { TODO: 'bg-gray-300', IN_PROGRESS: 'bg-accent-500', REVIEW: 'bg-warn', DONE: 'bg-pos' }
   return (
-    <div className="flex items-center gap-2.5 py-1.5 transition-colors hover:bg-black/[0.02] cursor-pointer -mx-1 px-1 rounded-lg">
-      <div className={`h-2 w-2 shrink-0 rounded-full ${dot[task.status] || 'bg-gray-300'}`} />
+    <div className="flex items-center gap-3 px-2 py-2.5 transition-colors hover:bg-black/[0.03] cursor-pointer rounded-lg">
+      <div className={`h-2.5 w-2.5 shrink-0 rounded-full ${dot[task.status] || 'bg-gray-300'}`} />
       <span className="flex-1 truncate text-sm text-text-primary">{task.title}</span>
-    </div>
-  )
-}
-
-function NoteRow({ note }: { note: any }) {
-  return (
-    <div className="py-1.5 transition-colors hover:bg-black/[0.02] cursor-pointer -mx-1 px-1 rounded-lg">
-      <p className="text-sm font-medium text-text-primary truncate">{note.title || 'Untitled'}</p>
-      <p className="text-xs text-text-tertiary truncate">{note.content || 'No content'}</p>
     </div>
   )
 }
@@ -204,22 +253,23 @@ function NoteRow({ note }: { note: any }) {
 function ReminderRow({ reminder }: { reminder: any }) {
   const overdue = reminder.due_at && new Date(reminder.due_at) < new Date()
   return (
-    <div className="flex items-center gap-2.5 py-1.5 transition-colors hover:bg-black/[0.02] cursor-pointer -mx-1 px-1 rounded-lg">
+    <div className="flex items-center gap-3 px-2 py-2.5 transition-colors hover:bg-black/[0.03] cursor-pointer rounded-lg">
       <Clock className={`h-4 w-4 shrink-0 ${overdue ? 'text-neg' : 'text-text-tertiary'}`} />
       <div className="flex-1 min-w-0">
         <p className="text-sm text-text-primary truncate">{reminder.title}</p>
-        {reminder.due_at && <p className={`text-xs ${overdue ? 'text-neg' : 'text-text-tertiary'}`}>
-          {overdue ? 'Overdue · ' : ''}{new Date(reminder.due_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-        </p>}
+        {reminder.due_at && (
+          <p className={`text-xs ${overdue ? 'text-neg' : 'text-text-tertiary'}`}>
+            {overdue ? 'Overdue · ' : ''}{new Date(reminder.due_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+          </p>
+        )}
       </div>
     </div>
   )
 }
 
-/* ─── Sample finance data for chart visual ─── */
+/* ─── Sample finance data (fallback) ─── */
 
 function financeCurve(): { income: number; expenses: number }[] {
-  // Smooth variation that looks like real finance data
   return [
     { income: 420, expenses: 280 },
     { income: 380, expenses: 310 },
@@ -239,7 +289,6 @@ export default function DashboardHome() {
   const { data: tasks, isLoading: tasksLoading } = useQuery({ queryKey: ['tasks'], queryFn: () => api.getTasks() })
   const { data: notes } = useQuery({ queryKey: ['notes'], queryFn: () => api.getNotes() })
   const { data: reminders } = useQuery({ queryKey: ['reminders'], queryFn: () => api.getReminders() })
-  const { data: balance } = useQuery({ queryKey: ['balance'], queryFn: () => api.getBalance() })
   const { data: transactions } = useQuery({ queryKey: ['transactions'], queryFn: () => api.getTransactions(1) })
   const todo = tasks?.filter((t: any) => t.status === 'TODO') ?? []
   const inProgress = tasks?.filter((t: any) => t.status === 'IN_PROGRESS') ?? []
@@ -272,38 +321,36 @@ export default function DashboardHome() {
       expenses: dayTxs.filter((tx: any) => tx.type === 'EXPENSE').reduce((s: number, tx: any) => s + tx.amount, 0),
     }
   })
-  const financeData = balance ? [{ income: balance.income, expenses: balance.expenses }] : financeCurve()
   const incomeTotal = last7.reduce((s, d) => s + d.income, 0)
   const expenseTotal = last7.reduce((s, d) => s + d.expenses, 0)
   const netTotal = incomeTotal - expenseTotal
-  // Use real data if available, fall back to sample curve
   const hasTx = (transactions?.length ?? 0) > 0
   const chartData = hasTx ? last7 : financeCurve()
 
+  const cardDelay = (i: number) => ({ animationDelay: `${40 + i * 60}ms` })
+
   return (
-    <div className="h-full flex flex-col gap-3">
+    <div className="h-full flex flex-col gap-4">
 
-      {/* ═══ Heading row ═══ */}
-      <div className="flex items-center justify-between shrink-0 min-h-0">
-        <div className="flex items-baseline gap-3">
-          <h1 className="text-xl font-bold text-text-primary tracking-tight leading-none">Overview</h1>
-          <span className="text-[11px] text-text-tertiary font-medium">{totalTasks} tasks · {notes?.length ?? 0} notes · {incompleteReminders.length} pending</span>
-        </div>
-      </div>
+      {/* ═══ Greeting band ═══ */}
+      <GreetingBand totalTasks={totalTasks} noteCount={notes?.length ?? 0} reminderCount={incompleteReminders.length} />
 
-      {/* ═══ 12-col grid fills remaining height — no scroll ═══ */}
-      <div className="grid grid-cols-12 gap-3 flex-1 min-h-0 grid-rows-1fr">
+      {/* ═══ 12-col grid fills remaining height ═══ */}
+      <div className="grid grid-cols-12 gap-4 flex-1 min-h-0 grid-rows-1fr">
 
         {/* ── Main (8 cols) ── */}
-        <div className="col-span-8 flex flex-col gap-3 min-h-0">
+        <div className="col-span-8 flex flex-col gap-4 min-h-0">
 
-          {/* Analytics — smooth financial chart */}
-          <Ring className="shrink-0 py-3">
+          {/* ── Cash Flow chart — premium accent card ── */}
+          <Card
+            className="shrink-0 p-5 border-t-2 border-accent-500 animate-[card-enter_450ms_ease-out_forwards] opacity-0"
+            style={cardDelay(0)}
+          >
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-baseline gap-2">
                 <p className="text-[11px] font-semibold text-text-tertiary uppercase tracking-wider">Cash Flow</p>
+                <span className="text-[10px] text-text-tertiary">Last 7 days</span>
               </div>
-              {/* Legend */}
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-1.5">
                   <div className="h-2 w-2 rounded-full bg-[#2D6A4F]" />
@@ -322,195 +369,177 @@ export default function DashboardHome() {
                 { name: 'Expenses', data: chartData.map((d) => ({ label: '', value: d.expenses })), color: '#C28B5E', gradientId: 'expense-fill' },
               ]}
               labels={days}
-              height={130}
+              height={150}
             />
 
             {/* Summary stats under chart */}
-            <div className="flex items-center justify-between mt-2 pt-2 border-t border-black/[0.05]">
-              <div className="flex items-baseline gap-1">
+            <div className="flex items-center justify-between mt-3 pt-3 border-t border-black/[0.05]">
+              <div className="flex items-baseline gap-1.5">
                 <span className="text-[10px] text-text-tertiary font-medium">Income</span>
                 <span className="text-sm font-bold text-[#2D6A4F]">${incomeTotal.toLocaleString()}</span>
               </div>
-              <div className="flex items-baseline gap-1">
+              <div className="flex items-baseline gap-1.5">
                 <span className="text-[10px] text-text-tertiary font-medium">Expenses</span>
                 <span className="text-sm font-bold text-[#C28B5E]">${expenseTotal.toLocaleString()}</span>
               </div>
-              <div className="flex items-baseline gap-1">
+              <div className="flex items-baseline gap-1.5">
                 <span className="text-[10px] text-text-tertiary font-medium">Net</span>
                 <span className={`text-sm font-bold ${netTotal >= 0 ? 'text-pos' : 'text-neg'}`}>
-                  ${netTotal >= 0 ? '+' : ''}{netTotal.toLocaleString()}
+                  {netTotal >= 0 ? '+' : ''}${netTotal.toLocaleString()}
                 </span>
               </div>
             </div>
-          </Ring>
+          </Card>
 
-          {/* Category cards — 2-col × 2-row grid, fills remaining height */}
-          <div className="grid grid-cols-2 gap-3 flex-1 min-h-0 grid-rows-2">
+          {/* ── 2×2 category grid ── */}
+          <div className="grid grid-cols-2 gap-4 flex-1 min-h-0 grid-rows-2">
+
             {/* Tasks */}
-            <div className="flex flex-col min-h-0">
-              <div className="flex items-center justify-between mb-2 shrink-0">
+            <div className="flex flex-col min-h-0" style={cardDelay(1)}>
+              <div className="flex items-center justify-between mb-3 shrink-0">
                 <h2 className="text-[11px] font-semibold text-text-tertiary uppercase tracking-wider">Tasks</h2>
-                <button onClick={() => navigate('/dashboard/tasks')} className="inline-flex items-center gap-1 text-[11px] font-medium text-accent-500 hover:text-accent-600 transition-colors cursor-pointer shrink-0">
+                <button onClick={() => navigate('/dashboard/tasks')}
+                  className="inline-flex items-center gap-1 text-[11px] font-medium text-accent-500 hover:text-accent-600 transition-colors cursor-pointer shrink-0">
                   View all <ArrowRight className="h-3 w-3" />
                 </button>
               </div>
-              <Ring className="flex flex-col flex-1 overflow-hidden">
+              <Card className="flex flex-col flex-1 overflow-hidden p-5 animate-[card-enter_450ms_ease-out_forwards] opacity-0">
                 {tasksLoading ? (
                   <div className="space-y-2">{[1, 2, 3].map((i) => <div key={i} className="h-6 animate-pulse rounded bg-gray-100" />)}</div>
                 ) : (tasks?.length ?? 0) === 0 ? (
                   <div className="flex flex-col items-center justify-center flex-1 text-center">
                     <CheckSquare className="h-5 w-5 text-gray-200 mb-1" />
                     <p className="text-sm text-text-tertiary">No tasks yet</p>
-                    <button onClick={() => navigate('/dashboard/tasks')} className="mt-1 text-xs font-medium text-accent-500 cursor-pointer">Create one</button>
+                    <button onClick={() => navigate('/dashboard/tasks')}
+                      className="mt-1 text-xs font-medium text-accent-500 cursor-pointer">Create one</button>
                   </div>
                 ) : (
-                  <div className="flex flex-col flex-1">
-                    <div className="divide-y divide-gray-100/70">{tasks?.slice(0, 5).map((t: any) => <TaskRow key={t.id} task={t} />)}</div>
-                    <div className="flex-1" />
+                  <div className="flex flex-col flex-1 gap-0.5">
+                    {tasks?.slice(0, 4).map((t: any) => <TaskRow key={t.id} task={t} />)}
                   </div>
                 )}
-              </Ring>
+              </Card>
             </div>
 
-            {/* Notes */}
-            <div className="flex flex-col min-h-0">
-              <div className="flex items-center justify-between mb-2 shrink-0">
-                <h2 className="text-[11px] font-semibold text-text-tertiary uppercase tracking-wider">Notes</h2>
-                <button onClick={() => navigate('/dashboard/notes')} className="inline-flex items-center gap-1 text-[11px] font-medium text-accent-500 hover:text-accent-600 transition-colors cursor-pointer shrink-0">
-                  View all <ArrowRight className="h-3 w-3" />
-                </button>
+            {/* Updates — right column, spans both rows */}
+            <div className="flex flex-col min-h-0 row-span-2 col-start-2" style={cardDelay(2)}>
+              <div className="flex items-center justify-between mb-3 shrink-0">
+                <h2 className="text-[11px] font-semibold text-text-tertiary uppercase tracking-wider">Updates</h2>
               </div>
-              <Ring className="flex flex-col flex-1 overflow-hidden">
-                {(notes?.length ?? 0) === 0 ? (
-                  <div className="flex flex-col items-center justify-center flex-1 text-center">
-                    <FileText className="h-5 w-5 text-gray-200 mb-1" />
-                    <p className="text-sm text-text-tertiary">No notes yet</p>
-                    <button onClick={() => navigate('/dashboard/notes')} className="mt-1 text-xs font-medium text-accent-500 cursor-pointer">Write one</button>
-                  </div>
-                ) : (
-                  <div className="flex flex-col flex-1">
-                    <div className="divide-y divide-gray-100/70">{notes?.slice(0, 5).map((n: any) => <NoteRow key={n.id} note={n} />)}</div>
-                    <div className="flex-1" />
-                  </div>
-                )}
-              </Ring>
+              <Card className="flex flex-col flex-1 overflow-hidden p-5 animate-[card-enter_450ms_ease-out_forwards] opacity-0">
+                <div className="flex flex-col flex-1 gap-0.5">
+                  {[
+                    { hash: 'c97a838', msg: 'chart: replace preserveAspectRatio=none with ResizeObserver-synced viewBox width' },
+                    { hash: 'fc8e022', msg: 'chart: fill full card width with preserveAspectRatio=none, add line-draw animation' },
+                    { hash: 'ecf316b', msg: 'layout: fill viewport on all pages, login/register forest green palette' },
+                    { hash: '9fc2d7a', msg: 'frontend: forest green + amber palette, smooth financial chart, compact layout' },
+                    { hash: '2427421', msg: 'broken changes' },
+                    { hash: '8aad8a2', msg: 'fix month/year rendering (auto-rows-1fr → CSS, year card styling)' },
+                    { hash: 'fe8a33b', msg: 'dashboard: premium redesign — greeting band, stagger, card accent' },
+                    { hash: 'd4e2b1c', msg: 'dashboard: open up card spacing, 4 items, p-5, gap-0.5' },
+                  ].map((c) => (
+                    <div key={c.hash} className="flex items-center gap-3 px-2 py-2.5 rounded-lg hover:bg-black/[0.03] cursor-pointer transition-colors">
+                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full ring-1 ring-black/[0.06] bg-white">
+                        <GitCommitHorizontal className="h-3.5 w-3.5 text-accent-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <code className="text-[11px] font-mono font-bold text-accent-500">{c.hash}</code>
+                        <p className="text-xs text-text-tertiary truncate">{c.msg}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
             </div>
 
-            {/* Reminders */}
-            <div className="flex flex-col min-h-0">
-              <div className="flex items-center justify-between mb-2 shrink-0">
+            {/* Reminders — bottom-left */}
+            <div className="flex flex-col min-h-0 row-start-2" style={cardDelay(3)}>
+              <div className="flex items-center justify-between mb-3 shrink-0">
                 <h2 className="text-[11px] font-semibold text-text-tertiary uppercase tracking-wider">Reminders</h2>
-                <button onClick={() => navigate('/dashboard/reminders')} className="inline-flex items-center gap-1 text-[11px] font-medium text-accent-500 hover:text-accent-600 transition-colors cursor-pointer shrink-0">
+                <button onClick={() => navigate('/dashboard/reminders')}
+                  className="inline-flex items-center gap-1 text-[11px] font-medium text-accent-500 hover:text-accent-600 transition-colors cursor-pointer shrink-0">
                   View all <ArrowRight className="h-3 w-3" />
                 </button>
               </div>
-              <Ring className="flex flex-col flex-1 overflow-hidden">
+              <Card className="flex flex-col flex-1 overflow-hidden p-5 animate-[card-enter_450ms_ease-out_forwards] opacity-0">
                 {(incompleteReminders.length ?? 0) === 0 ? (
                   <div className="flex flex-col items-center justify-center flex-1 text-center">
                     <Bell className="h-5 w-5 text-gray-200 mb-1" />
                     <p className="text-sm text-text-tertiary">No reminders</p>
-                    <button onClick={() => navigate('/dashboard/reminders')} className="mt-1 text-xs font-medium text-accent-500 cursor-pointer">Add one</button>
+                    <button onClick={() => navigate('/dashboard/reminders')}
+                      className="mt-1 text-xs font-medium text-accent-500 cursor-pointer">Add one</button>
                   </div>
                 ) : (
-                  <div className="flex flex-col flex-1">
-                    <div className="divide-y divide-gray-100/70">{incompleteReminders.slice(0, 5).map((r: any) => <ReminderRow key={r.id} reminder={r} />)}</div>
-                    <div className="flex-1" />
+                  <div className="flex flex-col flex-1 gap-0.5">
+                    {incompleteReminders.slice(0, 4).map((r: any) => <ReminderRow key={r.id} reminder={r} />)}
                   </div>
                 )}
-              </Ring>
-            </div>
-
-            {/* New Updates */}
-            <div className="flex flex-col min-h-0">
-              <div className="flex items-center justify-between mb-2 shrink-0">
-                <h2 className="text-[11px] font-semibold text-text-tertiary uppercase tracking-wider">New Updates</h2>
-              </div>
-              <Ring className="flex flex-col flex-1 overflow-hidden">
-                <div className="flex flex-col flex-1">
-                  <div className="divide-y divide-gray-100/70">
-                    {[
-                      { hash: 'c97a838', msg: 'chart: replace preserveAspectRatio=none with ResizeObserver-synced viewBox width' },
-                      { hash: 'fc8e022', msg: 'chart: fill full card width with preserveAspectRatio=none, add line-draw animation' },
-                      { hash: 'ecf316b', msg: 'layout: fill viewport on all pages, login/register forest green palette' },
-                      { hash: '9fc2d7a', msg: 'frontend: forest green + amber palette, smooth financial chart, compact layout' },
-                      { hash: '2427421', msg: 'broken changes' },
-                    ].map((c) => (
-                      <div key={c.hash} className="flex items-center gap-2.5 py-1.5 -mx-1 px-1 rounded-lg">
-                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full ring-1 ring-black/[0.06]">
-                          <GitCommitHorizontal className="h-3.5 w-3.5 text-accent-500" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <code className="text-[11px] font-mono font-bold text-accent-500">{c.hash}</code>
-                          <p className="text-xs text-text-tertiary truncate">{c.msg}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="flex-1" />
-                </div>
-              </Ring>
+              </Card>
             </div>
           </div>
         </div>
 
         {/* ── Right sidebar (4 cols) ── */}
-        <div className="col-span-4 flex flex-col gap-3 min-h-0">
+        <div className="col-span-4 flex flex-col gap-4 min-h-0">
 
           {/* Donut + completion stats */}
-          <Ring className="shrink-0 py-3">
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full ring-1 ring-black/[0.06]">
-                <DonutChart segments={taskSegments} size={36} />
+          <Card className="shrink-0 p-5 animate-[card-enter_450ms_ease-out_forwards] opacity-0" style={cardDelay(1)}>
+            <div className="flex items-center gap-4">
+              <div className="shrink-0">
+                <DonutChart segments={taskSegments} size={44} />
               </div>
               <div className="min-w-0">
                 <div className="flex items-baseline gap-1.5">
-                  <span className="text-lg font-bold text-text-primary">{totalTasks}</span>
+                  <span className="text-2xl font-bold text-text-primary tabular-nums">{totalTasks}</span>
                   <span className="text-[11px] text-text-tertiary">tasks</span>
                 </div>
-                <p className="text-[11px] text-text-tertiary">{doneCount} done · {completionRate}% complete</p>
+                <p className="text-xs text-text-tertiary mt-0.5">
+                  <span className="font-semibold text-pos">{doneCount}</span> done · {completionRate}% complete
+                </p>
               </div>
             </div>
-          </Ring>
+          </Card>
 
           {/* Quick stats */}
-          <Ring className="flex flex-col flex-1 overflow-hidden">
-            <div className="flex flex-col justify-between flex-1">
+          <Card className="flex flex-col flex-1 overflow-hidden p-5 animate-[card-enter_450ms_ease-out_forwards] opacity-0" style={cardDelay(2)}>
+            <p className="text-[11px] font-semibold text-text-tertiary uppercase tracking-wider mb-3">Stats</p>
+            <div className="flex flex-col justify-between flex-1 gap-1">
               {[
                 { icon: Target, label: 'Completion', value: `${completionRate}%`, color: 'text-pos' },
                 { icon: BarChart3, label: 'In Progress', value: inProgress.length, color: 'text-accent-500' },
                 { icon: Users, label: 'Collaborators', value: assignees.size, color: 'text-warn' },
                 { icon: AlertCircle, label: 'Overdue', value: reminders?.filter((r: any) => r.due_at && !r.is_done && new Date(r.due_at) < new Date()).length ?? 0, color: 'text-neg' },
               ].map((s) => (
-                <div key={s.label} className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full ring-1 ring-black/[0.06]">
+                <div key={s.label} className="flex items-center gap-3 py-2">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full ring-1 ring-black/[0.06] bg-white">
                     <s.icon className={`h-3.5 w-3.5 ${s.color}`} />
                   </div>
                   <div className="flex items-baseline justify-between flex-1 min-w-0">
                     <span className="text-sm text-text-secondary">{s.label}</span>
-                    <span className="text-sm font-bold text-text-primary ml-2">{s.value}</span>
+                    <span className="text-sm font-bold text-text-primary ml-2 tabular-nums">{s.value}</span>
                   </div>
                 </div>
               ))}
             </div>
-          </Ring>
+          </Card>
 
           {/* Distribution */}
-          <Ring className="shrink-0 py-3">
-            <p className="text-[11px] font-semibold text-text-tertiary uppercase tracking-wider mb-2">Distribution</p>
-            <div className="space-y-1.5">
+          <Card className="shrink-0 p-5 animate-[card-enter_450ms_ease-out_forwards] opacity-0" style={cardDelay(3)}>
+            <p className="text-[11px] font-semibold text-text-tertiary uppercase tracking-wider mb-3">Distribution</p>
+            <div className="space-y-2">
               {distLabels.map((label, i) => (
-                <div key={label} className="flex items-center gap-2.5">
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full ring-1 ring-black/[0.06]">
+                <div key={label} className="flex items-center gap-3">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full ring-1 ring-black/[0.06] bg-white">
                     <div className="h-2 w-2 rounded-full" style={{ backgroundColor: distColors[i] }} />
                   </div>
                   <div className="flex items-baseline justify-between flex-1 min-w-0">
                     <span className="text-sm text-text-secondary">{label}</span>
-                    <span className="text-sm font-medium text-text-primary ml-2">{distCounts[i]}</span>
+                    <span className="text-sm font-medium text-text-primary ml-2 tabular-nums">{distCounts[i]}</span>
                   </div>
                 </div>
               ))}
             </div>
-          </Ring>
+          </Card>
         </div>
       </div>
     </div>
