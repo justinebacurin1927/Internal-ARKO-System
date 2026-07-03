@@ -5,15 +5,180 @@ import { Card, CardContent } from '../components/Card'
 import { Button } from '../components/Button'
 import ConfirmDialog from '../components/ConfirmDialog'
 import { useToast } from '../lib/toast'
-import { Plus, ListTodo, AlertCircle, User, Loader2, Trash2, Search } from 'lucide-react'
+import {
+  Plus, AlertCircle, User, Loader2, Trash2, Search, GripVertical,
+} from 'lucide-react'
+import {
+  DragDropContext, Droppable, Draggable,
+  type DropResult,
+} from '@hello-pangea/dnd'
 
 const columns = ['TODO', 'IN_PROGRESS', 'REVIEW', 'DONE'] as const
-const columnLabels: Record<string, string> = {
-  TODO: 'To Do',
-  IN_PROGRESS: 'In Progress',
-  REVIEW: 'Review',
-  DONE: 'Done',
+
+const columnMeta: Record<string, { label: string; color: string; bg: string }> = {
+  TODO:        { label: 'To Do',        color: '#A3AC9E', bg: 'bg-black/[0.02]' },
+  IN_PROGRESS: { label: 'In Progress',  color: '#2D6A4F', bg: 'bg-accent-500/[0.03]' },
+  REVIEW:      { label: 'Review',       color: '#C9954A', bg: 'bg-warn/[0.03]' },
+  DONE:        { label: 'Done',         color: '#5FA87A', bg: 'bg-pos/[0.03]' },
 }
+
+/* ─── Priority pill ─── */
+
+function PriorityBadge({ priority }: { priority: string }) {
+  const styles: Record<string, string> = {
+    URGENT:  'bg-neg-bg text-neg',
+    HIGH:    'bg-warn-bg text-warn',
+    MEDIUM:  'bg-accent-50 text-accent-700',
+    LOW:     'bg-gray-50 text-gray-500',
+  }
+  return (
+    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${styles[priority] ?? 'bg-gray-50 text-gray-500'}`}>
+      {priority}
+    </span>
+  )
+}
+
+/* ─── Task card ─── */
+
+function TaskCard({ task, index }: { task: any; index: number; onDelete: (id: string) => void }) {
+  return (
+    <Draggable draggableId={task.id.toString()} index={index}>
+      {(provided, snapshot) => (
+        <div
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          className={`transition-shadow duration-200 rounded-lg ${
+            snapshot.isDragging
+              ? 'shadow-[0_8px_24px_rgba(26,29,26,0.12),0_2px_6px_rgba(26,29,26,0.08)] z-10'
+              : 'shadow-[0_1px_2px_rgba(26,29,26,0.04),0_1px_3px_rgba(26,29,26,0.06)]'
+          }`}
+          style={{
+            ...provided.draggableProps.style,
+            borderLeft: `3px solid ${columnMeta[task.status]?.color ?? '#A3AC9E'}`,
+            background: '#fff',
+            borderRadius: '12px',
+          }}
+        >
+          {/* Drag handle bar — visible on hover */}
+          <div
+            {...provided.dragHandleProps}
+            className="flex items-center gap-2 px-4 pt-3 pb-1 cursor-grab active:cursor-grabbing select-none"
+          >
+            <GripVertical className="h-3 w-3 text-[#D8DCD6] transition-colors group-hover/handle:text-text-tertiary" />
+            <p className="text-sm font-medium text-text-primary flex-1 truncate min-w-0">
+              {task.title}
+            </p>
+          </div>
+
+          <div className="px-4 pb-3">
+            {task.description && (
+              <p className="text-xs text-text-tertiary line-clamp-2 mt-1.5 leading-relaxed">
+                {task.description}
+              </p>
+            )}
+            <div className="flex items-center gap-2 mt-3 flex-wrap">
+              {task.priority && <PriorityBadge priority={task.priority} />}
+              {task.assignee_name && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-gray-50 px-2 py-0.5 text-[10px] text-gray-500">
+                  <User className="h-2.5 w-2.5" />
+                  {task.assignee_name}
+                </span>
+              )}
+              <button
+                onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(task.id) }}
+                className="ml-auto p-1 text-[#D8DCD6] hover:text-neg transition-colors cursor-pointer rounded-md hover:bg-neg-bg"
+              >
+                <Trash2 className="h-3 w-3" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </Draggable>
+  )
+}
+
+/* ─── Column ─── */
+
+function TaskColumn({
+  column,
+  tasks,
+  isLoading,
+  search,
+}: {
+  column: string
+  tasks: any[]
+  isLoading: boolean
+  search: string
+}) {
+  const meta = columnMeta[column]
+  const filtered = tasks.filter((t: any) =>
+    !search || t.title.toLowerCase().includes(search.toLowerCase()),
+  )
+  const isEmpty = !isLoading && filtered.length === 0
+
+  return (
+    <div className="flex flex-col min-h-0 rounded-xl" style={{ background: 'transparent' }}>
+      {/* Header */}
+      <div className="flex items-center justify-between px-1 mb-3 shrink-0">
+        <div className="flex items-center gap-2">
+          <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: meta.color }} />
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-text-secondary">
+            {meta.label}
+          </h3>
+        </div>
+        {!isLoading && (
+          <span
+            className="rounded-full px-2 py-0.5 text-[10px] font-semibold tabular-nums"
+            style={{ backgroundColor: `${meta.color}15`, color: meta.color }}
+          >
+            {filtered.length}
+          </span>
+        )}
+      </div>
+
+      {isLoading ? (
+        <div className="space-y-2 flex-1">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-20 animate-pulse rounded-xl bg-gray-100" />
+          ))}
+        </div>
+      ) : (
+        <Droppable droppableId={column}>
+          {(provided, snapshot) => (
+            <div
+              ref={provided.innerRef}
+              {...provided.droppableProps}
+              className={`flex flex-col flex-1 min-h-0 overflow-y-auto gap-2 rounded-xl transition-colors duration-150 px-1 py-0.5 ${
+                snapshot.isDraggingOver ? `${meta.bg} ring-1 ring-black/[0.04]` : ''
+              }`}
+              style={{
+                scrollbarWidth: 'thin',
+                scrollbarColor: '#D8DCD6 transparent',
+              }}
+            >
+              {isEmpty ? (
+                <div className="flex flex-col items-center justify-center flex-1 py-10 text-center">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full" style={{ backgroundColor: `${meta.color}10` }}>
+                    <AlertCircle className="h-3.5 w-3.5" style={{ color: meta.color }} />
+                  </div>
+                  <p className="text-xs text-text-tertiary mt-2">No tasks</p>
+                </div>
+              ) : (
+                filtered.map((task: any, i: number) => (
+                  <TaskCard key={task.id} task={task} index={i} onDelete={(id) => setConfirmDeleteId(id)} />
+                })
+              )}
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
+      )}
+    </div>
+  )
+}
+
+/* ─── Page ─── */
 
 export default function TasksPage() {
   const queryClient = useQueryClient()
@@ -71,12 +236,10 @@ export default function TasksPage() {
     },
   })
 
-  const handleDrop = (taskId: string, newStatus: string) => {
-    updateStatus.mutate({ id: taskId, status: newStatus })
-  }
-
-  const handleDragStart = (e: React.DragEvent, taskId: string) => {
-    e.dataTransfer.setData('taskId', taskId)
+  const onDragEnd = (result: DropResult) => {
+    if (!result.destination) return
+    if (result.destination.droppableId === result.source.droppableId) return
+    updateStatus.mutate({ id: result.draggableId, status: result.destination.droppableId })
   }
 
   const handleCreate = (e: React.FormEvent) => {
@@ -104,11 +267,12 @@ export default function TasksPage() {
   }
 
   return (
-    <div className="h-full flex flex-col gap-3">
+    <div className="h-full flex flex-col gap-4">
+      {/* ── Heading ── */}
       <div className="flex items-start justify-between shrink-0">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Tasks</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage your tasks and projects</p>
+          <h1 className="text-xl font-bold text-text-primary tracking-tight">Tasks</h1>
+          <p className="text-xs text-text-tertiary mt-0.5">Drag tasks between columns to update status</p>
         </div>
         <Button onClick={() => setShowNew(!showNew)}>
           <Plus className="h-4 w-4" />
@@ -116,13 +280,13 @@ export default function TasksPage() {
         </Button>
       </div>
 
-      {/* New task form */}
+      {/* ── New task form ── */}
       {showNew && (
         <Card>
           <CardContent className="p-5">
             <form onSubmit={handleCreate} className="space-y-4">
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-700">Title</label>
+                <label className="mb-1.5 block text-sm font-medium text-text-primary">Title</label>
                 <input
                   type="text"
                   value={newTitle}
@@ -130,26 +294,26 @@ export default function TasksPage() {
                   placeholder="What needs to be done?"
                   required
                   autoFocus
-                  className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20"
+                  className="block w-full rounded-lg border border-border-subtle px-3 py-2 text-sm focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20 bg-white"
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-700">Description</label>
+                <label className="mb-1.5 block text-sm font-medium text-text-primary">Description</label>
                 <textarea
                   value={newDesc}
                   onChange={(e) => setNewDesc(e.target.value)}
                   placeholder="Add details..."
                   rows={2}
-                  className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20"
+                  className="block w-full rounded-lg border border-border-subtle px-3 py-2 text-sm focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20 bg-white"
                 />
               </div>
               <div className="flex gap-4">
                 <div className="flex-1">
-                  <label className="mb-1.5 block text-sm font-medium text-gray-700">Priority</label>
+                  <label className="mb-1.5 block text-sm font-medium text-text-primary">Priority</label>
                   <select
                     value={newPriority}
                     onChange={(e) => setNewPriority(e.target.value)}
-                    className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20"
+                    className="block w-full rounded-lg border border-border-subtle px-3 py-2 text-sm focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20 bg-white"
                   >
                     <option value="LOW">Low</option>
                     <option value="MEDIUM">Medium</option>
@@ -158,25 +322,25 @@ export default function TasksPage() {
                   </select>
                 </div>
                 <div className="flex-1">
-                  <label className="mb-1.5 block text-sm font-medium text-gray-700">Assign to</label>
+                  <label className="mb-1.5 block text-sm font-medium text-text-primary">Assign to</label>
                   <div className="relative">
                     <div
                       onClick={() => setShowAssigneeSearch(true)}
-                      className="flex h-[38px] cursor-pointer items-center rounded-lg border border-gray-300 px-3 text-sm text-gray-700 hover:border-gray-400"
+                      className="flex h-[38px] cursor-pointer items-center rounded-lg border border-border-subtle px-3 text-sm text-text-secondary hover:border-gray-400 bg-white"
                     >
                       {newAssignee
                         ? users?.find((u: any) => u.id === newAssignee)?.name ?? 'Unknown'
                         : 'Myself'}
                     </div>
                     {showAssigneeSearch && (
-                      <div className="absolute left-0 top-full z-10 mt-1 w-full rounded-lg border border-gray-200 bg-white p-2 shadow-lg">
+                      <div className="absolute left-0 top-full z-10 mt-1 w-full rounded-lg border border-border-subtle bg-white p-2 shadow-card">
                         <input
                           type="text"
                           value={assigneeSearch}
                           onChange={(e) => setAssigneeSearch(e.target.value)}
                           placeholder="Search users..."
                           autoFocus
-                          className="mb-2 w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs focus:border-accent-500 focus:outline-none"
+                          className="mb-2 w-full rounded-md border border-border-subtle px-2 py-1.5 text-xs focus:border-accent-500 focus:outline-none"
                         />
                         <div className="max-h-32 space-y-0.5 overflow-y-auto">
                           <button
@@ -185,7 +349,7 @@ export default function TasksPage() {
                               setNewAssignee('')
                               setShowAssigneeSearch(false)
                             }}
-                            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs text-gray-700 hover:bg-gray-50"
+                            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs text-text-secondary hover:bg-gray-50"
                           >
                             <User className="h-3 w-3" />
                             Myself
@@ -198,7 +362,7 @@ export default function TasksPage() {
                                 setNewAssignee(u.id)
                                 setShowAssigneeSearch(false)
                               }}
-                              className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs text-gray-700 hover:bg-gray-50"
+                              className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs text-text-secondary hover:bg-gray-50"
                             >
                               <User className="h-3 w-3" />
                               {u.name ?? u.email}
@@ -225,124 +389,31 @@ export default function TasksPage() {
         </Card>
       )}
 
-      {/* Search */}
+      {/* ── Search ── */}
       <div className="relative shrink-0">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary" />
         <input
           value={taskSearch}
           onChange={(e) => setTaskSearch(e.target.value)}
           placeholder="Search tasks..."
-          className="block w-full rounded-lg border border-gray-200 pl-9 pr-3 py-2 text-sm focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20 bg-white"
+          className="block w-full rounded-lg border border-border-subtle pl-9 pr-3 py-2 text-sm focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20 bg-white"
         />
       </div>
 
-      {/* Kanban columns */}
-      <div className="grid grid-cols-4 gap-3 flex-1 min-h-0 grid-rows-1fr">
-        {columns.map((column) => {
-          const colTasks = (tasks?.filter((t: any) => t.status === column) ?? []).filter((t: any) =>
-            !taskSearch || t.title.toLowerCase().includes(taskSearch.toLowerCase())
-          )
-          const isEmpty = !isLoading && colTasks.length === 0
-
-          return (
-            <div
+      {/* ── Kanban board ── */}
+      <DragDropContext onDragEnd={onDragEnd}>
+        <div className="grid grid-cols-4 gap-4 flex-1 min-h-0" style={{ gridAutoRows: '1fr' }}>
+          {columns.map((column) => (
+            <TaskColumn
               key={column}
-              className="flex flex-col min-h-0"
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => {
-                const taskId = e.dataTransfer.getData('taskId')
-                if (taskId) handleDrop(taskId, column)
-              }}
-            >
-              <div className="flex items-center justify-between px-1 mb-2 shrink-0">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-                  {columnLabels[column]}
-                </h3>
-                {!isLoading && (
-                  <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-400">
-                    {colTasks.length}
-                  </span>
-                )}
-              </div>
-
-              {isLoading ? (
-                <Card aria-hidden="true" className="shrink-0">
-                  <CardContent className="space-y-3 py-6">
-                    {[...Array(3)].map((_, i) => (
-                      <div key={i} className="space-y-1.5">
-                        <div className="h-4 w-full animate-pulse rounded bg-gray-100" />
-                        <div className="h-3 w-3/4 animate-pulse rounded bg-gray-100" />
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              ) : isEmpty ? (
-                <div className="flex flex-col flex-1 items-center justify-center">
-                  <Card className="border-dashed border-gray-200 w-full">
-                    <CardContent>
-                      <div className="flex flex-col items-center py-8 text-gray-300">
-                        <ListTodo className="mb-2 h-7 w-7" />
-                        <p className="text-xs">No tasks</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              ) : (
-                <div className="flex flex-col flex-1 overflow-y-auto">
-                  <div className="space-y-2">
-                    {colTasks.map((task: any) => (
-                      <Card
-                        key={task.id}
-                        className="cursor-grab active:cursor-grabbing select-none"
-                        draggable
-                        onDragStart={(e) => handleDragStart(e, task.id)}
-                      >
-                        <CardContent className="p-4">
-                          <p className="text-sm font-medium text-gray-900">{task.title}</p>
-                          {task.description && (
-                            <p className="mt-1.5 text-xs text-gray-500 line-clamp-2">
-                              {task.description}
-                            </p>
-                          )}
-                          <div className="mt-3 flex flex-wrap items-center gap-2">
-                            {task.priority && (
-                              <span
-                                className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${
-                                task.priority === 'URGENT'
-                                  ? 'bg-red-50 text-red-700'
-                                  : task.priority === 'HIGH'
-                                    ? 'bg-orange-50 text-orange-700'
-                                    : task.priority === 'MEDIUM'
-                                      ? 'bg-accent-50 text-accent-700'
-                                      : 'bg-gray-50 text-gray-600'
-                              }`}
-                            >
-                              {task.priority}
-                            </span>
-                          )}
-                          {task.assignee_name && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-gray-50 px-2 py-0.5 text-[10px] text-gray-500">
-                              <User className="h-2.5 w-2.5" />
-                              {task.assignee_name}
-                            </span>
-                          )}
-                          <button
-                            onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(task.id) }}
-                            className="ml-auto p-1 text-gray-300 hover:text-red-500 transition-colors cursor-pointer"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-              )}
-            </div>
-          )
-        })}
-      </div>
+              column={column}
+              tasks={tasks ?? []}
+              isLoading={isLoading}
+              search={taskSearch}
+            />
+          ))}
+        </div>
+      </DragDropContext>
 
       <ConfirmDialog
         open={!!confirmDeleteId}
