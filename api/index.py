@@ -11,6 +11,16 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
 if os.environ.get("VERCEL"):
     os.environ["DJANGO_SETTINGS_MODULE"] = "config.production"
 
+import django
+django.setup()
+
+# Run pending migrations on cold start so the database schema is up-to-date
+from django.core.management import call_command
+try:
+    call_command("migrate", "--noinput", verbosity=0)
+except Exception:
+    pass  # non-fatal — the app will still attempt queries
+
 from django.core.wsgi import get_wsgi_application
 
 app = get_wsgi_application()
