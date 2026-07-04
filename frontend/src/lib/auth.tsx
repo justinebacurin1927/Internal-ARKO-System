@@ -1,5 +1,8 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, useRef, type ReactNode } from 'react'
 import { api } from './api'
+
+const SESSION_TIMEOUT_MS = 30 * 60 * 1000 // 30 minutes idle → auto-logout
+const IDLE_CHECK_INTERVAL = 10_000          // check every 10s
 
 interface User {
   id: string
@@ -24,6 +27,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('token'))
   const [loading, setLoading] = useState(true)
+  const lastActivity = useRef(Date.now())
+  const idleTimer = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  // ── Idle session timeout ──
+  const resetIdle = useRef(() => { lastActivity.current = Date.now() }).current
+
+  useEffect(() => {
+    if (!token) {
+      if (idleTimer.current) { clearInterval(idleTimer.current); idleTimer.current = null }
+      return
+    }
+
+    const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart']
+    events.forEach((e) => window.addEventListener(e, resetIdle, { passive: true }))
+
+    idleTimer.current = setInterval(() => {
+      if (Date.now() - lastActivity.current >= SESSION_TIMEOUT_MS) {
+        logout()
+      }
+    }, IDLE_CHECK_INTERVAL)
+
+    return () => {
+      events.forEach((e) => window.removeEventListener(e, resetIdle))
+      if (idleTimer.current) { clearInterval(idleTimer.current); idleTimer.current = null }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token])
 
   useEffect(() => {
     if (token) {

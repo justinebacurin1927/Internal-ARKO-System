@@ -3,7 +3,10 @@
 @theme {
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-display: 'Abril Fatface', serif;
+  --font-display-smooth: 'Oswald', sans-serif;
   --font-serif: 'Playfair Display', Georgia, serif;
+  --font-label: 'DM Sans', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
 
   /* Backgrounds */
   --color-bg-app: #F4F5F2;
@@ -48,6 +51,10 @@
 
   /* Shadows — green-tinted */
   --shadow-card: 0 1px 2px rgba(26, 29, 26, 0.04), 0 1px 3px rgba(26, 29, 26, 0.06);
+
+  /* Animation utilities */
+  --animate-fade-in: fade-in 0.3s ease-out;
+  --animate-slide-up: slide-up 0.3s ease-out;
 }
 
 @layer base {
@@ -73,6 +80,39 @@
 @keyframes card-enter {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in-left {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes float-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(30px, -40px) scale(1.05); }
+  50% { transform: translate(-20px, -20px) scale(0.97); }
+  75% { transform: translate(40px, 30px) scale(1.02); }
+}
+
+@keyframes float-drift-slow {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(-40px, 30px) scale(1.03); }
+  66% { transform: translate(20px, -30px) scale(0.96); }
+}
+
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 0.04; }
+  50% { opacity: 0.08; }
+}
+
+@keyframes shimmer-shift {
+  0% { transform: translateX(-100%) skewX(-15deg); }
+  100% { transform: translateX(200%) skewX(-15deg); }
 }
 
 @keyframes count-up {

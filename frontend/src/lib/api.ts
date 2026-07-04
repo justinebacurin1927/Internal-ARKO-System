@@ -108,6 +108,12 @@ export const api = {
   deleteTransaction: (id: number) =>
     request<void>(`/finance/transactions/${id}/`, { method: 'DELETE' }),
   getCategories: () => request<any[]>('/finance/categories/'),
+  getMetrics: () => request<any[]>('/finance/metrics/'),
+  updateMetric: (key: string, value: number) =>
+    request<any>(`/finance/metrics/${key}/`, {
+      method: 'PATCH',
+      body: JSON.stringify({ value }),
+    }),
 
   // Messages
   getConversations: () => request<any[]>('/messages/conversations/'),
@@ -165,6 +171,30 @@ export const api = {
     request<any[]>(`/events/sprints/${activeOnly ? '?active=true' : ''}`),
   createSprint: (data: any) =>
     request<any>('/events/sprints/', { method: 'POST', body: JSON.stringify(data) }),
+
+  // Budgets
+  getBudgets: (month?: number, year?: number) =>
+    request<any[]>(`/finance/budgets/${month || year ? `?${month ? `month=${month}` : ''}${month && year ? '&' : ''}${year ? `year=${year}` : ''}` : ''}`),
+  createBudget: (data: any) =>
+    request<any>('/finance/budgets/', { method: 'POST', body: JSON.stringify(data) }),
+  updateBudget: (id: number, data: any) =>
+    request<any>(`/finance/budgets/${id}/`, { method: 'PATCH', body: JSON.stringify(data) }),
+  deleteBudget: (id: number) =>
+    request<void>(`/finance/budgets/${id}/`, { method: 'DELETE' }),
+
+  // Recurring transactions
+  getRecurring: () =>
+    request<any[]>('/finance/recurring/'),
+  createRecurring: (data: any) =>
+    request<any>('/finance/recurring/', { method: 'POST', body: JSON.stringify(data) }),
+  updateRecurring: (id: number, data: any) =>
+    request<any>(`/finance/recurring/${id}/`, { method: 'PATCH', body: JSON.stringify(data) }),
+  deleteRecurring: (id: number) =>
+    request<void>(`/finance/recurring/${id}/`, { method: 'DELETE' }),
+
+  // Monthly summary
+  getMonthlySummary: (year?: number) =>
+    request<any>(`/finance/monthly-summary/${year ? `?year=${year}` : ''}`),
 
   // Users
   searchUsers: (query?: string) =>
