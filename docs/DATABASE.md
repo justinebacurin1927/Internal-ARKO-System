@@ -1,6 +1,6 @@
 # ARKO Database Schema
 
-> **Last updated:** 2026-07-04
+> **Last updated:** 2026-07-05
 > **Database:** PostgreSQL (Neon production, Docker local)
 > **ORM:** Django 6.0 Models
 
@@ -35,6 +35,8 @@
 
 The central user table. Custom user model using `AbstractBaseUser` + `PermissionsMixin`. Authentication is email-based (`USERNAME_FIELD = 'email'`).
 
+**Permission model:** Admin endpoints use a custom `IsRoleAdmin` permission class that checks `role = 'ADMIN'` — **not** Django's built-in `IsAdminUser` (which checks `is_staff`). The `is_staff` field is kept in sync with `role` as a secondary flag; `role` is the source of truth for authorization.
+
 | Column | Type | Constraints | Notes |
 |--------|------|-------------|-------|
 | `id` | `BigAutoField` | PK | Auto-generated |
@@ -47,7 +49,7 @@ The central user table. Custom user model using `AbstractBaseUser` + `Permission
 | `role` | `VARCHAR(20)` | NOT NULL, default `'USER'` | See roles |
 | `status` | `VARCHAR(20)` | NOT NULL, default `'ACTIVE'` | See statuses |
 | `is_active` | `BOOLEAN` | NOT NULL, default `true` | |
-| `is_staff` | `BOOLEAN` | NOT NULL, default `false` | Admin access |
+| `is_staff` | `BOOLEAN` | NOT NULL, default `false` | Synced from `role` — not the primary gate |
 | `is_superuser` | `BOOLEAN` | NOT NULL, default `false` | |
 | `created_at` | `TIMESTAMP` | NOT NULL, auto | |
 | `updated_at` | `TIMESTAMP` | NOT NULL, auto | |

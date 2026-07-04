@@ -4,7 +4,7 @@ tags:
   - arko
   - architecture
 created: 2026-07-01
-updated: 2026-07-04
+updated: 2026-07-05
 ---
 
 # ARKO Architecture
@@ -152,6 +152,31 @@ Backing Services:
 2. Vercel rewrites `/api/{path}` → `api/index.py` serverless function
 3. `api/index.py` loads Django WSGI app with production settings (`config.production`)
 4. Django routes the request through URL dispatcher
+
+## Auth & Permission Model
+
+### Role-based admin access
+
+Admin endpoints use a custom `IsRoleAdmin` permission class that checks the `role` field directly (`role == 'ADMIN'`) rather than Django's built-in `IsAdminUser` (which checks `is_staff`):
+
+```python
+class IsRoleAdmin(BasePermission):
+    def has_permission(self, request, view):
+        return bool(request.user and request.user.is_authenticated
+                    and getattr(request.user, 'role', None) == 'ADMIN')
+```
+
+This decouples admin authorization from `is_staff` so that:
+- Creating an admin user automatically syncs `is_staff = True` (done in the view, not the serializer)
+- The `role` field is always the source of truth
+- The JWT token carries the user profile (including `role`) returned by `/api/auth/me/`
+
+### Authorization flow
+
+1. User logs in → receives JWT + user profile (includes `role`)
+2. Frontend checks `user.role === 'ADMIN'` to show/hide admin UI (nav items, buttons)
+3. API requests use Bearer token → backend verifies JWT → `IsRoleAdmin` checks `request.user.role`
+4. All 4 admin endpoints (`list`, `create`, `update`, `delete`) use `IsRoleAdmin`
 
 ### Django settings split
 
