@@ -69,7 +69,7 @@ export default function MetricsPage() {
     },
   })
 
-  const commitEdit = (key: string, rawValue: string, def: any) => {
+  const commitEdit = (key: string, rawValue: string, _def: any) => {
     const parsed = parseFloat(rawValue)
     if (isNaN(parsed)) return
     updateMetric.mutate({ key, value: parsed })
