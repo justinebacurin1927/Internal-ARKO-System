@@ -150,6 +150,7 @@ export default function UserManagementPage() {
           <AlertCircle className="h-6 w-6 text-red-500" />
         </div>
         <p className="text-sm font-medium text-text-primary">Failed to load users</p>
+        <p className="text-xs text-text-tertiary max-w-xs">{(error as any)?.message || 'An unknown error occurred'}</p>
         <button onClick={() => queryClient.invalidateQueries({ queryKey: ['admin-users'] })}
           className="text-xs font-medium text-accent-600 hover:text-accent-500 cursor-pointer">
           Try again

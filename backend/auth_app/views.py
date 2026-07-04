@@ -1,11 +1,17 @@
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
+from rest_framework.permissions import AllowAny, IsAuthenticated, BasePermission
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 from .models import User
 from .serializers import RegisterSerializer, AdminCreateUserSerializer, LoginSerializer, UserSerializer
+
+
+class IsRoleAdmin(BasePermission):
+    """Grant access if the user has the ADMIN role (checks `role` field, not `is_staff`)."""
+    def has_permission(self, request, view):
+        return bool(request.user and request.user.is_authenticated and getattr(request.user, 'role', None) == 'ADMIN')
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -75,7 +81,7 @@ def change_password(request):
 @permission_classes([IsAuthenticated])
 def bootstrap_admin(request):
     """Promote the requesting user to admin if no admin exists yet."""
-    if User.objects.filter(is_staff=True).exists():
+    if User.objects.filter(role='ADMIN').exists():
         return Response({'detail': 'An admin already exists'}, status=status.HTTP_400_BAD_REQUEST)
     request.user.is_staff = True
     request.user.is_superuser = True
@@ -86,7 +92,7 @@ def bootstrap_admin(request):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated, IsAdminUser])
+@permission_classes([IsAuthenticated, IsRoleAdmin])
 def admin_list_users(request):
     """List all users (admin only)."""
     users = User.objects.all().order_by('-created_at')
@@ -95,7 +101,7 @@ def admin_list_users(request):
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated, IsAdminUser])
+@permission_classes([IsAuthenticated, IsRoleAdmin])
 def admin_create_user(request):
     """Create a user with full fields (admin only)."""
     serializer = AdminCreateUserSerializer(data=request.data)
@@ -116,7 +122,7 @@ def admin_create_user(request):
 
 
 @api_view(['PATCH'])
-@permission_classes([IsAuthenticated, IsAdminUser])
+@permission_classes([IsAuthenticated, IsRoleAdmin])
 def admin_update_user(request, user_id):
     """Update a user's details (admin only)."""
     try:
@@ -127,18 +133,21 @@ def admin_update_user(request, user_id):
     # Only allow certain fields to be updated by admin
     allowed = {'name', 'email', 'phone', 'title', 'role', 'status', 'is_active'}
     update_data = {k: v for k, v in request.data.items() if k in allowed}
-    # Sync is_staff with role
-    if 'role' in update_data:
-        update_data['is_staff'] = update_data['role'] == 'ADMIN'
 
     serializer = UserSerializer(user, data=update_data, partial=True)
     serializer.is_valid(raise_exception=True)
     serializer.save()
+
+    # Sync is_staff with role (serializer doesn't expose is_staff)
+    if 'role' in update_data:
+        user.is_staff = update_data['role'] == 'ADMIN'
+        user.save(update_fields=['is_staff'])
+
     return Response(serializer.data)
 
 
 @api_view(['DELETE'])
-@permission_classes([IsAuthenticated, IsAdminUser])
+@permission_classes([IsAuthenticated, IsRoleAdmin])
 def admin_delete_user(request, user_id):
     """Delete a user (admin only)."""
     try:
