@@ -325,6 +325,9 @@ export default function TasksPage() {
       queryClient.invalidateQueries({ queryKey: ['tasks'] })
       toast('Task created')
     },
+    onError: (err: any) => {
+      toast(err?.message || 'Failed to create task', 'error')
+    },
   })
 
   const deleteTask = useMutation({

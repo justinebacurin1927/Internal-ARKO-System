@@ -318,6 +318,7 @@ export default function MessagesPage() {
       setMessage('')
       setTimeout(() => { textareaRef.current?.focus(); autoResize() }, 50)
     },
+    onError: (err: any) => toast(err?.message || 'Failed to send message', 'error'),
   })
 
   const editMsg = useMutation({
@@ -328,6 +329,7 @@ export default function MessagesPage() {
       setEditingMsgId(null)
       toast('Message updated')
     },
+    onError: (err: any) => toast(err?.message || 'Failed to edit message', 'error'),
   })
 
   const deleteMsg = useMutation({
@@ -338,6 +340,7 @@ export default function MessagesPage() {
       setConfirmDeleteMsgId(null)
       toast('Message deleted')
     },
+    onError: (err: any) => toast(err?.message || 'Failed to delete message', 'error'),
   })
 
   const createConv = useMutation({
@@ -350,6 +353,7 @@ export default function MessagesPage() {
       setSelectedUsers([])
       toast('Conversation started')
     },
+    onError: (err: any) => toast(err?.message || 'Failed to create conversation', 'error'),
   })
 
   useEffect(() => {

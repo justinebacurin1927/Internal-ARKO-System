@@ -55,7 +55,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="h-full flex flex-col gap-3 max-w-2xl">
+    <div className="h-full flex flex-col gap-3 max-w-2xl overflow-y-auto">
       <div className="shrink-0">
         <h1 className="text-2xl font-bold text-text-primary tracking-tight">Settings</h1>
         <p className="text-sm text-text-tertiary mt-1">Manage your account</p>

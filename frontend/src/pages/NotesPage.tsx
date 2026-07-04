@@ -25,8 +25,12 @@ export default function NotesPage() {
     mutationFn: () => api.createNote({ title: 'Untitled', content: '' }),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['notes'] })
-      selectNote(data)
       toast('Note created')
+      // Delay selectNote to let the refetch settle, preventing race with empty state
+      setTimeout(() => selectNote(data), 50)
+    },
+    onError: (err: any) => {
+      toast(err?.message || 'Failed to create note', 'error')
     },
   })
 

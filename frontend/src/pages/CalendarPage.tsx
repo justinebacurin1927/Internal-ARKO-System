@@ -393,7 +393,7 @@ function WeekView({weekDays,sprint,events,onCellClick,onEventClick,isInSprint}:{
             </div>
             {weekDays.map((d,di)=>(
               <button key={`c-${si}-${di}`} onClick={()=>onCellClick(d.ds,si)}
-                className={`text-left transition-colors cursor-pointer ${di<6?'border-r border-border-subtle':''} ${si<SLOT_COUNT-1?'border-b border-border-subtle':''} ${d.today?'bg-accent-50/40':isInSprint(d.ds)?'bg-accent-500/[0.02]':''} hover:bg-accent-50/60`} />
+                className={`text-left transition-colors cursor-pointer touch-manipulation ${di<6?'border-r border-border-subtle':''} ${si<SLOT_COUNT-1?'border-b border-border-subtle':''} ${d.today?'bg-accent-50/40':isInSprint(d.ds)?'bg-accent-500/[0.02]':''} hover:bg-accent-50/60`} />
             ))}
           </div>
         ))}
