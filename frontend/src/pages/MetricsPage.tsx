@@ -143,7 +143,7 @@ export default function MetricsPage() {
             : raw
           const trendInfo = metric.history?.length
             ? formatTrend(raw, prev, metric)
-            : { value: '', direction: 'up' }
+            : { value: '', direction: 'up' as const }
           const isEditable = metric.calculation === 'manual'
           const isAuto = metric.calculation === 'calculated' || metric.calculation === 'derived'
 
