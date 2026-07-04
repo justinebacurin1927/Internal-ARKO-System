@@ -11,6 +11,7 @@ import NotesPage from './pages/NotesPage'
 import FinancePage from './pages/FinancePage'
 import CalendarPage from './pages/CalendarPage'
 import SettingsPage from './pages/SettingsPage'
+import UserManagementPage from './pages/UserManagementPage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
@@ -40,6 +41,7 @@ export default function App() {
         <Route path="calendar" element={<CalendarPage />} />
         <Route path="finance" element={<FinancePage />} />
         <Route path="settings" element={<SettingsPage />} />
+        <Route path="users" element={<UserManagementPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>

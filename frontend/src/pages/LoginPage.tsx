@@ -394,15 +394,12 @@ function LoginForm() {
           </span>
         </div>
 
-        {/* Signup link */}
+        {/* Admin-managed registration */}
         <p
           className="mt-5 text-center text-sm text-zinc-500"
           style={{ fontFamily: "'DM Sans', sans-serif", animation: 'fade-in-up 0.5s ease-out 0.3s both' }}
         >
-          Don&apos;t have an account?{' '}
-          <a href="/register" className="font-medium text-accent-500 hover:text-accent-400 transition-colors">
-            Create one
-          </a>
+          Account creation is managed by your administrator
         </p>
 
         {/* Divider */}

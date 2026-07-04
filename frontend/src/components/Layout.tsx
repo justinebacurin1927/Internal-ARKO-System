@@ -13,12 +13,13 @@ import {
   Search,
   LogOut,
   Settings,
+  Users,
 } from 'lucide-react'
 
 const today = new Date()
 const dateStr = today.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
 
-const categories = [
+const ALL_CATEGORIES = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', end: true },
   { to: '/dashboard/finance', icon: TrendingUp, label: 'Analytics', end: false },
   { to: '/dashboard/calendar', icon: CalendarDays, label: 'Calendar', end: false },
@@ -26,6 +27,7 @@ const categories = [
   { to: '/dashboard/notes', icon: FileText, label: 'Notes' },
   { to: '/dashboard/messages', icon: MessageSquare, label: 'Messages' },
   { to: '/dashboard/reminders', icon: Bell, label: 'Reminders' },
+  { to: '/dashboard/users', icon: Users, label: 'Users', end: false, admin: true },
 ]
 
 /* ─── Floating circle — ring-based, no bg fill ─── */
@@ -83,6 +85,10 @@ export default function DashboardLayout() {
 
   const handleLogout = () => { logout(); navigate('/login') }
   const initial = (user?.name ?? user?.email ?? '?').charAt(0).toUpperCase()
+
+  const categories = ALL_CATEGORIES.filter(
+    (c) => !(c as any).admin || user?.role === 'ADMIN',
+  )
 
   const currentCategory = categories.find(
     (c) => (c.end ? location.pathname === c.to : location.pathname.startsWith(c.to)),

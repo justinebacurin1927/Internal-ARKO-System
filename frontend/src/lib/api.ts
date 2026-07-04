@@ -199,4 +199,14 @@ export const api = {
   // Users
   searchUsers: (query?: string) =>
     request<any[]>(`/users/search/${query ? `?query=${query}` : ''}`),
+
+  // Admin user management
+  adminListUsers: () =>
+    request<any[]>('/auth/users/'),
+  adminCreateUser: (data: any) =>
+    request<any>('/auth/users/create/', { method: 'POST', body: JSON.stringify(data) }),
+  adminUpdateUser: (id: number, data: any) =>
+    request<any>(`/auth/users/${id}/`, { method: 'PATCH', body: JSON.stringify(data) }),
+  adminDeleteUser: (id: number) =>
+    request<void>(`/auth/users/${id}/delete/`, { method: 'DELETE' }),
 }
