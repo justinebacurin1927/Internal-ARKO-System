@@ -71,6 +71,20 @@ def change_password(request):
     return Response({'detail': 'Password changed'})
 
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def bootstrap_admin(request):
+    """Promote the requesting user to admin if no admin exists yet."""
+    if User.objects.filter(is_staff=True).exists():
+        return Response({'detail': 'An admin already exists'}, status=status.HTTP_400_BAD_REQUEST)
+    request.user.is_staff = True
+    request.user.is_superuser = True
+    request.user.role = 'ADMIN'
+    request.user.save()
+    serializer = UserSerializer(request.user)
+    return Response(serializer.data)
+
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated, IsAdminUser])
 def admin_list_users(request):
