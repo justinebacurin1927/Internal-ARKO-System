@@ -63,7 +63,7 @@ export default function SettingsPage() {
 
       {/* Profile section */}
       <Card className="overflow-hidden shrink-0">
-        <CardContent className="p-6">
+        <CardContent className="p-4">
           <div className="flex items-center gap-3 mb-6">
             <div className="flex h-10 w-10 items-center justify-center rounded-full ring-1 ring-black/[0.06]">
               <User className="h-5 w-5 text-accent-500" />
@@ -106,7 +106,7 @@ export default function SettingsPage() {
 
       {/* Password section */}
       <Card className="overflow-hidden shrink-0">
-        <CardContent className="p-6">
+        <CardContent className="p-4">
           <div className="flex items-center gap-3 mb-6">
             <div className="flex h-10 w-10 items-center justify-center rounded-full ring-1 ring-black/[0.06]">
               <Lock className="h-5 w-5 text-accent-500" />

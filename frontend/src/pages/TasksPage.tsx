@@ -67,7 +67,7 @@ function TaskCard({ task, index, onDelete }: { task: any; index: number; onDelet
           {/* Drag handle bar — visible on hover */}
           <div
             {...provided.dragHandleProps}
-            className="flex items-center gap-2 px-4 pt-3 pb-1 cursor-grab active:cursor-grabbing select-none"
+            className="flex items-center gap-1.5 px-3 pt-2 pb-0.5 cursor-grab active:cursor-grabbing select-none"
           >
             <GripVertical className="h-3 w-3 text-[#D8DCD6] transition-colors group-hover/handle:text-text-tertiary" />
             <p className="text-sm font-medium text-text-primary flex-1 truncate min-w-0">
@@ -75,7 +75,7 @@ function TaskCard({ task, index, onDelete }: { task: any; index: number; onDelet
             </p>
           </div>
 
-          <div className="px-4 pb-3">
+          <div className="px-3 pb-2">
             {task.description && (
               <p className="text-xs text-text-tertiary line-clamp-2 mt-1.5 leading-relaxed">
                 {task.description}
@@ -307,11 +307,11 @@ export default function TasksPage() {
   }
 
   return (
-    <div className="h-full flex flex-col gap-4">
+    <div className="h-full flex flex-col gap-2">
       {/* ── Heading ── */}
       <div className="flex items-start justify-between shrink-0">
         <div>
-          <h1 className="text-xl font-bold text-text-primary tracking-tight">Tasks</h1>
+          <h1 className="text-sm font-bold text-text-primary tracking-tight">Tasks</h1>
           <p className="text-xs text-text-tertiary mt-0.5">Drag tasks between columns to update status</p>
         </div>
         <Button onClick={() => setShowNew(!showNew)}>
@@ -442,7 +442,7 @@ export default function TasksPage() {
 
       {/* ── Kanban board ── */}
       <DragDropContext onDragEnd={onDragEnd}>
-        <div className="grid grid-cols-4 gap-4 flex-1 min-h-0" style={{ gridAutoRows: '1fr' }}>
+        <div className="grid grid-cols-4 gap-3 flex-1 min-h-0" style={{ gridAutoRows: '1fr' }}>
           {columns.map((column) => (
             <TaskColumn
               key={column}

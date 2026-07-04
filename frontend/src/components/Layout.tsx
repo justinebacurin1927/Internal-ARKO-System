@@ -42,7 +42,7 @@ function CircleBtn({ children, active, title, onClick }: {
     <button
       onClick={onClick}
       title={title}
-      className={`flex h-10 w-10 items-center justify-center rounded-full transition-all duration-150 cursor-pointer ${
+      className={`flex h-9 w-9 items-center justify-center rounded-full transition-all duration-150 cursor-pointer ${
         active
           ? 'ring-2 ring-accent-500 text-accent-500 shadow-[0_2px_8px_rgba(45,106,79,0.25)]'
           : 'ring-1 ring-black/[0.06] text-text-tertiary hover:ring-accent-400 hover:text-accent-500 hover:shadow-[0_2px_8px_rgba(45,106,79,0.15)]'
@@ -100,8 +100,8 @@ export default function DashboardLayout() {
       <div className="flex h-full">
 
         {/* ── Left navigation rail ── */}
-        <nav className="sticky top-0 z-40 flex h-full w-[72px] shrink-0 flex-col items-center gap-3 pt-4">
-          <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-accent-500 shadow-sm">
+        <nav className="sticky top-0 z-40 flex h-full w-[72px] shrink-0 flex-col items-center gap-2 pt-3">
+          <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-accent-500 shadow-sm">
             <span className="text-sm font-bold text-white">A</span>
           </div>
 
@@ -111,7 +111,7 @@ export default function DashboardLayout() {
               to={item.to}
               end={item.end}
               className={({ isActive }) =>
-                `flex h-10 w-10 items-center justify-center rounded-full transition-all duration-150 cursor-pointer ${
+                `flex h-9 w-9 items-center justify-center rounded-full transition-all duration-150 cursor-pointer ${
                   isActive
                     ? 'ring-2 ring-accent-500 text-accent-500 shadow-[0_2px_8px_rgba(45,106,79,0.25)]'
                     : 'ring-1 ring-black/[0.06] text-text-tertiary hover:ring-accent-400 hover:text-accent-500 hover:shadow-[0_2px_8px_rgba(45,106,79,0.15)]'
@@ -119,16 +119,16 @@ export default function DashboardLayout() {
               }
               title={item.label}
             >
-              <item.icon className="h-[18px] w-[18px]" />
+              <item.icon className="h-4 w-4" />
             </NavLink>
           ))}
 
           <div className="flex-1" />
 
-          <div className="relative mb-4" ref={menuRef}>
+          <div className="relative mb-3" ref={menuRef}>
             <button
               onClick={() => setShowMenu(!showMenu)}
-              className="flex h-10 w-10 items-center justify-center rounded-full ring-1 ring-black/[0.06] text-text-tertiary text-xs font-bold hover:ring-accent-300 hover:text-accent-500 transition-all cursor-pointer"
+              className="flex h-9 w-9 items-center justify-center rounded-full ring-1 ring-black/[0.06] text-text-tertiary text-xs font-bold hover:ring-accent-300 hover:text-accent-500 transition-all cursor-pointer"
               title="User menu"
             >
               {initial}
@@ -162,12 +162,12 @@ export default function DashboardLayout() {
         <div className="flex flex-1 flex-col min-w-0">
 
           {/* Floating header */}
-          <div className="sticky top-0 z-30 mx-6 mt-4 mb-4 flex items-center justify-between rounded-full ring-1 ring-black/[0.08] px-5 h-12 shrink-0">
-            <div className="flex items-center gap-4">
-              <span className="text-sm font-semibold text-text-primary">
+          <div className="sticky top-0 z-30 mx-6 mt-3 mb-3 flex items-center justify-between rounded-full ring-1 ring-black/[0.08] px-4 h-10 shrink-0">
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-semibold text-text-primary">
                 {currentCategory?.label ?? 'Dashboard'}
               </span>
-              <span className="hidden sm:block text-xs text-text-tertiary font-medium">
+              <span className="hidden sm:block text-[11px] text-text-tertiary font-medium">
                 {dateStr}
               </span>
               <span className={`flex items-center gap-1.5 text-[10px] font-medium ${
@@ -190,14 +190,14 @@ export default function DashboardLayout() {
                     ref={searchRef}
                     type="text"
                     placeholder="Search..."
-                    className="ml-2 bg-transparent text-sm text-text-primary outline-none placeholder:text-text-tertiary w-32 lg:w-44"
+                    className="ml-2 bg-transparent text-sm text-text-primary outline-none placeholder:text-text-tertiary w-28 lg:w-36"
                     onBlur={() => setShowSearch(false)}
                     onKeyDown={(e) => e.key === 'Escape' && setShowSearch(false)}
                   />
                 </div>
               ) : (
                 <CircleBtn title="Search" onClick={() => setShowSearch(true)}>
-                  <Search className="h-[18px] w-[18px]" />
+                  <Search className="h-4 w-4" />
                 </CircleBtn>
               )}
             </div>

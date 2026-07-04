@@ -202,7 +202,7 @@ export default function CalendarPage() {
       {/* ── Header ── */}
       <header className="flex items-center justify-between shrink-0 mb-3">
         <div className="flex items-center gap-3">
-          <h1 className="text-xl font-bold text-text-primary tracking-tight">Calendar</h1>
+          <h1 className="text-base font-bold text-text-primary tracking-tight">Calendar</h1>
           {activeSprint && (
             <span className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-semibold text-white uppercase tracking-widest shadow-xs"
               style={{backgroundColor:activeSprint.color}}>

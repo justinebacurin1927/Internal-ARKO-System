@@ -183,7 +183,7 @@ export default function NotesPage() {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Note title"
-                  className="text-lg font-bold text-gray-900 bg-transparent border-none focus:outline-none w-full"
+                  className="text-sm font-bold text-gray-900 bg-transparent border-none focus:outline-none w-full"
                 />
                 <Button
                   variant="ghost"

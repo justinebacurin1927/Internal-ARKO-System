@@ -104,7 +104,7 @@ export default function MetricsPage({ onOpenGlossary }: { onOpenGlossary: () => 
             Business KPIs
           </h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 px-3 pb-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 px-3 pb-3">
           {[...Array(10)].map((_, i) => (
             <div key={i} className="animate-pulse rounded-xl border border-border-subtle bg-white p-4 shadow-sm">
               <div className="mb-2 flex items-center justify-between">
@@ -150,7 +150,7 @@ export default function MetricsPage({ onOpenGlossary }: { onOpenGlossary: () => 
       </div>
 
       {/* KPI grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 px-3 pb-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 px-3 pb-3">
         {metrics?.map((metric: any) => {
           const raw = metric.value ?? 0
           const hist = metric.history?.length

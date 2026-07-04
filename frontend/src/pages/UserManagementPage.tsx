@@ -6,7 +6,7 @@ import { useToast } from '../lib/toast'
 import ConfirmDialog from '../components/ConfirmDialog'
 import {
   Plus, Pencil, Trash2, Search, Shield, UserCog, Clock,
-  Mail, Phone, Briefcase, BadgeCheck, CheckCircle, XCircle,
+  Mail, Phone, Briefcase, BadgeCheck, XCircle,
   AlertCircle, ChevronDown, X, RotateCcw, Users,
 } from 'lucide-react'
 
@@ -31,17 +31,6 @@ const roleStyles: Record<string, string> = {
   USER: 'bg-stone-100 text-stone-600 ring-stone-200',
 }
 
-const statusStyles: Record<string, string> = {
-  ACTIVE: 'text-emerald-600 bg-emerald-50 ring-emerald-200',
-  RESTRICTED: 'text-amber-600 bg-amber-50 ring-amber-200',
-  SUSPENDED: 'text-red-600 bg-red-50 ring-red-200',
-}
-
-const statusIcons: Record<string, React.ReactNode> = {
-  ACTIVE: <CheckCircle className="h-3 w-3" />,
-  RESTRICTED: <AlertCircle className="h-3 w-3" />,
-  SUSPENDED: <XCircle className="h-3 w-3" />,
-}
 
 export default function UserManagementPage() {
   const queryClient = useQueryClient()
@@ -179,7 +168,7 @@ export default function UserManagementPage() {
       {/* Header */}
       <div className="flex shrink-0 items-center justify-between mb-3">
         <div className="flex items-center gap-2.5">
-          <h1 className="text-lg font-bold text-text-primary" style={{ fontFamily: "'Playfair Display', serif" }}>
+          <h1 className="text-sm font-bold text-text-primary" style={{ fontFamily: "'Playfair Display', serif }} Display', serif" }}>
             User Management
           </h1>
           <span className="rounded-full bg-accent-50 px-2 py-[2px] text-[9px] font-medium text-accent-600 ring-1 ring-accent-200">
@@ -199,7 +188,7 @@ export default function UserManagementPage() {
 
       {/* Create/Edit form */}
       {formOpen && (
-        <div className="shrink-0 rounded-xl border border-accent-200 bg-white p-3.5 shadow-sm mb-3">
+        <div className="shrink-0 rounded-xl border border-accent-200 bg-white p-2.5 shadow-sm mb-2">
           <div className="flex items-center gap-2 mb-3">
             <div className="flex h-5 w-5 items-center justify-center rounded-md bg-accent-50">
               {editingUser
@@ -223,13 +212,13 @@ export default function UserManagementPage() {
               createUser.mutate()
             }
           }}>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-x-3 gap-y-2.5">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-x-2 gap-y-2">
               {/* Name */}
               <div>
                 <label className="mb-1 block text-[10px] font-medium text-text-secondary tracking-wide">Full Name</label>
                 <input type="text" value={formName} onChange={(e) => setFormName(e.target.value)}
                   placeholder="Juan Dela Cruz"
-                  className={inputBase + ' px-3 py-2.5 text-xs'}
+                  className={inputBase + ' px-3 py-2 text-[11px]'}
                 />
               </div>
 
@@ -238,7 +227,7 @@ export default function UserManagementPage() {
                 <label className="mb-1 block text-[10px] font-medium text-text-secondary tracking-wide">Email *</label>
                 <input type="email" value={formEmail} onChange={(e) => setFormEmail(e.target.value)}
                   required placeholder="user@example.com"
-                  className={inputBase + ' px-3 py-2.5 text-xs'}
+                  className={inputBase + ' px-3 py-2 text-[11px]'}
                 />
               </div>
 
@@ -251,7 +240,7 @@ export default function UserManagementPage() {
                   onChange={(e) => setFormPassword(e.target.value)}
                   required={!editingUser} minLength={6}
                   placeholder={editingUser ? '••••••••' : 'Min 6 characters'}
-                  className={inputBase + ' px-3 py-2.5 text-xs'}
+                  className={inputBase + ' px-3 py-2 text-[11px]'}
                 />
               </div>
 
@@ -262,7 +251,7 @@ export default function UserManagementPage() {
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-3 w-3 text-text-tertiary pointer-events-none transition-colors duration-150 group-focus-within:text-accent-500" />
                   <input type="text" value={formPhone} onChange={(e) => setFormPhone(e.target.value)}
                     placeholder="+63 912 345 6789"
-                    className={inputBase + ' pl-8 pr-3 py-2.5 text-xs'}
+                    className={inputBase + ' pl-8 pr-3 py-2 text-[11px]'}
                   />
                 </div>
               </div>
@@ -274,7 +263,7 @@ export default function UserManagementPage() {
                   <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 h-3 w-3 text-text-tertiary pointer-events-none transition-colors duration-150 group-focus-within:text-accent-500" />
                   <input type="text" value={formTitle} onChange={(e) => setFormTitle(e.target.value)}
                     placeholder="Software Engineer"
-                    className={inputBase + ' pl-8 pr-3 py-2.5 text-xs'}
+                    className={inputBase + ' pl-8 pr-3 py-2 text-[11px]'}
                   />
                 </div>
               </div>
@@ -288,7 +277,7 @@ export default function UserManagementPage() {
                 </label>
                 <input type="text" value={formVerificationId} disabled
                   placeholder="Government ID or company ID"
-                  className={inputBase + ' px-3 py-2.5 text-xs opacity-50'}
+                  className={inputBase + ' px-3 py-2 text-[11px] opacity-50'}
                 />
               </div>
 
@@ -298,7 +287,7 @@ export default function UserManagementPage() {
                 <div className="relative group">
                   <Shield className="absolute left-3 top-1/2 -translate-y-1/2 h-3 w-3 text-text-tertiary pointer-events-none z-10 transition-colors duration-150 group-focus-within:text-accent-500" />
                   <select value={formRole} onChange={(e) => setFormRole(e.target.value)}
-                    className={selectBase + ' pl-8 pr-8 py-2.5 text-xs'}>
+                    className={selectBase + ' pl-8 pr-8 py-2 text-[11px]'}>
                     <option value="USER">User</option>
                     <option value="MEMBER">Member</option>
                     <option value="ADMIN">Admin</option>
@@ -313,7 +302,7 @@ export default function UserManagementPage() {
                 <div className="relative group">
                   <UserCog className="absolute left-3 top-1/2 -translate-y-1/2 h-3 w-3 text-text-tertiary pointer-events-none z-10 transition-colors duration-150 group-focus-within:text-accent-500" />
                   <select value={formStatus} onChange={(e) => setFormStatus(e.target.value)}
-                    className={selectBase + ' pl-8 pr-8 py-2.5 text-xs'}>
+                    className={selectBase + ' pl-8 pr-8 py-2 text-[11px]'}>
                     <option value="ACTIVE">Active</option>
                     <option value="RESTRICTED">Restricted</option>
                     <option value="SUSPENDED">Suspended</option>
@@ -327,7 +316,7 @@ export default function UserManagementPage() {
             <div className="flex items-center gap-2 mt-3 pt-2.5 border-t border-border-subtle">
               <button type="submit" disabled={submitDisabled}
                 className={[
-                  'flex-1 rounded-xl px-4 py-2.5 text-xs font-semibold text-white transition-all duration-150',
+                  'flex-1 rounded-xl px-4 py-2 text-[11px] font-semibold text-white transition-all duration-150',
                   'bg-accent-600 hover:bg-accent-500 active:bg-accent-700 active:scale-[0.97]',
                   'disabled:opacity-30 disabled:cursor-not-allowed disabled:active:scale-100 disabled:hover:bg-accent-600',
                 ].join(' ')}
@@ -338,7 +327,7 @@ export default function UserManagementPage() {
                 }
               </button>
               <button type="button" onClick={resetForm}
-                className="rounded-xl border border-border-subtle px-4 py-2.5 text-xs font-medium text-text-secondary hover:text-text-primary hover:bg-accent-50 transition-all duration-150">
+                className="rounded-xl border border-border-subtle px-4 py-2 text-[11px] font-medium text-text-secondary hover:text-text-primary hover:bg-accent-50 transition-all duration-150">
                 Cancel
               </button>
             </div>
@@ -366,8 +355,8 @@ export default function UserManagementPage() {
           <div className="space-y-2">
             {[...Array(5)].map((_, i) => (
               <div key={i} className="flex items-center gap-3 rounded-xl border border-border-subtle bg-white p-3">
-                <div className="h-8 w-8 animate-pulse rounded-full bg-accent-100" />
-                <div className="flex-1 space-y-1.5">
+                <div className="h-7 w-7 animate-pulse rounded-full bg-accent-100" />
+                <div className="flex-1 space-y-1">
                   <div className="h-3 w-32 animate-pulse rounded bg-accent-100" />
                   <div className="h-2 w-24 animate-pulse rounded bg-accent-100" />
                 </div>
@@ -389,21 +378,21 @@ export default function UserManagementPage() {
             )}
           </div>
         ) : (
-          <div className="space-y-1.5">
+          <div className="space-y-1">
             {filtered.map((u: any) => {
               const isCurrentUser = currentUser?.id === u.id
               const joined = u.created_at ? new Date(u.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'
               return (
                 <div key={u.id}
                   className={[
-                    'group/user flex items-center justify-between rounded-xl border bg-white px-3.5 py-3 transition-all duration-100',
+                    'group/user flex items-center justify-between rounded-xl border bg-white px-3 py-2.5 transition-all duration-100',
                     isCurrentUser ? 'border-accent-300 ring-1 ring-accent-200/30' : 'border-border-subtle hover:border-accent-200',
                   ].join(' ')}
                 >
                   <div className="flex min-w-0 items-center gap-3">
                     {/* Avatar */}
                     <div className={[
-                      'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold',
+                      'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold',
                       u.role === 'ADMIN' ? 'bg-accent-100 text-accent-700' :
                       u.role === 'MEMBER' ? 'bg-emerald-50 text-emerald-700' :
                       'bg-stone-100 text-stone-600',

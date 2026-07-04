@@ -23,9 +23,9 @@ function getGreeting(): { text: string; icon: typeof Sun } {
 
 function StatPill({ icon: Icon, value, label }: { icon: any; value: number; label: string }) {
   return (
-    <div className="flex items-center gap-1.5 rounded-full ring-1 ring-black/[0.06] bg-white px-3 py-1.5">
+    <div className="flex items-center gap-1.5 rounded-full ring-1 ring-black/[0.06] bg-white px-2.5 py-1">
       <Icon className="h-3.5 w-3.5 text-text-tertiary" />
-      <span className="text-sm font-semibold text-text-primary tabular-nums">{value}</span>
+      <span className="text-xs font-semibold text-text-primary tabular-nums">{value}</span>
       <span className="text-[10px] text-text-tertiary font-medium hidden sm:inline">{label}</span>
     </div>
   )
@@ -62,7 +62,7 @@ function GreetingBand({ totalTasks, noteCount, reminderCount }: { totalTasks: nu
           <Icon className="h-[18px] w-[18px]" />
         </div>
         <div>
-          <h1 className="text-lg font-semibold text-text-primary tracking-tight">
+          <h1 className="text-xs font-semibold text-text-primary tracking-tight">
             {text}, <span className="text-accent-500">{user?.name?.split(' ')[0] ?? 'Founder'}</span>
           </h1>
           <p className="text-xs text-text-tertiary">
@@ -330,20 +330,20 @@ export default function DashboardHome() {
   const cardDelay = (i: number) => ({ animationDelay: `${40 + i * 60}ms` })
 
   return (
-    <div className="h-full flex flex-col gap-4">
+    <div className="h-full flex flex-col gap-2">
 
       {/* ═══ Greeting band ═══ */}
       <GreetingBand totalTasks={totalTasks} noteCount={notes?.length ?? 0} reminderCount={incompleteReminders.length} />
 
       {/* ═══ 12-col grid fills remaining height ═══ */}
-      <div className="grid grid-cols-12 gap-4 flex-1 min-h-0 grid-rows-1fr">
+      <div className="grid grid-cols-12 gap-2 flex-1 min-h-0 grid-rows-1fr">
 
         {/* ── Main (8 cols) ── */}
-        <div className="col-span-8 flex flex-col gap-4 min-h-0">
+        <div className="col-span-8 flex flex-col gap-2 min-h-0">
 
           {/* ── Cash Flow chart — premium accent card ── */}
           <Card
-            className="shrink-0 p-5 border-t-2 border-accent-500 animate-[card-enter_450ms_ease-out_forwards] opacity-0"
+            className="shrink-0 p-3.5 border-t-2 border-accent-500 animate-[card-enter_450ms_ease-out_forwards] opacity-0"
             style={cardDelay(0)}
           >
             <div className="flex items-center justify-between mb-3">
@@ -351,7 +351,7 @@ export default function DashboardHome() {
                 <p className="text-[11px] font-semibold text-text-tertiary uppercase tracking-wider">Cash Flow</p>
                 <span className="text-[10px] text-text-tertiary">Last 7 days</span>
               </div>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1.5">
                   <div className="h-2 w-2 rounded-full bg-[#2D6A4F]" />
                   <span className="text-[10px] text-text-tertiary">Income</span>
@@ -369,7 +369,7 @@ export default function DashboardHome() {
                 { name: 'Expenses', data: chartData.map((d) => ({ label: '', value: d.expenses })), color: '#C28B5E', gradientId: 'expense-fill' },
               ]}
               labels={days}
-              height={150}
+              height={90}
             />
 
             {/* Summary stats under chart */}
@@ -392,7 +392,7 @@ export default function DashboardHome() {
           </Card>
 
           {/* ── 2×2 category grid ── */}
-          <div className="grid grid-cols-2 gap-4 flex-1 min-h-0 grid-rows-2">
+          <div className="grid grid-cols-2 gap-2 flex-1 min-h-0 grid-rows-2">
 
             {/* Tasks */}
             <div className="flex flex-col min-h-0" style={cardDelay(1)}>
@@ -403,7 +403,7 @@ export default function DashboardHome() {
                   View all <ArrowRight className="h-3 w-3" />
                 </button>
               </div>
-              <Card className="flex flex-col flex-1 overflow-hidden p-5 animate-[card-enter_450ms_ease-out_forwards] opacity-0">
+              <Card className="flex flex-col flex-1 overflow-hidden p-3.5 animate-[card-enter_450ms_ease-out_forwards] opacity-0">
                 {tasksLoading ? (
                   <div className="space-y-2">{[1, 2, 3].map((i) => <div key={i} className="h-6 animate-pulse rounded bg-gray-100" />)}</div>
                 ) : (tasks?.length ?? 0) === 0 ? (
@@ -426,7 +426,7 @@ export default function DashboardHome() {
               <div className="flex items-center justify-between mb-3 shrink-0">
                 <h2 className="text-[11px] font-semibold text-text-tertiary uppercase tracking-wider">Updates</h2>
               </div>
-              <Card className="flex flex-col flex-1 overflow-hidden p-5 animate-[card-enter_450ms_ease-out_forwards] opacity-0">
+              <Card className="flex flex-col flex-1 overflow-hidden p-3.5 animate-[card-enter_450ms_ease-out_forwards] opacity-0">
                 <div className="flex flex-col flex-1 gap-0.5">
                   {[
                     { hash: 'c97a838', msg: 'chart: replace preserveAspectRatio=none with ResizeObserver-synced viewBox width' },
@@ -436,7 +436,7 @@ export default function DashboardHome() {
                     { hash: '2427421', msg: 'broken changes' },
                     { hash: '8aad8a2', msg: 'fix month/year rendering (auto-rows-1fr → CSS, year card styling)' },
                     { hash: 'fe8a33b', msg: 'dashboard: premium redesign — greeting band, stagger, card accent' },
-                    { hash: 'd4e2b1c', msg: 'dashboard: open up card spacing, 4 items, p-5, gap-0.5' },
+                    { hash: 'd4e2b1c', msg: 'dashboard: open up card spacing, 4 items, p-4, gap-0.5' },
                   ].map((c) => (
                     <div key={c.hash} className="flex items-center gap-3 px-2 py-2.5 rounded-lg hover:bg-black/[0.03] cursor-pointer transition-colors">
                       <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full ring-1 ring-black/[0.06] bg-white">
@@ -461,7 +461,7 @@ export default function DashboardHome() {
                   View all <ArrowRight className="h-3 w-3" />
                 </button>
               </div>
-              <Card className="flex flex-col flex-1 overflow-hidden p-5 animate-[card-enter_450ms_ease-out_forwards] opacity-0">
+              <Card className="flex flex-col flex-1 overflow-hidden p-3.5 animate-[card-enter_450ms_ease-out_forwards] opacity-0">
                 {(incompleteReminders.length ?? 0) === 0 ? (
                   <div className="flex flex-col items-center justify-center flex-1 text-center">
                     <Bell className="h-5 w-5 text-gray-200 mb-1" />
@@ -480,17 +480,17 @@ export default function DashboardHome() {
         </div>
 
         {/* ── Right sidebar (4 cols) ── */}
-        <div className="col-span-4 flex flex-col gap-4 min-h-0">
+        <div className="col-span-4 flex flex-col gap-2 min-h-0">
 
           {/* Donut + completion stats */}
-          <Card className="shrink-0 p-5 animate-[card-enter_450ms_ease-out_forwards] opacity-0" style={cardDelay(1)}>
-            <div className="flex items-center gap-4">
+          <Card className="shrink-0 p-3.5 animate-[card-enter_450ms_ease-out_forwards] opacity-0" style={cardDelay(1)}>
+            <div className="flex items-center gap-3">
               <div className="shrink-0">
-                <DonutChart segments={taskSegments} size={44} />
+                <DonutChart segments={taskSegments} size={36} />
               </div>
               <div className="min-w-0">
                 <div className="flex items-baseline gap-1.5">
-                  <span className="text-2xl font-bold text-text-primary tabular-nums">{totalTasks}</span>
+                  <span className="text-xl font-bold text-text-primary tabular-nums">{totalTasks}</span>
                   <span className="text-[11px] text-text-tertiary">tasks</span>
                 </div>
                 <p className="text-xs text-text-tertiary mt-0.5">
@@ -501,7 +501,7 @@ export default function DashboardHome() {
           </Card>
 
           {/* Quick stats */}
-          <Card className="flex flex-col flex-1 overflow-hidden p-5 animate-[card-enter_450ms_ease-out_forwards] opacity-0" style={cardDelay(2)}>
+          <Card className="flex flex-col flex-1 overflow-hidden p-3.5 animate-[card-enter_450ms_ease-out_forwards] opacity-0" style={cardDelay(2)}>
             <p className="text-[11px] font-semibold text-text-tertiary uppercase tracking-wider mb-3">Stats</p>
             <div className="flex flex-col justify-between flex-1 gap-1">
               {[
@@ -524,7 +524,7 @@ export default function DashboardHome() {
           </Card>
 
           {/* Distribution */}
-          <Card className="shrink-0 p-5 animate-[card-enter_450ms_ease-out_forwards] opacity-0" style={cardDelay(3)}>
+          <Card className="shrink-0 p-3.5 animate-[card-enter_450ms_ease-out_forwards] opacity-0" style={cardDelay(3)}>
             <p className="text-[11px] font-semibold text-text-tertiary uppercase tracking-wider mb-3">Distribution</p>
             <div className="space-y-2">
               {distLabels.map((label, i) => (

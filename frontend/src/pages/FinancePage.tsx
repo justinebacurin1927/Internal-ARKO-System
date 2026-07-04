@@ -238,7 +238,7 @@ export default function FinancePage() {
       {/* ── Top bar ── */}
       <div className="flex shrink-0 items-center justify-between px-3 pt-3 pb-2">
         <div className="flex items-baseline gap-2">
-          <h1 className="text-lg font-bold tracking-tight text-text-primary">Ledger</h1>
+          <h1 className="text-sm font-bold tracking-tight text-text-primary">Ledger</h1>
           <span className="text-[10px] text-text-tertiary font-mono">
             {formatCurrency(balance?.balance ?? 0)}
           </span>
@@ -269,7 +269,7 @@ export default function FinancePage() {
         [&::-webkit-scrollbar-track]:bg-transparent">
 
         {/* ── Stats row ── */}
-        <div className="grid grid-cols-3 gap-2 shrink-0">
+        <div className="grid grid-cols-3 gap-1.5 shrink-0">
           {[
             { label: 'Balance', icon: Wallet, value: balance?.balance ?? 0, border: 'border-accent-300/40', bg: 'bg-accent-50/60', iconCol: 'text-accent-600', valCol: 'text-accent-800' },
             { label: 'Income', icon: ArrowUpRight, value: balance?.income ?? 0, border: 'border-emerald-300/40', bg: 'bg-emerald-50/60', iconCol: 'text-emerald-600', valCol: 'text-emerald-800' },
@@ -277,9 +277,9 @@ export default function FinancePage() {
           ].map((s) => {
             const Icon = s.icon
             return (
-              <div key={s.label} className={`rounded-xl border ${s.border} bg-white px-3 py-2.5 transition-all duration-150 hover:shadow-sm`}>
+              <div key={s.label} className={`rounded-xl border ${s.border} bg-white px-2.5 py-2 transition-all duration-150 hover:shadow-sm`}>
                 <div className="flex items-center gap-1.5 mb-0.5">
-                  <div className={`flex h-5 w-5 items-center justify-center rounded-md ${s.bg}`}>
+                  <div className={`flex h-4 w-4 items-center justify-center rounded-md ${s.bg}`}>
                     <Icon className={`h-2.5 w-2.5 ${s.iconCol}`} />
                   </div>
                   <span className={`text-[9px] font-semibold uppercase tracking-[0.08em] ${s.iconCol}`}>{s.label}</span>
@@ -294,7 +294,7 @@ export default function FinancePage() {
         {formOpen && (
           <div className="rounded-xl border border-accent-200 bg-white p-3.5 shadow-sm">
             <div className="flex items-center gap-2 mb-3">
-              <div className="flex h-5 w-5 items-center justify-center rounded-md bg-accent-50">
+              <div className="flex h-4 w-4 items-center justify-center rounded-md bg-accent-50">
                 {editingTx
                   ? <Pencil className="h-3 w-3 text-accent-600" />
                   : <Plus className="h-3 w-3 text-accent-600" />
@@ -515,7 +515,7 @@ export default function FinancePage() {
             {isLoading ? (
               <div className="divide-y divide-border-subtle">
                 {[...Array(5)].map((_, i) => (
-                  <div key={i} className="flex items-center justify-between px-3 py-2.5">
+                  <div key={i} className="flex items-center justify-between px-2.5 py-2">
                     <div className="flex items-center gap-2.5">
                       <div className="h-7 w-7 animate-pulse rounded-lg bg-accent-100" />
                       <div className="space-y-1.5">

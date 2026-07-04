@@ -406,7 +406,7 @@ export default function MessagesPage() {
       <div className="h-full flex flex-col gap-4">
         <div className="flex items-start justify-between shrink-0">
           <div>
-            <h1 className="text-xl font-bold text-text-primary tracking-tight">Messages</h1>
+            <h1 className="text-base font-bold text-text-primary tracking-tight">Messages</h1>
             <p className="text-xs text-text-tertiary mt-0.5">Start a new conversation</p>
           </div>
           <Button variant="ghost" onClick={() => { setShowNewConv(false); setUserSearchQuery(''); setSelectedUsers([]) }}>
@@ -500,7 +500,7 @@ export default function MessagesPage() {
       {/* Heading */}
       <div className="flex items-start justify-between shrink-0">
         <div>
-          <h1 className="text-xl font-bold text-text-primary tracking-tight">Messages</h1>
+          <h1 className="text-base font-bold text-text-primary tracking-tight">Messages</h1>
           <p className="text-xs text-text-tertiary mt-0.5">Chat with your team</p>
         </div>
         <Button onClick={() => setShowNewConv(true)}>

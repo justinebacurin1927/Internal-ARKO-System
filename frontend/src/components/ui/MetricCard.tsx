@@ -80,7 +80,7 @@ function Sparkline({ data, color }: { data: number[]; color: string }) {
   const path = `M ${points.join(' L ')}`
 
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-5" preserveAspectRatio="none">
+    <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-4" preserveAspectRatio="none">
       <defs>
         <linearGradient id={`spark-grad-${data[0]}`} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor={color} stopOpacity="0.25" />
@@ -121,27 +121,27 @@ export function MetricCard({ name, value, trend, trendLabel, status, upIsGood = 
       className={`group relative rounded-xl border ${s.border} ${light ? 'bg-white shadow-sm' : 'bg-zinc-900/90 shadow-lg'} ${s.glow} transition-all duration-200 ${light ? 'hover:border-accent-300' : 'hover:border-zinc-600'}`}
     >
       {/* Top row: name + indicator dot */}
-      <div className="mb-2 flex items-center justify-between px-4 pt-4">
+      <div className="mb-1 flex items-center justify-between px-3 pt-3">
         <span
-          className={`text-[11px] font-medium uppercase tracking-wider ${light ? 'text-text-secondary' : 'text-zinc-400'}`}
+          className={`text-[10px] font-medium uppercase tracking-wider ${light ? 'text-text-secondary' : 'text-zinc-400'}`}
           style={{ fontFamily: "'DM Sans', sans-serif" }}
         >
           {name}
         </span>
-        <span className={`h-2 w-2 shrink-0 rounded-full ${s.indicator}`} />
+        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${s.indicator}`} />
       </div>
 
       {/* Value row */}
-      <div className="mb-0.5 flex items-baseline gap-2 px-4">
-        <span className={`text-xl font-bold tracking-tight ${light ? 'text-text-primary' : 'text-white'}`}>{value}</span>
-        <span className={`flex items-center gap-0.5 text-xs font-medium ${trendColor}`}>
+      <div className="mb-0.5 flex items-baseline gap-2 px-3">
+        <span className={`text-base font-bold tracking-tight ${light ? 'text-text-primary' : 'text-white'}`}>{value}</span>
+        <span className={`flex items-center gap-0.5 text-[11px] font-medium ${trendColor}`}>
           <span className="text-[10px]">{trend === 'up' ? '▲' : '▼'}</span>
           {trendLabel && <span>{trendLabel}</span>}
         </span>
       </div>
 
       {/* Sparkline */}
-      <div className="px-4 pb-4 pt-2">
+      <div className="px-3 pb-3 pt-1.5">
         <Sparkline data={sparklineData} color={s.spark} />
       </div>
     </div>

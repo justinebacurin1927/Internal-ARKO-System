@@ -111,7 +111,7 @@ export default function RemindersPage() {
 
       {showNew && (
         <Card className="overflow-hidden shrink-0">
-          <CardContent className="p-5 space-y-4">
+          <CardContent className="p-3 space-y-2">
             <div>
               <label className="mb-1.5 block text-sm font-medium text-gray-700">Title</label>
               <input
