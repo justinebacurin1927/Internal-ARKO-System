@@ -338,11 +338,13 @@ export default function DashboardHome() {
   const { data: notes } = useQuery({ queryKey: ['notes'], queryFn: () => api.getNotes() })
   const { data: reminders } = useQuery({ queryKey: ['reminders'], queryFn: () => api.getReminders() })
   const { data: transactions } = useQuery({ queryKey: ['transactions'], queryFn: () => api.getTransactions(1) })
+  const { data: userCount } = useQuery({ queryKey: ['user-count'], queryFn: () => api.getTotalUsers() })
   const todo = tasks?.filter((t: any) => t.status === 'TODO') ?? []
   const inProgress = tasks?.filter((t: any) => t.status === 'IN_PROGRESS') ?? []
   const review = tasks?.filter((t: any) => t.status === 'REVIEW') ?? []
   const done = tasks?.filter((t: any) => t.status === 'DONE') ?? []
   const incompleteReminders = reminders?.filter((r: any) => !r.is_done) ?? []
+  const overdue = incompleteReminders.filter((r: any) => r.due_at && new Date(r.due_at) < new Date()).length
   const totalTasks = tasks?.length ?? 0
   const doneCount = done.length
   const completionRate = totalTasks > 0 ? Math.round((doneCount / totalTasks) * 100) : 0
@@ -353,7 +355,6 @@ export default function DashboardHome() {
   const distLabels = ['To Do', 'In Progress', 'Review', 'Done']
   const distCounts = [todo.length, inProgress.length, review.length, done.length]
   const taskSegments = distCounts.map((v, i) => ({ value: v, color: distColors[i] }))
-  const assignees = new Set(tasks?.map((t: any) => t.assignee_name).filter(Boolean) ?? [])
 
   // Finance chart — aggregate real transactions into daily buckets
   const last7 = Array.from({ length: 7 }, (_, i) => {
@@ -558,19 +559,28 @@ export default function DashboardHome() {
               {[
                 { icon: Target, label: 'Completion', value: `${completionRate}%`, color: 'text-pos' },
                 { icon: BarChart3, label: 'In Progress', value: inProgress.length, color: 'text-accent-500' },
-                { icon: Users, label: 'Collaborators', value: assignees.size, color: 'text-warn' },
-                { icon: AlertCircle, label: 'Overdue', value: reminders?.filter((r: any) => r.due_at && !r.is_done && new Date(r.due_at) < new Date()).length ?? 0, color: 'text-neg' },
-              ].map((s) => (
-                <div key={s.label} className="flex items-center gap-3 py-2">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full ring-1 ring-black/[0.06] bg-white">
-                    <s.icon className={`h-3.5 w-3.5 ${s.color}`} />
+                { icon: Users, label: 'Members', value: userCount?.count ?? '...', color: 'text-warn' },
+                { icon: AlertCircle, label: 'Overdue', value: overdue, color: 'text-neg' },
+              ].map((s) => {
+                const row = (
+                  <div className="flex items-center gap-3 py-2">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full ring-1 ring-black/[0.06] bg-white">
+                      <s.icon className={`h-3.5 w-3.5 ${s.color}`} />
+                    </div>
+                    <div className="flex items-baseline justify-between flex-1 min-w-0">
+                      <span className="text-sm text-text-secondary">{s.label}</span>
+                      <span className="text-sm font-bold text-text-primary ml-2 tabular-nums">{s.value}</span>
+                    </div>
                   </div>
-                  <div className="flex items-baseline justify-between flex-1 min-w-0">
-                    <span className="text-sm text-text-secondary">{s.label}</span>
-                    <span className="text-sm font-bold text-text-primary ml-2 tabular-nums">{s.value}</span>
-                  </div>
-                </div>
-              ))}
+                )
+                return s.label === 'Members' ? (
+                  <button key={s.label} onClick={() => navigate('/dashboard/users')} className="w-full text-left rounded-lg transition-colors hover:bg-black/[0.03] cursor-pointer">
+                    {row}
+                  </button>
+                ) : (
+                  <div key={s.label}>{row}</div>
+                )
+              })}
             </div>
           </Card>
 

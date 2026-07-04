@@ -15,3 +15,9 @@ def search(request):
         )
     data = [{'id': u.id, 'name': u.name, 'email': u.email, 'image': u.image} for u in qs]
     return Response(data)
+
+@api_view(['GET'])
+def count(request):
+    """Return total number of users in the system."""
+    total = User.objects.count()
+    return Response({'count': total})

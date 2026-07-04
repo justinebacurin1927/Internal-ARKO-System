@@ -197,6 +197,7 @@ export const api = {
     request<any>(`/finance/monthly-summary/${year ? `?year=${year}` : ''}`),
 
   // Users
+  getTotalUsers: () => request<{ count: number }>('/users/count/'),
   searchUsers: (query?: string) =>
     request<any[]>(`/users/search/${query ? `?query=${query}` : ''}`),
 
