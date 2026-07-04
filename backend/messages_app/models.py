@@ -24,6 +24,7 @@ class Message(models.Model):
     conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE, related_name='messages')
     sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sent_messages')
     created_at = models.DateTimeField(auto_now_add=True)
+    edited = models.BooleanField(default=False)
 
     class Meta:
         db_table = 'messages'

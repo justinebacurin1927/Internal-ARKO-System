@@ -118,11 +118,18 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ content }),
     }),
-  createConversation: (participantId: string) =>
+  createConversation: (participantIds: string[]) =>
     request<any>('/messages/conversations/create/', {
       method: 'POST',
-      body: JSON.stringify({ participant_id: participantId }),
+      body: JSON.stringify({ participant_ids: participantIds }),
     }),
+  editMessage: (messageId: number, content: string) =>
+    request<any>(`/messages/item/${messageId}/`, {
+      method: 'PATCH',
+      body: JSON.stringify({ content }),
+    }),
+  deleteMessage: (messageId: number) =>
+    request<void>(`/messages/item/${messageId}/`, { method: 'DELETE' }),
 
   // Reminders
   getReminders: () => request<any[]>('/reminders/'),

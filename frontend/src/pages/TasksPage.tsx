@@ -416,7 +416,7 @@ export default function TasksPage() {
               tasks={tasks ?? []}
               isLoading={isLoading}
               search={taskSearch}
-              onDelete={(id) => setConfirmDeleteId(id)}
+              onDelete={setConfirmDeleteId}
             />
           ))}
         </div>
