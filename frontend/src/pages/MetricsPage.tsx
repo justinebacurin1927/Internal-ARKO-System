@@ -183,14 +183,14 @@ export default function MetricsPage() {
 
   if (error) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-3 p-8 text-center">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10">
-          <RefreshCw className="h-6 w-6 text-red-400" />
+      <div className="flex h-full flex-col items-center justify-center gap-3 p-8 text-center bg-bg-app">
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+          <RefreshCw className="h-6 w-6 text-red-500" />
         </div>
-        <p className="text-sm text-zinc-400">Couldn't load metrics</p>
+        <p className="text-sm text-stone-600">Couldn't load metrics</p>
         <button
           onClick={() => queryClient.invalidateQueries({ queryKey: ['metrics'] })}
-          className="text-xs font-medium text-accent-400 hover:text-accent-300 cursor-pointer"
+          className="text-xs font-medium text-accent-600 hover:text-accent-500 cursor-pointer"
         >
           Try again
         </button>
@@ -200,21 +200,21 @@ export default function MetricsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex h-full flex-col overflow-y-auto p-3 pt-0">
+      <div className="flex h-full flex-col overflow-y-auto p-3 pt-0 bg-bg-app">
         <div className="mb-1 flex items-baseline justify-between">
-          <h2 className="text-base font-bold text-white" style={{ fontFamily: "'Playfair Display', serif" }}>
+          <h2 className="text-base font-bold text-stone-800" style={{ fontFamily: "'Playfair Display', serif" }}>
             Business KPIs
           </h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
           {[...Array(10)].map((_, i) => (
-            <div key={i} className="animate-pulse rounded-xl border border-zinc-800 bg-zinc-900/90 p-4">
+            <div key={i} className="animate-pulse rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
               <div className="mb-2 flex items-center justify-between">
-                <div className="h-3 w-20 rounded bg-zinc-800" />
-                <div className="h-2 w-2 rounded-full bg-zinc-800" />
+                <div className="h-3 w-20 rounded bg-stone-100" />
+                <div className="h-2 w-2 rounded-full bg-stone-200" />
               </div>
-              <div className="mb-1 h-6 w-24 rounded bg-zinc-800" />
-              <div className="mt-2 h-5 w-full rounded bg-zinc-800" />
+              <div className="mb-1 h-6 w-24 rounded bg-stone-100" />
+              <div className="mt-2 h-5 w-full rounded bg-stone-100" />
             </div>
           ))}
         </div>
@@ -223,22 +223,27 @@ export default function MetricsPage() {
   }
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto p-3 pt-0">
+    <div className="flex h-full flex-col overflow-y-auto bg-bg-app
+      [&::-webkit-scrollbar]:w-1.5
+      [&::-webkit-scrollbar-thumb]:rounded-full
+      [&::-webkit-scrollbar-thumb]:bg-stone-300
+      [&::-webkit-scrollbar-thumb]:hover:bg-stone-400
+      [&::-webkit-scrollbar-track]:bg-transparent">
       {/* Section header */}
-      <div className="mb-1 flex shrink-0 items-baseline justify-between">
+      <div className="mb-1 flex shrink-0 items-baseline justify-between px-3 pt-3">
         <h2
-          className="text-base font-bold text-white"
+          className="text-base font-bold text-stone-800"
           style={{ fontFamily: "'Playfair Display', serif" }}
         >
           Business KPIs
         </h2>
         <div className="flex items-center gap-3">
-          <span className="text-[10px] font-medium text-zinc-500">
+          <span className="text-[10px] font-medium text-stone-400">
             {metrics?.length ?? 0} metrics · live
           </span>
           <button
             onClick={() => setGlossaryOpen(true)}
-            className="inline-flex items-center gap-1 rounded-lg border border-white/8 bg-white/[0.03] px-2.5 py-1.5 text-[10px] font-medium text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.06] transition-all cursor-pointer"
+            className="inline-flex items-center gap-1 rounded-lg border border-stone-200 bg-white px-2.5 py-1.5 text-[10px] font-medium text-stone-500 hover:text-stone-700 hover:bg-stone-50 transition-all cursor-pointer shadow-sm"
           >
             <HelpCircle className="h-3 w-3" />
             What do these mean?
@@ -247,7 +252,7 @@ export default function MetricsPage() {
       </div>
 
       {/* KPI grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 px-3 pb-3">
         {metrics?.map((metric: any) => {
           const raw = metric.value ?? 0
           const hist = metric.history?.length
@@ -269,7 +274,7 @@ export default function MetricsPage() {
             >
               {/* Auto-calculated badge */}
               {isAuto && (
-                <span className="absolute -top-2 right-3 z-10 inline-flex items-center gap-1 rounded-full bg-zinc-800 px-2 py-[2px] text-[9px] font-medium text-zinc-400 ring-1 ring-white/5">
+                <span className="absolute -top-2 right-3 z-10 inline-flex items-center gap-1 rounded-full bg-stone-100 px-2 py-[2px] text-[9px] font-medium text-stone-500 ring-1 ring-stone-200">
                   <Cpu className="h-2.5 w-2.5" />
                   Auto
                 </span>
@@ -277,18 +282,18 @@ export default function MetricsPage() {
 
               {/* If editing - inline input */}
               {updateMetric.isPending && updateMetric.variables?.key === metric.key ? (
-                <div className="group relative rounded-xl border border-accent-500/40 bg-zinc-900/90 p-4 shadow-lg shadow-accent-500/5 backdrop-blur-sm">
+                <div className="group relative rounded-xl border border-accent-300 bg-white p-4 shadow-sm">
                   <div className="mb-2 flex items-center justify-between">
-                    <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-400" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+                    <span className="text-[11px] font-medium uppercase tracking-wider text-stone-500" style={{ fontFamily: "'DM Sans', sans-serif" }}>
                       {metric.name}
                     </span>
-                    <span className="h-2 w-2 shrink-0 rounded-full bg-accent-500 animate-pulse" />
+                    <span className="h-2 w-2 shrink-0 rounded-full bg-accent-400 animate-pulse" />
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-zinc-500">{metric.suffix}</span>
-                    <div className="h-8 w-full animate-pulse rounded-lg bg-zinc-800" />
+                    <span className="text-sm text-stone-400">{metric.suffix}</span>
+                    <div className="h-8 w-full animate-pulse rounded-lg bg-stone-100" />
                   </div>
-                  <p className="mt-1.5 text-[10px] text-zinc-600">Saving…</p>
+                  <p className="mt-1.5 text-[10px] text-stone-400">Saving…</p>
                 </div>
               ) : isEditable ? (
                 <EditableMetricCard
@@ -309,6 +314,7 @@ export default function MetricsPage() {
                   status={STATUS_MAP[metric.key] ?? 'neutral'}
                   upIsGood={metric.up_is_good}
                   sparklineData={hist}
+                  light
                 />
               )}
             </div>
@@ -317,7 +323,7 @@ export default function MetricsPage() {
       </div>
 
       {/* Legend */}
-      <div className="mt-4 flex shrink-0 flex-wrap items-center gap-x-4 gap-y-1.5 text-[10px] text-zinc-500">
+      <div className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-1.5 px-3 pb-3 text-[10px] text-stone-400">
         <span className="flex items-center gap-1.5">
           <span className="h-2 w-2 rounded-full bg-emerald-500" />
           Healthy
@@ -327,14 +333,14 @@ export default function MetricsPage() {
           Needs attention
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-full bg-zinc-500" />
+          <span className="h-2 w-2 rounded-full bg-stone-400" />
           Neutral
         </span>
-        <span className="flex items-center gap-1 text-zinc-600">
+        <span className="flex items-center gap-1 text-stone-400">
           <Pencil className="h-2.5 w-2.5" />
           Tap to edit
         </span>
-        <span className="flex items-center gap-1 text-zinc-600">
+        <span className="flex items-center gap-1 text-stone-400">
           <Cpu className="h-2.5 w-2.5" />
           Auto-calculated
         </span>
@@ -346,12 +352,8 @@ export default function MetricsPage() {
           className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto pt-6 pb-12"
           onClick={(e) => { if (e.target === e.currentTarget) setGlossaryOpen(false) }}
         >
-          {/* Scrim */}
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setGlossaryOpen(false)} />
-
-          {/* Modal card — light theme */}
-          <div className="relative z-10 mx-4 w-full max-w-2xl animate-in rounded-2xl bg-white p-0 shadow-2xl shadow-black/20">
-            {/* Header */}
+          <div className="fixed inset-0 bg-black/50" onClick={() => setGlossaryOpen(false)} />
+          <div className="relative z-10 mx-4 w-full max-w-2xl animate-in rounded-2xl bg-white p-0 shadow-2xl shadow-black/15">
             <div className="flex items-center justify-between border-b border-stone-200 px-6 py-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100">
@@ -370,11 +372,9 @@ export default function MetricsPage() {
               </button>
             </div>
 
-            {/* Glossary entries */}
             <div className="divide-y divide-stone-100">
               {METRIC_GLOSSARY.map((m) => (
                 <div key={m.key} className="px-6 py-4 transition-colors hover:bg-stone-50/60">
-                  {/* Title row */}
                   <div className="mb-2 flex items-center gap-2.5">
                     <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
                       {m.icon}
@@ -384,20 +384,14 @@ export default function MetricsPage() {
                       <p className="text-[10px] font-mono text-stone-400">{m.formula}</p>
                     </div>
                   </div>
-
-                  {/* What */}
                   <div className="mb-2 ml-9.5">
                     <p className="text-xs font-medium text-emerald-700 mb-0.5">What it is</p>
                     <p className="text-[11px] leading-relaxed text-stone-600">{m.what}</p>
                   </div>
-
-                  {/* Why */}
                   <div className="mb-2 ml-9.5">
                     <p className="text-xs font-medium text-amber-700 mb-0.5">Why it matters</p>
                     <p className="text-[11px] leading-relaxed text-stone-600">{m.why}</p>
                   </div>
-
-                  {/* Target */}
                   <div className="ml-9.5">
                     <p className="text-xs font-medium text-stone-500 mb-0.5">Target</p>
                     <p className="text-[11px] leading-relaxed text-stone-600">{m.target}</p>
@@ -406,7 +400,6 @@ export default function MetricsPage() {
               ))}
             </div>
 
-            {/* Footer */}
             <div className="border-t border-stone-200 px-6 py-3.5">
               <p className="text-[10px] text-stone-400">
                 Metrics labeled <span className="inline-flex items-center gap-0.5 font-medium text-stone-500"><Cpu className="h-2.5 w-2.5" /> Auto</span> are calculated from your transaction data. Manual metrics can be edited by tapping the card.
@@ -441,21 +434,21 @@ function EditableMetricCard({
   return (
     <button
       onClick={() => { setEditing(true); setEditVal(String(raw)) }}
-      className="w-full cursor-pointer text-left outline-none focus-visible:ring-2 focus-visible:ring-accent-500/40 focus-visible:rounded-xl"
+      className="w-full cursor-pointer text-left outline-none focus-visible:ring-2 focus-visible:ring-accent-400/30 focus-visible:rounded-xl"
     >
       {editing ? (
         <div
-          className="group relative rounded-xl border border-accent-500/40 bg-zinc-900/90 p-4 shadow-lg shadow-accent-500/5 backdrop-blur-sm"
+          className="group relative rounded-xl border border-accent-300 bg-white p-4 shadow-sm"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="mb-2 flex items-center justify-between">
-            <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-400" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+            <span className="text-[11px] font-medium uppercase tracking-wider text-stone-500" style={{ fontFamily: "'DM Sans', sans-serif" }}>
               {metric.name}
             </span>
-            <span className="h-2 w-2 shrink-0 rounded-full bg-accent-500 animate-pulse" />
+            <span className="h-2 w-2 shrink-0 rounded-full bg-accent-400 animate-pulse" />
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-zinc-500">{metric.suffix}</span>
+            <span className="text-sm text-stone-400">{metric.suffix}</span>
             <input
               ref={inputRef}
               type="number"
@@ -465,11 +458,11 @@ function EditableMetricCard({
               onBlur={() => { onCommit(editVal); setEditing(false) }}
               onKeyDown={handleKeyDown}
               autoFocus
-              className="flex-1 rounded-lg border border-zinc-700 bg-zinc-800/80 px-2.5 py-1.5 text-lg font-bold text-white outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-500/20"
+              className="flex-1 rounded-lg border border-stone-200 bg-white px-2.5 py-1.5 text-lg font-bold text-stone-900 outline-none focus:border-accent-400 focus:ring-2 focus:ring-accent-500/8"
               style={{ fontFamily: "'DM Sans', sans-serif" }}
             />
           </div>
-          <p className="mt-1.5 text-[10px] text-zinc-600">Enter to save · Esc to cancel</p>
+          <p className="mt-1.5 text-[10px] text-stone-400">Enter to save · Esc to cancel</p>
         </div>
       ) : (
         <MetricCard
@@ -480,6 +473,7 @@ function EditableMetricCard({
           status={status}
           upIsGood={metric.up_is_good}
           sparklineData={hist}
+          light
         />
       )}
     </button>

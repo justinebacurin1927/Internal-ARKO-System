@@ -5,22 +5,46 @@ const statusStyles: Record<MetricStatus, { border: string; glow: string; indicat
     border: 'border-emerald-500/20',
     glow: 'shadow-emerald-500/5',
     indicator: 'bg-emerald-500',
-    badge: 'bg-emerald-500/10 text-emerald-400',
+    badge: 'bg-emerald-500/10 text-emerald-600',
     spark: '#5FA87A',
   },
   warning: {
     border: 'border-amber-500/20',
     glow: 'shadow-amber-500/5',
     indicator: 'bg-amber-500',
-    badge: 'bg-amber-500/10 text-amber-400',
+    badge: 'bg-amber-500/10 text-amber-600',
     spark: '#C9954A',
   },
   neutral: {
-    border: 'border-zinc-700',
-    glow: 'shadow-zinc-500/5',
-    indicator: 'bg-zinc-500',
-    badge: 'bg-zinc-800 text-zinc-400',
-    spark: '#71717A',
+    border: 'border-stone-200',
+    glow: 'shadow-stone-200/5',
+    indicator: 'bg-stone-400',
+    badge: 'bg-stone-100 text-stone-500',
+    spark: '#A8A29E',
+  },
+}
+
+const statusStylesLight: Record<MetricStatus, { border: string; glow: string; indicator: string; badge: string; spark: string }> = {
+  healthy: {
+    border: 'border-emerald-200',
+    glow: 'shadow-emerald-200/5',
+    indicator: 'bg-emerald-500',
+    badge: 'bg-emerald-50 text-emerald-700',
+    spark: '#5FA87A',
+  },
+  warning: {
+    border: 'border-amber-200',
+    glow: 'shadow-amber-200/5',
+    indicator: 'bg-amber-500',
+    badge: 'bg-amber-50 text-amber-700',
+    spark: '#C9954A',
+  },
+  neutral: {
+    border: 'border-stone-200',
+    glow: 'shadow-stone-200/5',
+    indicator: 'bg-stone-400',
+    badge: 'bg-stone-100 text-stone-500',
+    spark: '#A8A29E',
   },
 }
 
@@ -33,6 +57,8 @@ interface MetricCardProps {
   /** Whether an upward trend means "good news". If false, an up arrow is shown in the warning color. */
   upIsGood?: boolean
   sparklineData: number[]
+  /** Light mode variant */
+  light?: boolean
 }
 
 /** Inline SVG sparkline — no dependencies. */
@@ -78,22 +104,26 @@ function Sparkline({ data, color }: { data: number[]; color: string }) {
   )
 }
 
-export function MetricCard({ name, value, trend, trendLabel, status, upIsGood = true, sparklineData }: MetricCardProps) {
-  const s = statusStyles[status]
+export function MetricCard({ name, value, trend, trendLabel, status, upIsGood = true, sparklineData, light }: MetricCardProps) {
+  const s = light ? statusStylesLight[status] : statusStyles[status]
 
   const trendIsPositive =
     (trend === 'up' && upIsGood) || (trend === 'down' && !upIsGood)
 
-  const trendColor = trendIsPositive ? 'text-emerald-400' : status === 'healthy' ? 'text-red-400' : 'text-amber-400'
+  const trendColor = trendIsPositive
+    ? light ? 'text-emerald-600' : 'text-emerald-400'
+    : status === 'healthy'
+      ? light ? 'text-red-600' : 'text-red-400'
+      : light ? 'text-amber-600' : 'text-amber-400'
 
   return (
     <div
-      className={`group relative rounded-xl border ${s.border} bg-zinc-900/90 p-4 shadow-lg ${s.glow} backdrop-blur-sm transition-all duration-200 hover:border-zinc-600`}
+      className={`group relative rounded-xl border ${s.border} ${light ? 'bg-white shadow-sm' : 'bg-zinc-900/90 shadow-lg'} ${s.glow} transition-all duration-200 ${light ? 'hover:border-stone-300' : 'hover:border-zinc-600'}`}
     >
       {/* Top row: name + indicator dot */}
-      <div className="mb-2 flex items-center justify-between">
+      <div className="mb-2 flex items-center justify-between px-4 pt-4">
         <span
-          className="text-[11px] font-medium uppercase tracking-wider text-zinc-400"
+          className={`text-[11px] font-medium uppercase tracking-wider ${light ? 'text-stone-500' : 'text-zinc-400'}`}
           style={{ fontFamily: "'DM Sans', sans-serif" }}
         >
           {name}
@@ -102,8 +132,8 @@ export function MetricCard({ name, value, trend, trendLabel, status, upIsGood = 
       </div>
 
       {/* Value row */}
-      <div className="mb-0.5 flex items-baseline gap-2">
-        <span className="text-xl font-bold tracking-tight text-white">{value}</span>
+      <div className="mb-0.5 flex items-baseline gap-2 px-4">
+        <span className={`text-xl font-bold tracking-tight ${light ? 'text-stone-900' : 'text-white'}`}>{value}</span>
         <span className={`flex items-center gap-0.5 text-xs font-medium ${trendColor}`}>
           <span className="text-[10px]">{trend === 'up' ? '▲' : '▼'}</span>
           {trendLabel && <span>{trendLabel}</span>}
@@ -111,7 +141,7 @@ export function MetricCard({ name, value, trend, trendLabel, status, upIsGood = 
       </div>
 
       {/* Sparkline */}
-      <div className="mt-2">
+      <div className="px-4 pb-4 pt-2">
         <Sparkline data={sparklineData} color={s.spark} />
       </div>
     </div>

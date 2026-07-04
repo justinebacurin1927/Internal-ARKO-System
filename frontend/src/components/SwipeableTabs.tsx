@@ -10,9 +10,11 @@ interface SwipeableTabsProps {
   activeTab: string
   onTabChange: (tabId: string) => void
   children: [React.ReactNode, React.ReactNode]
+  /** Default true — dark tab bar. Set false for light mode. */
+  light?: boolean
 }
 
-export default function SwipeableTabs({ tabs, activeTab, onTabChange, children }: SwipeableTabsProps) {
+export default function SwipeableTabs({ tabs, activeTab, onTabChange, children, light }: SwipeableTabsProps) {
   const [touchStart, setTouchStart] = useState<number | null>(null)
   const [touchEnd, setTouchEnd] = useState<number | null>(null)
   const [sliding, setSliding] = useState(false)
@@ -35,7 +37,6 @@ export default function SwipeableTabs({ tabs, activeTab, onTabChange, children }
       setTouchEnd(current)
 
       const diff = current - touchStart
-      // Clamp: don't overscroll past first/last tab
       const clamped =
         activeIndex === 0
           ? Math.max(0, diff)
@@ -69,19 +70,19 @@ export default function SwipeableTabs({ tabs, activeTab, onTabChange, children }
     <div className="flex h-full flex-col">
       {/* ── Tab bar ── */}
       <div className="relative shrink-0 px-3 pt-3">
-        <div className="flex gap-1 rounded-xl bg-zinc-800/50 p-1">
+        <div className={`flex gap-1 rounded-xl p-1 ${light ? 'bg-stone-100' : 'bg-zinc-800/50'}`}>
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
               className={`relative flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 ${
                 activeTab === tab.id
-                  ? 'text-white'
-                  : 'text-zinc-400 hover:text-zinc-200'
+                  ? light ? 'text-stone-900' : 'text-white'
+                  : light ? 'text-stone-400 hover:text-stone-700' : 'text-zinc-400 hover:text-zinc-200'
               }`}
             >
               {activeTab === tab.id && (
-                <span className="absolute inset-0 rounded-lg bg-accent-600 shadow-sm" />
+                <span className={`absolute inset-0 rounded-lg shadow-sm ${light ? 'bg-white shadow-stone-200/80' : 'bg-accent-600'}`} />
               )}
               <span className="relative z-10">{tab.label}</span>
             </button>
@@ -106,12 +107,9 @@ export default function SwipeableTabs({ tabs, activeTab, onTabChange, children }
                 : `translateX(-${activeIndex * 100}%)`,
           }}
         >
-          {/* First tab */}
           <div className="h-full w-full shrink-0 overflow-y-auto">
             {children[0]}
           </div>
-
-          {/* Second tab */}
           <div className="h-full w-full shrink-0 overflow-y-auto">
             {children[1]}
           </div>
