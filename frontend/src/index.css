@@ -2,6 +2,8 @@
 
 @theme {
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Abril Fatface', serif;
+  --font-serif: 'Playfair Display', Georgia, serif;
 
   /* Backgrounds */
   --color-bg-app: #F4F5F2;
