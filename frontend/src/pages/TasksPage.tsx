@@ -51,9 +51,9 @@ function TaskCard({ task, index, onDelete }: { task: any; index: number; onDelet
         <div
           ref={provided.innerRef}
           {...provided.draggableProps}
-          className={`transition-shadow duration-200 rounded-lg ${
+          className={`rounded-lg ${
             snapshot.isDragging
-              ? 'shadow-[0_8px_24px_rgba(26,29,26,0.12),0_2px_6px_rgba(26,29,26,0.08)] z-10'
+              ? 'shadow-[0_12px_28px_rgba(26,29,26,0.15),0_4px_12px_rgba(26,29,26,0.1)] z-50'
               : 'shadow-[0_1px_2px_rgba(26,29,26,0.04),0_1px_3px_rgba(26,29,26,0.06)]'
           }`}
           style={{
@@ -61,6 +61,7 @@ function TaskCard({ task, index, onDelete }: { task: any; index: number; onDelet
             borderLeft: `3px solid ${columnMeta[task.status]?.color ?? '#A3AC9E'}`,
             background: '#fff',
             borderRadius: '12px',
+            opacity: snapshot.isDragging ? 0.95 : 1,
           }}
         >
           {/* Drag handle bar — visible on hover */}
@@ -118,8 +119,10 @@ function TaskColumn({
   onDelete: (id: string) => void
 }) {
   const meta = columnMeta[column]
-  const filtered = tasks.filter((t: any) =>
-    !search || t.title.toLowerCase().includes(search.toLowerCase()),
+  const filtered = tasks.filter(
+    (t: any) =>
+      t.status === column &&
+      (!search || t.title.toLowerCase().includes(search.toLowerCase())),
   )
   const isEmpty = !isLoading && filtered.length === 0
 
@@ -155,7 +158,7 @@ function TaskColumn({
             <div
               ref={provided.innerRef}
               {...provided.droppableProps}
-              className={`flex flex-col flex-1 min-h-0 overflow-y-auto gap-2 rounded-xl transition-colors duration-150 px-1 py-0.5 ${
+              className={`flex flex-col flex-1 min-h-0 gap-2 rounded-xl transition-all duration-200 px-1 py-0.5 ${
                 snapshot.isDraggingOver ? `${meta.bg} ring-1 ring-black/[0.04]` : ''
               }`}
               style={{
@@ -188,10 +191,13 @@ function TaskColumn({
 
 export default function TasksPage() {
   const queryClient = useQueryClient()
-  const { data: tasks, isLoading, error } = useQuery({
+  const { data: rawTasks, isLoading, error } = useQuery({
     queryKey: ['tasks'],
     queryFn: () => api.getTasks(),
   })
+
+  // Stable sort: position first, then id as tiebreaker — prevents shuffle on refetch
+  const tasks = (rawTasks ?? []).slice().sort((a: any, b: any) => (a.position ?? 0) - (b.position ?? 0) || a.id - b.id)
   const { data: users } = useQuery({
     queryKey: ['users'],
     queryFn: () => api.searchUsers(),
@@ -206,6 +212,16 @@ export default function TasksPage() {
   const [assigneeSearch, setAssigneeSearch] = useState('')
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [taskSearch, setTaskSearch] = useState('')
+  // Optimistic local state for instant drag feedback (cleaned up after refetch)
+  const [optimisticStatus, setOptimisticStatus] = useState<Record<string, string>>({})
+  const [optimisticPosition, setOptimisticPosition] = useState<Record<string, number>>({})
+
+  // Merge optimistic overrides into server data
+  const displayTasks = tasks.map((t: any) => ({
+    ...t,
+    ...(optimisticStatus[t.id] ? { status: optimisticStatus[t.id] } : {}),
+    ...(optimisticPosition[t.id] !== undefined ? { position: optimisticPosition[t.id] } : {}),
+  }))
 
   const { toast } = useToast()
 
@@ -228,12 +244,6 @@ export default function TasksPage() {
     },
   })
 
-  const updateStatus = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: string }) =>
-      api.updateTask(id, { status }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
-  })
-
   const deleteTask = useMutation({
     mutationFn: (id: string) => api.deleteTask(id),
     onSuccess: () => {
@@ -244,8 +254,32 @@ export default function TasksPage() {
 
   const onDragEnd = (result: DropResult) => {
     if (!result.destination) return
-    if (result.destination.droppableId === result.source.droppableId) return
-    updateStatus.mutate({ id: result.draggableId, status: result.destination.droppableId })
+    const { draggableId, source, destination } = result
+    if (destination.droppableId === source.droppableId && source.index === destination.index) return
+
+    // Optimistic update: instantly move the card so @hello-pangea/dnd's
+    // drop animation plays to the correct final position
+    setOptimisticPosition((prev) => ({ ...prev, [draggableId]: destination.index }))
+    if (destination.droppableId !== source.droppableId) {
+      setOptimisticStatus((prev) => ({ ...prev, [draggableId]: destination.droppableId }))
+    }
+
+    const body = {
+      position: destination.index,
+      ...(destination.droppableId !== source.droppableId
+        ? { status: destination.droppableId }
+        : {}),
+    }
+
+    api.updateTask(draggableId, body)
+      .then(() => {
+        setTimeout(() => queryClient.invalidateQueries({ queryKey: ['tasks'] }), 200)
+      })
+      .catch(() => {
+        // Roll back on failure
+        setOptimisticStatus((prev) => { const { [draggableId]: _, ...rest } = prev; return rest })
+        setOptimisticPosition((prev) => { const { [draggableId]: _, ...rest } = prev; return rest })
+      })
   }
 
   const handleCreate = (e: React.FormEvent) => {
@@ -413,7 +447,7 @@ export default function TasksPage() {
             <TaskColumn
               key={column}
               column={column}
-              tasks={tasks ?? []}
+              tasks={displayTasks}
               isLoading={isLoading}
               search={taskSearch}
               onDelete={setConfirmDeleteId}
