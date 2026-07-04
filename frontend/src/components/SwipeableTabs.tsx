@@ -70,19 +70,19 @@ export default function SwipeableTabs({ tabs, activeTab, onTabChange, children, 
     <div className="flex h-full flex-col">
       {/* ── Tab bar ── */}
       <div className="relative shrink-0 px-3 pt-3">
-        <div className={`flex gap-1 rounded-xl p-1 ${light ? 'bg-stone-100' : 'bg-zinc-800/50'}`}>
+        <div className={`flex gap-1 rounded-xl p-1 ${light ? 'bg-accent-50' : 'bg-zinc-800/50'}`}>
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
               className={`relative flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 ${
                 activeTab === tab.id
-                  ? light ? 'text-stone-900' : 'text-white'
-                  : light ? 'text-stone-400 hover:text-stone-700' : 'text-zinc-400 hover:text-zinc-200'
+                  ? light ? 'text-text-primary' : 'text-white'
+                  : light ? 'text-text-tertiary hover:text-text-primary' : 'text-zinc-400 hover:text-zinc-200'
               }`}
             >
               {activeTab === tab.id && (
-                <span className={`absolute inset-0 rounded-lg shadow-sm ${light ? 'bg-white shadow-stone-200/80' : 'bg-accent-600'}`} />
+                <span className={`absolute inset-0 rounded-lg shadow-sm ${light ? 'bg-white shadow-accent-200/40' : 'bg-accent-600'}`} />
               )}
               <span className="relative z-10">{tab.label}</span>
             </button>

@@ -44,6 +44,7 @@ updated: 2026-07-04
 - [ ] Task subtasks & dependencies
 - [ ] Task comments
 - [ ] In-app notifications
+- [ ] user-management
 
 ## Sprint 3.5 — Personal & Creative Tools 🔜
 

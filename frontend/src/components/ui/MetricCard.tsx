@@ -40,10 +40,10 @@ const statusStylesLight: Record<MetricStatus, { border: string; glow: string; in
     spark: '#C9954A',
   },
   neutral: {
-    border: 'border-stone-200',
-    glow: 'shadow-stone-200/5',
+    border: 'border-border-subtle',
+    glow: 'shadow-border-subtle/30',
     indicator: 'bg-stone-400',
-    badge: 'bg-stone-100 text-stone-500',
+    badge: 'bg-accent-50 text-text-secondary',
     spark: '#A8A29E',
   },
 }
@@ -118,12 +118,12 @@ export function MetricCard({ name, value, trend, trendLabel, status, upIsGood = 
 
   return (
     <div
-      className={`group relative rounded-xl border ${s.border} ${light ? 'bg-white shadow-sm' : 'bg-zinc-900/90 shadow-lg'} ${s.glow} transition-all duration-200 ${light ? 'hover:border-stone-300' : 'hover:border-zinc-600'}`}
+      className={`group relative rounded-xl border ${s.border} ${light ? 'bg-white shadow-sm' : 'bg-zinc-900/90 shadow-lg'} ${s.glow} transition-all duration-200 ${light ? 'hover:border-accent-300' : 'hover:border-zinc-600'}`}
     >
       {/* Top row: name + indicator dot */}
       <div className="mb-2 flex items-center justify-between px-4 pt-4">
         <span
-          className={`text-[11px] font-medium uppercase tracking-wider ${light ? 'text-stone-500' : 'text-zinc-400'}`}
+          className={`text-[11px] font-medium uppercase tracking-wider ${light ? 'text-text-secondary' : 'text-zinc-400'}`}
           style={{ fontFamily: "'DM Sans', sans-serif" }}
         >
           {name}
@@ -133,7 +133,7 @@ export function MetricCard({ name, value, trend, trendLabel, status, upIsGood = 
 
       {/* Value row */}
       <div className="mb-0.5 flex items-baseline gap-2 px-4">
-        <span className={`text-xl font-bold tracking-tight ${light ? 'text-stone-900' : 'text-white'}`}>{value}</span>
+        <span className={`text-xl font-bold tracking-tight ${light ? 'text-text-primary' : 'text-white'}`}>{value}</span>
         <span className={`flex items-center gap-0.5 text-xs font-medium ${trendColor}`}>
           <span className="text-[10px]">{trend === 'up' ? '▲' : '▼'}</span>
           {trendLabel && <span>{trendLabel}</span>}
