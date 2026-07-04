@@ -372,8 +372,8 @@ function WeekView({weekDays,sprint,events,onCellClick,onEventClick,isInSprint}:{
   isInSprint:(ds:string)=>boolean
 }) {
   return (
-    <div className="flex-1 rounded-lg ring-1 ring-black/[0.06] bg-white overflow-hidden relative">
-      <div className="grid h-full" style={{gridTemplateColumns:'44px repeat(7,1fr)',gridTemplateRows:'auto repeat(12,1fr)'}}>
+    <div className="flex-1 rounded-lg ring-1 ring-black/[0.06] bg-white overflow-x-auto md:overflow-hidden relative">
+      <div className="grid h-full min-w-[600px] md:min-w-0" style={{gridTemplateColumns:'44px repeat(7,1fr)',gridTemplateRows:'auto repeat(12,1fr)'}}>
         <div className="h-[36px] border-b border-r border-border-subtle" />
         {weekDays.map((d,i)=>{
           const sp=isInSprint(d.ds)
@@ -435,8 +435,8 @@ function MonthView({days,eventsByDate,onDayClick,isInSprint}:{
   isInSprint:(ds:string)=>boolean
 }) {
   return (
-    <div className="flex-1 rounded-lg ring-1 ring-black/[0.06] bg-white overflow-hidden">
-      <div className="grid h-full" style={{gridTemplateColumns:'repeat(7,1fr)',gridAutoRows:'1fr'}}>
+    <div className="flex-1 rounded-lg ring-1 ring-black/[0.06] bg-white overflow-x-auto md:overflow-hidden">
+      <div className="grid h-full min-w-[600px] md:min-w-0" style={{gridTemplateColumns:'repeat(7,1fr)',gridAutoRows:'1fr'}}>
         {/* Day headers */}
         {DAY_ABBRS.map((a,i)=>(
           <div key={i} className="h-[30px] flex items-center justify-center border-b border-border-subtle">
@@ -478,7 +478,7 @@ function YearView({focusYear,eventsByDate,onMonthClick}:{
 }) {
   return (
     <div className="flex-1 rounded-lg ring-1 ring-black/[0.06] bg-white p-4 overflow-y-auto">
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {Array.from({length:12},(_,m)=>{
           const days=getMonthGrid(focusYear,m)
           const evCount = days.reduce((sum,d)=>sum+(eventsByDate.get(d.ds)?.length??0),0)

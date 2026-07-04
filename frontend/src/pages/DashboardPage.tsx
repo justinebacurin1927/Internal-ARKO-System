@@ -104,7 +104,7 @@ function GreetingBand({ totalTasks, noteCount, reminderCount }: { totalTasks: nu
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
 
   return (
-    <div className="flex items-center justify-between shrink-0 min-h-0 animate-[slide-up_0.4s_ease-out_forwards]">
+    <div className="flex items-center justify-between shrink-0 min-h-0 animate-[slide-up_0.4s_ease-out_forwards] flex-wrap gap-2">
       <div className="flex items-center gap-3">
         <div className="flex h-9 w-9 items-center justify-center rounded-full bg-accent-500/10 text-accent-500 ring-1 ring-accent-500/20">
           <Icon className="h-[18px] w-[18px]" />
@@ -121,7 +121,7 @@ function GreetingBand({ totalTasks, noteCount, reminderCount }: { totalTasks: nu
           </p>
         </div>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <StatPill icon={CheckSquare} value={totalTasks} label="Tasks" />
         <StatPill icon={FileText} value={noteCount} label="Notes" />
         <StatPill icon={Bell} value={reminderCount} label="Pending" />
@@ -384,10 +384,10 @@ export default function DashboardHome() {
       <GreetingBand totalTasks={totalTasks} noteCount={notes?.length ?? 0} reminderCount={incompleteReminders.length} />
 
       {/* ═══ 12-col grid fills remaining height ═══ */}
-      <div className="grid grid-cols-12 gap-2 flex-1 min-h-0 grid-rows-1fr">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-2 flex-1 min-h-0 md:grid-rows-1fr">
 
         {/* ── Main (8 cols) ── */}
-        <div className="col-span-8 flex flex-col gap-2 min-h-0">
+        <div className="col-span-12 md:col-span-8 flex flex-col gap-2 min-h-0">
 
           {/* ── Cash Flow chart — premium accent card ── */}
           <Card
@@ -440,7 +440,7 @@ export default function DashboardHome() {
           </Card>
 
           {/* ── 2×2 category grid ── */}
-          <div className="grid grid-cols-2 gap-2 flex-1 min-h-0 grid-rows-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 flex-1 min-h-0 sm:grid-rows-2">
 
             {/* Tasks */}
             <div className="flex flex-col min-h-0" style={cardDelay(1)}>
@@ -470,7 +470,7 @@ export default function DashboardHome() {
             </div>
 
             {/* Updates — right column, spans both rows */}
-            <div className="flex flex-col min-h-0 row-span-2 col-start-2" style={cardDelay(2)}>
+            <div className="flex flex-col min-h-0 sm:row-span-2 sm:col-start-2" style={cardDelay(2)}>
               <div className="flex items-center justify-between mb-3 shrink-0">
                 <h2 className="text-[11px] font-semibold text-text-tertiary uppercase tracking-wider">Updates</h2>
               </div>
@@ -501,7 +501,7 @@ export default function DashboardHome() {
             </div>
 
             {/* Reminders — bottom-left */}
-            <div className="flex flex-col min-h-0 row-start-2" style={cardDelay(3)}>
+            <div className="flex flex-col min-h-0 sm:row-start-2" style={cardDelay(3)}>
               <div className="flex items-center justify-between mb-3 shrink-0">
                 <h2 className="text-[11px] font-semibold text-text-tertiary uppercase tracking-wider">Reminders</h2>
                 <button onClick={() => navigate('/dashboard/reminders')}
@@ -528,7 +528,7 @@ export default function DashboardHome() {
         </div>
 
         {/* ── Right sidebar (4 cols) ── */}
-        <div className="col-span-4 flex flex-col gap-2 min-h-0">
+        <div className="col-span-12 md:col-span-4 flex flex-col gap-2 min-h-0">
 
           {/* Quote of the Day */}
           <QuoteCard />

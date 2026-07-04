@@ -510,9 +510,9 @@ export default function MessagesPage() {
       </div>
 
       {/* Main card */}
-      <Card className="flex-1 min-h-0 overflow-hidden flex flex-row">
+      <Card className="flex-1 min-h-0 overflow-hidden flex flex-row relative">
         {/* ── Conversation list ── */}
-        <div className="w-72 xl:w-80 shrink-0 border-r border-border-subtle flex flex-col bg-black/[0.01]">
+        <div className={`w-72 xl:w-80 shrink-0 border-r border-border-subtle flex flex-col bg-black/[0.01] ${selectedConv ? 'hidden md:flex' : 'flex w-full md:w-72 xl:w-80'}`}>
           <div className="px-4 py-3 border-b border-border-subtle">
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-text-tertiary pointer-events-none" />
@@ -570,7 +570,7 @@ export default function MessagesPage() {
         </div>
 
         {/* ── Chat panel ── */}
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className={`flex-1 flex flex-col min-w-0 ${selectedConv ? 'flex w-full md:w-auto' : 'hidden md:flex'}`}>
           {!selectedConv ? (
             /* No conversation selected */
             <div className="flex-1 flex items-center justify-center px-6">
@@ -587,7 +587,15 @@ export default function MessagesPage() {
           ) : (
             <>
               {/* Chat header */}
-              <div className="px-5 py-3.5 border-b border-border-subtle flex items-center gap-3 shrink-0">
+              <div className="px-4 md:px-5 py-3.5 border-b border-border-subtle flex items-center gap-2 md:gap-3 shrink-0">
+                {/* Back button — mobile only */}
+                <button
+                  onClick={() => setSelectedConv(null)}
+                  className="flex md:hidden h-8 w-8 items-center justify-center rounded-full text-text-tertiary hover:text-text-primary hover:bg-black/[0.03] transition-colors cursor-pointer shrink-0"
+                  title="Back to conversations"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+                </button>
                 {isGroupConv ? (
                   <GroupAvatar participants={selectedConvData?.participants ?? []} currentUserId={user?.id} />
                 ) : (

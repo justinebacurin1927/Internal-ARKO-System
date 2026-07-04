@@ -127,7 +127,9 @@ export default function NotesPage() {
 
       <div className="flex gap-4 flex-1 min-h-0">
         {/* Notes list */}
-        <Card className="w-64 shrink-0 overflow-hidden flex flex-col">
+        <Card className={`w-64 shrink-0 overflow-hidden flex flex-col ${
+          selectedId ? 'hidden md:flex' : 'flex w-full md:w-64'
+        }`}>
           <CardHeader className="p-3 border-b border-gray-100 space-y-2">
             <CardTitle className="text-xs font-semibold text-gray-500 uppercase tracking-wider">All Notes</CardTitle>
             <div className="relative">
@@ -166,7 +168,9 @@ export default function NotesPage() {
         </Card>
 
         {/* Editor */}
-        <Card className="flex-1 overflow-hidden flex flex-col">
+        <Card className={`flex-1 overflow-hidden flex flex-col ${
+          !selectedId ? 'hidden md:flex' : 'flex w-full md:flex'
+        }`}>
           {!selectedId ? (
             <div className="flex-1 flex items-center justify-center text-gray-400">
               <div className="text-center">
@@ -177,8 +181,16 @@ export default function NotesPage() {
               </div>
             </div>
           ) : (
-            <div className="flex-1 flex flex-col p-5">
+            <div className="flex-1 flex flex-col p-3 md:p-5">
               <div className="flex items-center justify-between mb-4">
+                {/* Back button — mobile only */}
+                <button
+                  onClick={() => setSelectedId(null)}
+                  className="flex md:hidden h-8 w-8 items-center justify-center rounded-full text-text-tertiary hover:text-text-primary hover:bg-black/[0.03] transition-colors cursor-pointer shrink-0 mr-1"
+                  title="Back to notes"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+                </button>
                 <input
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}

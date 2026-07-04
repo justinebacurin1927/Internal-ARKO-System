@@ -193,7 +193,7 @@ function TaskColumn({
   const isEmpty = !isLoading && filtered.length === 0
 
   return (
-    <div className="flex flex-col min-h-0 rounded-xl" style={{ background: 'transparent' }}>
+    <div className="flex flex-col min-h-0 rounded-xl snap-start shrink-0 w-[85vw] md:w-auto md:min-w-[280px] md:flex-1" style={{ background: 'transparent' }}>
       {/* Header */}
       <div className="flex items-center justify-between px-1 mb-3 shrink-0">
         <div className="flex items-center gap-2">
@@ -430,7 +430,7 @@ export default function TasksPage() {
                   className="block w-full rounded-lg border border-border-subtle px-3 py-2 text-sm focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20 bg-white"
                 />
               </div>
-              <div className="flex gap-4">
+              <div className="flex flex-col sm:flex-row gap-4">
                 <div className="flex-1">
                   <label className="mb-1.5 block text-sm font-medium text-text-primary">Priority</label>
                   <select
@@ -578,7 +578,7 @@ export default function TasksPage() {
 
       {/* ── Kanban board ── */}
       <DragDropContext onDragEnd={onDragEnd}>
-        <div className="grid grid-cols-4 gap-3 flex-1 min-h-0" style={{ gridAutoRows: '1fr' }}>
+        <div className="flex md:grid md:grid-cols-4 gap-3 flex-1 min-h-0 overflow-x-auto md:overflow-visible pb-2 md:pb-0 snap-x snap-mandatory" style={{ gridAutoRows: '1fr' }}>
           {columns.map((column) => (
             <TaskColumn
               key={column}
