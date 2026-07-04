@@ -18,4 +18,10 @@ urlpatterns = [
     path('api/notes/', include('notes_app.urls')),
     path('api/events/', include('events_app.urls')),
     path('api/users/', include('users_app.urls')),
+    path('api/storage/', include('storage_app.urls')),
+    path('api/comments/', include('comments_app.urls')),
+    path('api/notifications/', include('notifications_app.urls')),
+    path('api/journal/', include('journal_app.urls')),
+    path('api/ideas/', include('ideas_app.urls')),
+    path('api/resources/', include('resources_app.urls')),
 ]

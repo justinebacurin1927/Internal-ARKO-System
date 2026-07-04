@@ -24,6 +24,12 @@ INSTALLED_APPS = [
     'notes_app',
     'events_app',
     'users_app',
+    'storage_app',
+    'comments_app',
+    'notifications_app',
+    'journal_app',
+    'ideas_app',
+    'resources_app',
 ]
 
 MIDDLEWARE = [
@@ -75,7 +81,16 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 STATIC_URL = 'static/'
+MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# S3 / Object Storage (local fallback)
+S3_ENDPOINT = ''
+S3_REGION = 'us-east-1'
+S3_ACCESS_KEY_ID = ''
+S3_SECRET_ACCESS_KEY = ''
+S3_BUCKET = 'arko-attachments'
+S3_FORCE_PATH_STYLE = True
 
 # CORS
 CORS_ALLOW_ALL_ORIGINS = True

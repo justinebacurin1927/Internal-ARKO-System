@@ -100,9 +100,10 @@ function QuotePanel({ quote, loading }: { quote: Quote | null; loading: boolean 
       <div className="relative z-10 flex flex-col flex-1 px-12 pt-8 pb-12">
         {/* ARKO wordmark */}
         <span
-          className="select-none font-display-smooth text-[clamp(40px,5vw,72px)] leading-none text-white/85"
+          className="select-none font-display-smooth text-[clamp(40px,5vw,72px)] leading-none text-white/85 flex items-center gap-3"
           style={{ fontWeight: 700, animation: 'fade-in-left 0.8s ease-out' }}
         >
+          <img src="/icon.png" alt="" className="h-[1em] w-auto" />
           A R K O
         </span>
 
@@ -210,7 +211,8 @@ function LoginForm() {
       >
         {/* Mobile-brand */}
         <div className="lg:hidden text-center mb-8">
-          <span className="font-display-smooth text-3xl text-white/85">
+          <span className="font-display-smooth text-3xl text-white/85 inline-flex items-center justify-center gap-2">
+            <img src="/icon.png" alt="" className="h-[1em] w-auto" />
             A R K O
           </span>
         </div>

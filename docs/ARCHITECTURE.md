@@ -29,6 +29,13 @@ graph TD
     DRF --> Notes[Notes App]
     DRF --> Reminders[Reminders App]
     DRF --> Users[Users App]
+    DRF --> Events[Events & Sprints]
+    DRF --> Storage[Storage / File Uploads]
+    DRF --> Comments[Comments App]
+    DRF --> Notifications[Notifications App]
+    DRF --> Journal[Journal App]
+    DRF --> Ideas[Ideas App]
+    DRF --> Resources[Resources App]
     
     Tasks --> DB[(Neon PostgreSQL)]
     Finance --> DB
@@ -36,6 +43,14 @@ graph TD
     Notes --> DB
     Reminders --> DB
     Users --> DB
+    Events --> DB
+    Comments --> DB
+    Notifications --> DB
+    Journal --> DB
+    Ideas --> DB
+    Resources --> DB
+    
+    Storage --> S3[Supabase Storage / S3]
     
     subgraph Local Dev
         Docker[Docker Compose]
@@ -46,7 +61,7 @@ graph TD
     
     subgraph Production
         DB
-        SupaStorage[S3 (Supabase Storage)]
+        S3
     end
 ```
 
@@ -60,6 +75,12 @@ erDiagram
     User ||--o{ Transaction : makes
     User ||--o{ Task : assigned
     User ||--o{ Workflow : creates
+    User ||--o{ Comment : writes
+    User ||--o{ Notification : receives
+    User ||--o{ JournalEntry : authors
+    User ||--o{ Idea : brainstorms
+    User ||--o{ Resource : saves
+    User ||--o{ FileAttachment : uploads
     
     Workspace ||--o{ WorkspaceMember : has
     AccountCategory ||--o{ Transaction : categorizes
@@ -70,9 +91,15 @@ erDiagram
     
     Task ||--o{ Comment : has
     Task ||--o{ Task : subtasks
+    Task ||--o{ TaskDependency : blocks
+    Task ||--o{ FileAttachment : attached-to
     
     Conversation ||--o{ Message : contains
     Conversation ||--o{ ConversationParticipant : includes
+    
+    Idea ||--o{ Task : spawns
+    
+    Resource ||--o{ FileAttachment : linked-to
 ```
 
 ## Key Decisions
@@ -87,6 +114,25 @@ erDiagram
 | ORM | Django ORM | Native Django, migrations built in |
 | Styling | Tailwind CSS v4 | Utility-first, consistent design system |
 | State | React Query (TanStack Query) | Server state caching, invalidation, mutations |
+| File Storage | S3 (Supabase/MinIO) | S3-compatible, works in production and local dev |
+
+## Sprint 3 & 3.5 Architecture Notes
+
+### Generic Comment System
+Comments are attached to any resource type via a `resource_type` + `resource_id` pair — no polymorphic FK needed. This keeps queries simple and lets comments work on tasks, ideas, notes, etc. without schema changes.
+
+### Notification Signals
+The `notifications_app` uses Django's `post_save` signal system to auto-generate notifications when:
+- A comment is added to a task (notifies the assignee)
+- A task is assigned (notifies the new assignee)
+
+This decouples notification logic from business logic.
+
+### Idea → Task Spawning
+The `ideas_app` can create a task from an idea with a single API call. The idea stores the spawned `task_id` for cross-referencing, and the task inherits the idea's title and description.
+
+### File Uploads
+The `storage_app` abstracts S3-compatible storage behind a simple upload/download/delete API. Falls back to local filesystem when S3 isn't configured (local dev).
 
 ## Deployment Architecture
 

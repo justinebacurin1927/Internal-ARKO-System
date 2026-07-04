@@ -4,9 +4,11 @@ import { api } from '../lib/api'
 import { Card, CardContent } from '../components/Card'
 import { Button } from '../components/Button'
 import ConfirmDialog from '../components/ConfirmDialog'
+import CommentSection from '../components/CommentSection'
 import { useToast } from '../lib/toast'
 import {
   Plus, AlertCircle, User, Loader2, Trash2, Search, GripVertical,
+  ChevronDown, ChevronRight, Subscript, MessageSquare,
 } from 'lucide-react'
 import {
   DragDropContext, Droppable, Draggable,
@@ -44,7 +46,11 @@ function PriorityBadge({ priority }: { priority: string }) {
 
 /* ─── Task card ─── */
 
-function TaskCard({ task, index, onDelete }: { task: any; index: number; onDelete: (id: string) => void }) {
+function TaskCard({ task, index, onDelete, expanded, onToggleExpand }: {
+  task: any; index: number; onDelete: (id: string) => void;
+  expanded?: boolean; onToggleExpand?: () => void;
+}) {
+  const [showComments, setShowComments] = useState(false)
   return (
     <Draggable draggableId={task.id.toString()} index={index}>
       {(provided: DraggableProvided, snapshot: DraggableStateSnapshot) => (
@@ -81,7 +87,46 @@ function TaskCard({ task, index, onDelete }: { task: any; index: number; onDelet
                 {task.description}
               </p>
             )}
-            <div className="flex items-center gap-2 mt-3 flex-wrap">
+
+            {/* Subtasks count */}
+            {task.subtasks && task.subtasks.length > 0 && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onToggleExpand?.() }}
+                className="mt-2 flex items-center gap-1 text-[10px] text-accent-600 hover:text-accent-500 font-medium transition-colors cursor-pointer"
+              >
+                {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                <Subscript className="h-3 w-3" />
+                {task.subtasks.length} subtask{task.subtasks.length > 1 ? 's' : ''}
+              </button>
+            )}
+
+            {/* Subtask list (expanded) */}
+            {expanded && task.subtasks && task.subtasks.length > 0 && (
+              <div className="mt-2 space-y-1 pl-2 border-l-2 border-accent-200">
+                {task.subtasks.map((st: any) => (
+                  <div key={st.id} className="flex items-center gap-1.5 text-[10px] text-text-secondary">
+                    <span className={`h-1.5 w-1.5 rounded-full ${st.status === 'DONE' ? 'bg-pos' : 'bg-accent-300'}`} />
+                    <span className={st.status === 'DONE' ? 'line-through text-text-tertiary' : ''}>
+                      {st.title}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Dependencies */}
+            {task.dependencies && task.dependencies.length > 0 && (
+              <div className="mt-2 space-y-0.5">
+                {task.dependencies.map((dep: any) => (
+                  <div key={dep.id} className="flex items-center gap-1 text-[9px] text-amber-600 bg-amber-50 rounded px-1.5 py-0.5">
+                    <span className="font-medium">Blocks:</span> {dep.depends_on_title || `#${dep.depends_on}`}
+                    {dep.depends_on_status === 'DONE' ? ' ✅' : ` (${dep.depends_on_status})`}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
               {task.priority && <PriorityBadge priority={task.priority} />}
               {task.assignee_name && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-gray-50 px-2 py-0.5 text-[10px] text-gray-500">
@@ -89,6 +134,16 @@ function TaskCard({ task, index, onDelete }: { task: any; index: number; onDelet
                   {task.assignee_name}
                 </span>
               )}
+
+              {/* Comment toggle */}
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowComments(!showComments) }}
+                className="flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] text-text-tertiary hover:text-accent-600 hover:bg-accent-50 transition-all cursor-pointer"
+              >
+                <MessageSquare className="h-2.5 w-2.5" />
+                Comments
+              </button>
+
               <button
                 onClick={(e) => { e.stopPropagation(); onDelete(task.id) }}
                 className="ml-auto p-1 text-[#D8DCD6] hover:text-neg transition-colors cursor-pointer rounded-md hover:bg-neg-bg"
@@ -96,6 +151,13 @@ function TaskCard({ task, index, onDelete }: { task: any; index: number; onDelet
                 <Trash2 className="h-3 w-3" />
               </button>
             </div>
+
+            {/* Comment section (inline) */}
+            {showComments && (
+              <div className="mt-2">
+                <CommentSection resourceType="TASK" resourceId={task.id.toString()} compact />
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -111,12 +173,16 @@ function TaskColumn({
   isLoading,
   search,
   onDelete,
+  expandedTasks,
+  onToggleExpand,
 }: {
   column: string
   tasks: any[]
   isLoading: boolean
   search: string
   onDelete: (id: string) => void
+  expandedTasks: Set<string>
+  onToggleExpand: (id: string) => void
 }) {
   const meta = columnMeta[column]
   const filtered = tasks.filter(
@@ -175,7 +241,10 @@ function TaskColumn({
                 </div>
               ) : (
                 filtered.map((task: any, i: number) => (
-                  <TaskCard key={task.id} task={task} index={i} onDelete={(id) => onDelete(id)} />
+                  <TaskCard key={task.id} task={task} index={i} onDelete={(id) => onDelete(id)}
+                    expanded={expandedTasks.has(task.id.toString())}
+                    onToggleExpand={() => onToggleExpand(task.id.toString())}
+                  />
                 ))
               )}
               {provided.placeholder}
@@ -208,10 +277,22 @@ export default function TasksPage() {
   const [newDesc, setNewDesc] = useState('')
   const [newPriority, setNewPriority] = useState('MEDIUM')
   const [newAssignee, setNewAssignee] = useState('')
+  const [newParent, setNewParent] = useState('')
   const [showAssigneeSearch, setShowAssigneeSearch] = useState(false)
+  const [showParentSearch, setShowParentSearch] = useState(false)
   const [assigneeSearch, setAssigneeSearch] = useState('')
+  const [parentSearch, setParentSearch] = useState('')
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [taskSearch, setTaskSearch] = useState('')
+  const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set())
+
+  const toggleExpand = (id: string) => {
+    setExpandedTasks((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      return next
+    })
+  }
   // Optimistic local state for instant drag feedback (cleaned up after refetch)
   const [optimisticStatus, setOptimisticStatus] = useState<Record<string, string>>({})
   const [optimisticPosition, setOptimisticPosition] = useState<Record<string, number>>({})
@@ -232,12 +313,14 @@ export default function TasksPage() {
         description: newDesc.trim() || undefined,
         priority: newPriority,
         assignee: newAssignee || undefined,
+        parent: newParent || undefined,
       }),
     onSuccess: () => {
       setNewTitle('')
       setNewDesc('')
       setNewPriority('MEDIUM')
       setNewAssignee('')
+      setNewParent('')
       setShowNew(false)
       queryClient.invalidateQueries({ queryKey: ['tasks'] })
       toast('Task created')
@@ -414,6 +497,59 @@ export default function TasksPage() {
                   </div>
                 </div>
               </div>
+              <div className="flex-1">
+                <label className="mb-1.5 block text-sm font-medium text-text-primary">Parent task (optional)</label>
+                <div className="relative">
+                  <div
+                    onClick={() => setShowParentSearch(true)}
+                    className="flex h-[38px] cursor-pointer items-center rounded-lg border border-border-subtle px-3 text-sm text-text-secondary hover:border-gray-400 bg-white"
+                  >
+                    {newParent
+                      ? tasks.find((t: any) => t.id.toString() === newParent)?.title ?? 'Unknown'
+                      : 'None (top-level task)'}
+                  </div>
+                  {showParentSearch && (
+                    <div className="absolute left-0 top-full z-10 mt-1 w-full rounded-lg border border-border-subtle bg-white p-2 shadow-card max-h-48">
+                      <input
+                        type="text"
+                        value={parentSearch}
+                        onChange={(e) => setParentSearch(e.target.value)}
+                        placeholder="Search tasks..."
+                        autoFocus
+                        className="mb-2 w-full rounded-md border border-border-subtle px-2 py-1.5 text-xs focus:border-accent-500 focus:outline-none"
+                      />
+                      <div className="max-h-32 space-y-0.5 overflow-y-auto">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setNewParent('')
+                            setShowParentSearch(false)
+                          }}
+                          className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs text-text-secondary hover:bg-gray-50"
+                        >
+                          None (top-level task)
+                        </button>
+                        {tasks
+                          .filter((t: any) => !t.parent && (!parentSearch || t.title.toLowerCase().includes(parentSearch.toLowerCase())))
+                          .map((t: any) => (
+                            <button
+                              key={t.id}
+                              type="button"
+                              onClick={() => {
+                                setNewParent(t.id.toString())
+                                setShowParentSearch(false)
+                              }}
+                              className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs text-text-secondary hover:bg-gray-50"
+                            >
+                              <span className={`h-1.5 w-1.5 rounded-full ${t.status === 'DONE' ? 'bg-pos' : 'bg-accent-300'}`} />
+                              {t.title}
+                            </button>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
               <Button type="submit" disabled={createTask.isPending}>
                 {createTask.isPending ? (
                   <>
@@ -451,6 +587,8 @@ export default function TasksPage() {
               isLoading={isLoading}
               search={taskSearch}
               onDelete={setConfirmDeleteId}
+              expandedTasks={expandedTasks}
+              onToggleExpand={toggleExpand}
             />
           ))}
         </div>

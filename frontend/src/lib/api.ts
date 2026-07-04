@@ -209,4 +209,100 @@ export const api = {
     request<any>(`/auth/users/${id}/`, { method: 'PATCH', body: JSON.stringify(data) }),
   adminDeleteUser: (id: number) =>
     request<void>(`/auth/users/${id}/delete/`, { method: 'DELETE' }),
+
+  // File uploads
+  uploadFile: (file: File, resourceType: string, resourceId?: string) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('resource_type', resourceType)
+    if (resourceId) formData.append('resource_id', resourceId)
+
+    const token = getToken()
+    return fetch(`${BASE}/storage/upload/`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: formData,
+    }).then(async (res) => {
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: 'Upload failed' }))
+        throw new Error(err.detail || 'Upload failed')
+      }
+      return res.json()
+    })
+  },
+  listFiles: (resourceType: string, resourceId?: string) =>
+    request<any[]>(`/storage/list/${resourceType}/${resourceId ?? ''}`),
+  getFileMeta: (id: string) =>
+    request<any>(`/storage/${id}/`),
+  deleteFile: (id: string) =>
+    request<void>(`/storage/${id}/delete/`, { method: 'DELETE' }),
+
+  // Task dependencies
+  addDependency: (taskId: string, dependsOnId: string) =>
+    request<any>(`/tasks/${taskId}/dependencies/`, {
+      method: 'POST',
+      body: JSON.stringify({ depends_on_id: dependsOnId }),
+    }),
+  removeDependency: (depId: number) =>
+    request<void>(`/tasks/dependencies/${depId}/`, { method: 'DELETE' }),
+
+  // Comments
+  getComments: (resourceType: string, resourceId: string) =>
+    request<any[]>(`/comments/${resourceType}/${resourceId}/`),
+  createComment: (resourceType: string, resourceId: string, content: string) =>
+    request<any>(`/comments/${resourceType}/${resourceId}/`, {
+      method: 'POST',
+      body: JSON.stringify({ content }),
+    }),
+  editComment: (commentId: number, content: string) =>
+    request<any>(`/comments/item/${commentId}/`, {
+      method: 'PATCH',
+      body: JSON.stringify({ content }),
+    }),
+  deleteComment: (commentId: number) =>
+    request<void>(`/comments/item/${commentId}/`, { method: 'DELETE' }),
+
+  // Notifications
+  getNotifications: () =>
+    request<any[]>('/notifications/'),
+  unreadNotificationCount: () =>
+    request<{ count: number }>('/notifications/unread/'),
+  markNotificationRead: (id: string) =>
+    request<any>(`/notifications/${id}/read/`, { method: 'PATCH' }),
+  markAllNotificationsRead: () =>
+    request<any>('/notifications/mark-all-read/', { method: 'PATCH' }),
+  deleteNotification: (id: string) =>
+    request<void>(`/notifications/${id}/delete/`, { method: 'DELETE' }),
+
+  // Journal
+  getJournalEntries: () =>
+    request<any[]>('/journal/'),
+  createJournalEntry: (data: any) =>
+    request<any>('/journal/', { method: 'POST', body: JSON.stringify(data) }),
+  updateJournalEntry: (id: string, data: any) =>
+    request<any>(`/journal/${id}/`, { method: 'PATCH', body: JSON.stringify(data) }),
+  deleteJournalEntry: (id: string) =>
+    request<void>(`/journal/${id}/`, { method: 'DELETE' }),
+
+  // Ideas
+  getIdeas: (status?: string) =>
+    request<any[]>(`/ideas/${status ? `?status=${status}` : ''}`),
+  createIdea: (data: any) =>
+    request<any>('/ideas/', { method: 'POST', body: JSON.stringify(data) }),
+  updateIdea: (id: string, data: any) =>
+    request<any>(`/ideas/${id}/`, { method: 'PATCH', body: JSON.stringify(data) }),
+  deleteIdea: (id: string) =>
+    request<void>(`/ideas/${id}/`, { method: 'DELETE' }),
+  spawnTaskFromIdea: (ideaId: string) =>
+    request<any>(`/ideas/${ideaId}/spawn-task/`, { method: 'POST' }),
+
+  // Resources
+  getResources: (params?: { type?: string; q?: string }) =>
+    request<any[]>(`/resources/${params ? '?' + new URLSearchParams(params as any).toString() : ''}`),
+  createResource: (data: any) =>
+    request<any>('/resources/', { method: 'POST', body: JSON.stringify(data) }),
+  updateResource: (id: string, data: any) =>
+    request<any>(`/resources/${id}/`, { method: 'PATCH', body: JSON.stringify(data) }),
+  deleteResource: (id: string) =>
+    request<void>(`/resources/${id}/`, { method: 'DELETE' }),
 }

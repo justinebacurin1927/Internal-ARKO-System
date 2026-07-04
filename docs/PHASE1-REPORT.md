@@ -11,11 +11,11 @@ updated: 2026-07-04
 # Phase 1 Build & Deploy Report
 
 *Prepared for: 4-person internal team*
-*Date: 4 July 2026 | Status: Phase 1 complete, deployed to production*
+*Date: 4 July 2026 | Status: Sprints 1–3.5 complete, deployed to production*
 
 ## 1. Overview
 
-Phase 1 delivered the full ARKO platform: a React SPA frontend, Django REST API backend, Neon PostgreSQL database, deployed to Vercel production with Supabase Storage for file attachments.
+Phase 1 delivered the full ARKO platform across Sprints 1 through 3.5: a React SPA frontend, Django REST API backend, Neon PostgreSQL database, deployed to Vercel production with Supabase Storage for file attachments. The platform now spans 11 backend apps and 14 frontend pages covering operations, creativity, and knowledge management.
 
 ## 2. Architecture Evolution
 
@@ -31,6 +31,8 @@ The project was originally started as a Next.js 15 monorepo with tRPC, Prisma, a
 
 ## 3. Features Delivered
 
+### Sprint 1 — Core Features
+
 | Module | Features |
 |---|---|
 | **Auth** | Registration, login, JWT access + refresh tokens, auto-refresh on 401 |
@@ -41,6 +43,35 @@ The project was originally started as a Next.js 15 monorepo with tRPC, Prisma, a
 | **Notes** | Create and manage notes |
 | **Reminders** | Reminder CRUD with status tracking |
 | **Settings** | Profile editing, password change |
+
+### Sprint 2 — Deployment & Infra
+
+| Feature | Details |
+|---|---|
+| **Vercel Deploy** | SPA + Python serverless functions, zero-downtime deploys |
+| **Neon Postgres** | Production database, ap-southeast-2 region |
+| **Supabase Storage** | S3-compatible file storage configured |
+| **CI/CD** | `vercel deploy --prod` pushes go live immediately |
+
+### Sprint 3 — Platform Enhancements
+
+| Feature | Details |
+|---|---|
+| **File Uploads** | S3 upload/download/delete via `storage_app`, `FileUploader` component with previews |
+| **Task Subtasks** | Parent FK on Task model, expandable subtask tree in Kanban cards |
+| **Task Dependencies** | `TaskDependency` model, dependency indicators on cards |
+| **Task Comments** | Generic `Comment` model (type + ID), `CommentSection` component (full + compact) |
+| **In-app Notifications** | `Notification` model with auto-signals, bell icon with unread count dropdown |
+| **User Management** | Admin CRUD, role (Admin/Member/User) and status (Active/Suspended) controls |
+
+### Sprint 3.5 — Personal & Creative Tools
+
+| Feature | Details |
+|---|---|
+| **Quote of the Day** | Dashboard widget, session-cached API quote with local fallbacks |
+| **Personal Journal** | Private entries with mood tracking (5 moods), CRUD, sort by date |
+| **R&D Ideas Board** | Grid view with status filter, tags, one-click task spawning |
+| **Resource Library** | Links/docs/references with type filter, tags, search |
 
 ## 4. Infrastructure
 
@@ -74,9 +105,8 @@ The project was originally started as a Next.js 15 monorepo with tRPC, Prisma, a
 | API health endpoint | ✅ `{"status": "ok"}` |
 | User registration | ✅ JWT tokens returned |
 | User login | ✅ JWT tokens returned |
-| SPA routing (/dashboard, /tasks) | ✅ 200 |
-| Django migrations (21 applied) | ✅ |
-| Database tables (17) | ✅ |
+| SPA routing (all 14 pages) | ✅ 200 |
+| Django migrations (28+ applied) | ✅ |
 | TypeScript build | ✅ Clean |
 | Vercel build + deploy | ✅ Zero downtime |
 
@@ -101,8 +131,8 @@ Vercel env vars are managed via `vercel env add`.
 
 ## 8. Known Gaps & Next Steps
 
-- File uploads (S3/Supabase Storage) not wired to the frontend yet
-- No notification system (in-app or email)
-- Task subtasks, dependencies, comments not implemented
-- No search across modules
-- Workflow automation engine planned but not started
+- No search across modules (separate search for each page)
+- No email delivery for notifications (in-app only)
+- No webhook or integration system (Slack, email)
+- No multi-workspace support
+- Mobile responsive but not a native app

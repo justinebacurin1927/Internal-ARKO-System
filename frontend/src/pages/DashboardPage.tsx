@@ -4,11 +4,59 @@ import { useAuth } from '../lib/auth'
 import {
   FileText, Bell, ArrowRight, CheckSquare, Clock,
   Target, BarChart3, Users, AlertCircle, GitCommitHorizontal,
-  Sparkles, Sun, Moon,
+  Sparkles, Sun, Moon, Quote,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useEffect, useRef, useState } from 'react'
 import { Card } from '../components/Card'
+
+
+/* ─── Quote of the Day ─── */
+
+const fallbackQuotes = [
+  { content: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
+  { content: "Simplicity is the ultimate sophistication.", author: "Leonardo da Vinci" },
+  { content: "Make it simple, but significant.", author: "Don Draper" },
+  { content: "The best time to plant a tree was 20 years ago. The second best time is now.", author: "Chinese Proverb" },
+]
+
+function QuoteCard() {
+  const [quote, setQuote] = useState<{ content: string; author: string } | null>(null)
+
+  useEffect(() => {
+    const cached = sessionStorage.getItem('arko-quote')
+    if (cached) {
+      try { setQuote(JSON.parse(cached)); return } catch { /* fall through */ }
+    }
+
+    const controller = new AbortController()
+    fetch('https://api.quotable.io/quotes/random?limit=1', { signal: controller.signal })
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          const q = { content: data[0].content, author: data[0].author }
+          sessionStorage.setItem('arko-quote', JSON.stringify(q))
+          setQuote(q)
+        }
+      })
+      .catch(() => setQuote(fallbackQuotes[Math.floor(Math.random() * fallbackQuotes.length)]))
+    return () => controller.abort()
+  }, [])
+
+  if (!quote) return null
+
+  return (
+    <Card className="shrink-0 p-3.5 animate-[card-enter_450ms_ease-out_forwards] opacity-0" style={{ animationDelay: '0ms' }}>
+      <div className="flex items-start gap-2.5">
+        <Quote className="h-5 w-5 shrink-0 text-accent-500/30 mt-0.5" />
+        <div>
+          <p className="text-[11px] text-text-secondary leading-relaxed italic">"{quote.content}"</p>
+          <p className="text-[10px] text-text-tertiary mt-1.5 font-medium">&mdash; {quote.author}</p>
+        </div>
+      </div>
+    </Card>
+  )
+}
 
 /* ─── Time-of-day greeting ─── */
 
@@ -481,6 +529,9 @@ export default function DashboardHome() {
 
         {/* ── Right sidebar (4 cols) ── */}
         <div className="col-span-4 flex flex-col gap-2 min-h-0">
+
+          {/* Quote of the Day */}
+          <QuoteCard />
 
           {/* Donut + completion stats */}
           <Card className="shrink-0 p-3.5 animate-[card-enter_450ms_ease-out_forwards] opacity-0" style={cardDelay(1)}>

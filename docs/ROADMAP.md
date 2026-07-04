@@ -38,20 +38,20 @@ updated: 2026-07-04
 - [x] Production Django settings (locked CORS, SSL)
 - [x] CI/CD: git push → Vercel deploy
 
-## Sprint 3 — Platform Enhancements 🚧 (in progress)
+## Sprint 3 — Platform Enhancements ✅
 
-- [ ] File uploads (Supabase Storage → frontend)
-- [ ] Task subtasks & dependencies
-- [ ] Task comments
-- [ ] In-app notifications
-- [ ] user-management
+- [x] File uploads (S3 storage → frontend FileUploader)
+- [x] Task subtasks & dependencies (parent FK, TaskDependency model)
+- [x] Task comments (generic Comment model, CommentSection UI)
+- [x] In-app notifications (Notification model, bell UI, auto-generate signals)
+- [x] User management (admin CRUD, role/status fields)
 
-## Sprint 3.5 — Personal & Creative Tools 🔜
+## Sprint 3.5 — Personal & Creative Tools ✅
 
-- [ ] Quote of the Day (dashboard widget)
-- [ ] Personal Journal (private per-user)
-- [ ] R&D Ideas Board (brainstorm → task spawning)
-- [ ] Resource Library (links + files, tagged collections)
+- [x] Quote of the Day (dashboard widget, cached session API)
+- [x] Personal Journal (private per-user entries with mood tracking)
+- [x] R&D Ideas Board (brainstorm → task spawning)
+- [x] Resource Library (links/docs/references with tags, search, type filter)
 
 ## Future
 
