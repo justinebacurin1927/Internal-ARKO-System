@@ -30,18 +30,17 @@ interface Quote {
   author: string
 }
 
-/* ─── Daily quote hook (cached in localStorage) ─── */
+/* ─── Quote hook (cached in sessionStorage — survives refresh, resets on sign in/out) ─── */
 
-function useDailyQuote(): { quote: Quote | null; loading: boolean } {
+const CACHE_KEY = 'arko-session-quote'
+
+function useQuote(): { quote: Quote | null; loading: boolean } {
   const [quote, setQuote] = useState<Quote | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const today = new Date().toISOString().slice(0, 10)
-    const cacheKey = `arko-quote-${today}`
-
-    // Check localStorage
-    const cached = localStorage.getItem(cacheKey)
+    // Check sessionStorage
+    const cached = sessionStorage.getItem(CACHE_KEY)
     if (cached) {
       try {
         setQuote(JSON.parse(cached))
@@ -59,14 +58,13 @@ function useDailyQuote(): { quote: Quote | null; loading: boolean } {
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
           const q: Quote = { content: data[0].content, author: data[0].author }
-          localStorage.setItem(cacheKey, JSON.stringify(q))
+          sessionStorage.setItem(CACHE_KEY, JSON.stringify(q))
           setQuote(q)
         } else {
           throw new Error('Unexpected response')
         }
       })
       .catch(() => {
-        // Use random fallback
         const idx = Math.floor(Math.random() * fallbackQuotes.length)
         setQuote(fallbackQuotes[idx])
       })
@@ -115,6 +113,8 @@ function LoginForm() {
     try {
       setError('')
       await login(email, password)
+      // Clear cached quote so next sign-in gets a fresh one
+      sessionStorage.removeItem(CACHE_KEY)
     } catch (err: any) {
       setError(err.message || 'Login failed')
     } finally {
@@ -127,7 +127,7 @@ function LoginForm() {
       <div className="w-full max-w-sm">
         {/* Mobile-brand */}
         <div className="lg:hidden text-center mb-8">
-          <span className="font-display text-2xl text-white" style={{ letterSpacing: '0.08em' }}>
+          <span className="font-display text-3xl text-white/85" style={{ letterSpacing: '0.10em' }}>
             A R K O
           </span>
         </div>
@@ -222,23 +222,22 @@ function QuotePanel({ quote, loading }: { quote: Quote | null; loading: boolean 
         }}
       />
 
-      {/* ARKO wordmark */}
-      <div className="relative z-10 px-10 pt-9">
-        <span
-          className="font-display text-lg tracking-[0.12em] text-white/70"
-        >
-          A R K O
-        </span>
-      </div>
-
       {/* Quote content */}
-      <div className="relative z-10 flex flex-col items-center justify-center flex-1 px-12 -mt-8">
+      <div className="relative z-10 flex flex-col items-center justify-center flex-1 px-12">
         {loading ? (
           <QuoteSkeleton />
         ) : quote ? (
           <div
             className="flex flex-col items-center w-full max-w-xl animate-[fade-in_0.8s_ease-out]"
           >
+            {/* ARKO wordmark — big and centered above the quote */}
+            <h1
+              className="font-display text-[clamp(36px,4.5vw,64px)] leading-none text-white/85 mb-10"
+              style={{ letterSpacing: '0.10em' }}
+            >
+              A R K O
+            </h1>
+
             {/* Massive opening quotation mark */}
             <div
               className="relative w-full"
@@ -302,7 +301,7 @@ function QuotePanel({ quote, loading }: { quote: Quote | null; loading: boolean 
 /* ─── Page ─── */
 
 export default function LoginPage() {
-  const { quote, loading } = useDailyQuote()
+  const { quote, loading } = useQuote()
 
   return (
     <div className="flex min-h-[100dvh]">
