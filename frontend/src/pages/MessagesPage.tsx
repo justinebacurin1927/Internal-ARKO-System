@@ -286,7 +286,7 @@ export default function MessagesPage() {
   const [selectedUsers, setSelectedUsers] = useState<any[]>([])
   const [editingMsgId, setEditingMsgId] = useState<number | null>(null)
   const [confirmDeleteMsgId, setConfirmDeleteMsgId] = useState<number | null>(null)
-  const [typingUsers, setTypingUsers] = useState<Record<string, { name: string; timeout: NodeJS.Timeout }>>({})
+  const [typingUsers, setTypingUsers] = useState<Record<string, { name: string; timeout: ReturnType<typeof setTimeout> }>>({})
   const wsRef = useRef<WebSocket | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)

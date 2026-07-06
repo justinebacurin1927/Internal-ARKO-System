@@ -43,7 +43,6 @@ const toDS = (d: Date) => d.toISOString().split('T')[0]
 const timeToSlot = (t: string) => { const h=+t.split(':')[0], m=+t.split(':')[1]; return Math.max(0,Math.min(SLOT_COUNT-1,h-8+(m>=30?.5:0))) }
 const slotToTime = (s: number) => `${String(Math.floor(s)+8).padStart(2,'0')}:${s%1===0?'00':'30'}`
 const daysBetween = (a: Date, b: Date) => Math.round((b.getTime()-a.getTime())/86400000)
-const fmtTime = (t: string) => { const [h,m]=t.split(':'); return `${+h>12?+h-12:+h}${m>'00'?`:${m}`:''} ${+h>=12?'PM':'AM'}` }
 
 /** Get the date range for the current view */
 function viewDateRange(view: ViewMode, focus: Date): { from: string; to: string; days: {ds:string;date:Date;today:boolean;num:number}[]; label: string } {
