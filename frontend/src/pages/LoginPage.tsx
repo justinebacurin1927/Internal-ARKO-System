@@ -423,6 +423,11 @@ function LoginForm() {
         <p className="mt-3 text-center text-[10px] text-zinc-800" style={{ fontFamily: "'DM Sans', sans-serif" }}>
           &copy; 2026 Arko. All rights reserved.
         </p>
+
+        {/* Version */}
+        <p className="mt-1 text-center text-[9px] text-zinc-800/60" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+          v1.0.0
+        </p>
       </div>
     </div>
   )
