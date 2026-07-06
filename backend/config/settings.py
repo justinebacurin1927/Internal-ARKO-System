@@ -8,6 +8,7 @@ DEBUG = True
 ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -16,6 +17,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
+    'channels',
     'auth_app',
     'tasks_app',
     'finance_app',
@@ -24,6 +26,8 @@ INSTALLED_APPS = [
     'notes_app',
     'events_app',
     'users_app',
+    'uploads_app',
+    'notifications_app',
 ]
 
 MIDDLEWARE = [
@@ -75,7 +79,12 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 STATIC_URL = 'static/'
+MEDIA_URL = 'media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Upload limits
+MAX_UPLOAD_SIZE = 10 * 1024 * 1024  # 10MB
 
 # CORS
 CORS_ALLOW_ALL_ORIGINS = True
@@ -99,4 +108,13 @@ REST_FRAMEWORK = {
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
     'AUTH_HEADER_TYPES': ('Bearer',),
+}
+
+# Channels / ASGI
+ASGI_APPLICATION = 'config.asgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    },
 }

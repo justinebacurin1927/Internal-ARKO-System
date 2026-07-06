@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { api } from '../lib/api'
+import { api, getToken } from '../lib/api'
 import { useAuth } from '../lib/auth'
 import { Card } from '../components/Card'
 import { Button } from '../components/Button'
@@ -90,24 +90,32 @@ function ConvItem({
 }) {
   const label = conversationLabel(conv.participants, currentUserId)
   const lastMsg = conv.messages?.[0]
+  const unread = conv.unread_count ?? 0
   return (
     <button
       onClick={onClick}
-      className="w-full text-left group transition-colors"
+      className="w-full text-left group transition-colors relative"
       style={{
         borderLeft: isSelected ? '3px solid #2D6A4F' : '3px solid transparent',
         background: isSelected ? 'rgba(45,106,79,0.04)' : 'transparent',
       }}
     >
       <div className="flex items-center gap-3 px-4 py-3.5">
-        {label.isGroup ? (
-          <GroupAvatar participants={conv.participants} currentUserId={currentUserId} />
-        ) : (
-          <Avatar name={label.name} email={label.name} />
-        )}
+        <div className="relative shrink-0">
+          {label.isGroup ? (
+            <GroupAvatar participants={conv.participants} currentUserId={currentUserId} />
+          ) : (
+            <Avatar name={label.name} email={label.name} />
+          )}
+          {unread > 0 && (
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 leading-none shadow-md ring-2 ring-white">
+              {unread > 99 ? '99+' : unread}
+            </span>
+          )}
+        </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
-            <p className={`text-sm truncate flex items-center gap-1.5 ${isSelected ? 'font-semibold text-text-primary' : 'font-medium text-text-primary'}`}>
+            <p className={`text-sm truncate flex items-center gap-1.5 ${unread > 0 ? 'font-bold text-text-primary' : isSelected ? 'font-semibold text-text-primary' : 'font-medium text-text-primary'}`}>
               {label.name}
               {label.isGroup && <Users className="h-3 w-3 text-text-tertiary shrink-0" />}
             </p>
@@ -116,9 +124,9 @@ function ConvItem({
             )}
           </div>
           {label.subtitle ? (
-            <p className="text-xs text-text-tertiary truncate mt-0.5">{label.subtitle}</p>
+            <p className={`text-xs truncate mt-0.5 ${unread > 0 ? 'font-semibold text-text-primary' : 'text-text-tertiary'}`}>{label.subtitle}</p>
           ) : lastMsg?.content ? (
-            <p className="text-xs text-text-tertiary truncate mt-0.5">{lastMsg.content}</p>
+            <p className={`text-xs truncate mt-0.5 ${unread > 0 ? 'font-semibold text-text-primary' : 'text-text-tertiary'}`}>{lastMsg.content}</p>
           ) : null}
         </div>
       </div>
@@ -278,12 +286,99 @@ export default function MessagesPage() {
   const [selectedUsers, setSelectedUsers] = useState<any[]>([])
   const [editingMsgId, setEditingMsgId] = useState<number | null>(null)
   const [confirmDeleteMsgId, setConfirmDeleteMsgId] = useState<number | null>(null)
+  const [typingUsers, setTypingUsers] = useState<Record<string, { name: string; timeout: NodeJS.Timeout }>>({})
+  const wsRef = useRef<WebSocket | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  // ── WebSocket connection ──
+  useEffect(() => {
+    const token = getToken()
+    if (!token) return
+
+    // In dev: connect directly to Django on :8000 (Vite proxy blocks WS upgrades)
+    // In prod: would be the same host via nginx/vercel
+    const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    const wsHost = isDev ? 'localhost:8000' : window.location.host
+    const wsProto = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+    const ws = new WebSocket(`${wsProto}//${wsHost}/ws/chat/?token=${token}`)
+    wsRef.current = ws
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data)
+        if (data.type === 'new_message') {
+          // Refresh conversations and messages
+          queryClient.invalidateQueries({ queryKey: ['conversations'] })
+          if (data.conversation_id === selectedConv) {
+            queryClient.invalidateQueries({ queryKey: ['messages', selectedConv] })
+          }
+        } else if (data.type === 'typing') {
+          if (data.user_id !== user?.id) {
+            setTypingUsers((prev) => {
+              const next = { ...prev }
+              if (next[data.conversation_id]) {
+                clearTimeout(next[data.conversation_id].timeout)
+              }
+              next[data.conversation_id] = {
+                name: data.user_name,
+                timeout: setTimeout(() => {
+                  setTypingUsers((p) => {
+                    const cp = { ...p }
+                    delete cp[data.conversation_id]
+                    return cp
+                  })
+                }, 3000),
+              }
+              return next
+            })
+          }
+        }
+      } catch {
+        // ignore malformed messages
+      }
+    }
+
+    ws.onclose = () => { wsRef.current = null }
+    return () => { ws.close(); wsRef.current = null }
+  }, [user?.id, queryClient])
+
+  // ── Send typing indicator ──
+  const typingThrottle = useRef<number>(0)
+  const sendTyping = useCallback(() => {
+    const now = Date.now()
+    if (now - typingThrottle.current < 2000) return
+    typingThrottle.current = now
+    if (wsRef.current?.readyState === WebSocket.OPEN && selectedConv) {
+      wsRef.current.send(JSON.stringify({ action: 'typing', conversation_id: selectedConv }))
+    }
+  }, [selectedConv])
+
+  // ── Mark conversation as read ──
+  const markRead = useMutation({
+    mutationFn: (convId: string) => api.markConversationRead(convId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['conversations'] })
+    },
+  })
+
+  const handleSelectConv = useCallback((convId: string) => {
+    setSelectedConv(convId)
+    markRead.mutate(convId)
+  }, [markRead])
+
+  // ── Poll conversations for unread count updates (every 30s) ──
+  useEffect(() => {
+    const interval = setInterval(() => {
+      queryClient.invalidateQueries({ queryKey: ['conversations'] })
+    }, 30000)
+    return () => clearInterval(interval)
+  }, [queryClient])
 
   const { data: conversations, isLoading, error } = useQuery({
     queryKey: ['conversations'],
     queryFn: () => api.getConversations(),
+    refetchOnWindowFocus: true,
   })
 
   const { data: messagesData, isLoading: msgsLoading } = useQuery({
@@ -373,6 +468,7 @@ export default function MessagesPage() {
   const selectedConvData = conversations?.find((c: any) => c.id === selectedConv)
   const otherUser = selectedConvData ? otherParticipant(selectedConvData) : null
   const isGroupConv = selectedConvData && (selectedConvData.participants?.length ?? 0) > 2
+  const typingName = selectedConv ? typingUsers[selectedConv]?.name : null
 
   // Group messages by day
   const groupedMessages = messagesData?.messages?.reduce((groups: any[], msg: any) => {
@@ -561,7 +657,7 @@ export default function MessagesPage() {
                   key={conv.id}
                   conv={conv}
                   isSelected={selectedConv === conv.id}
-                  onClick={() => setSelectedConv(conv.id)}
+                  onClick={() => handleSelectConv(conv.id)}
                   currentUserId={user?.id}
                 />
               ))
@@ -599,7 +695,9 @@ export default function MessagesPage() {
                       ? conversationLabel(selectedConvData?.participants ?? [], user?.id).name
                       : otherUser?.name || otherUser?.email}
                   </p>
-                  {isGroupConv ? (
+                  {typingName ? (
+                    <p className="text-xs text-accent-500 animate-pulse font-medium">{typingName} is typing...</p>
+                  ) : isGroupConv ? (
                     <p className="text-xs text-text-tertiary">
                       {selectedConvData?.participants
                         ?.filter((p: any) => p.id !== user?.id)
@@ -676,7 +774,7 @@ export default function MessagesPage() {
                     <textarea
                       ref={textareaRef}
                       value={message}
-                      onChange={(e) => { setMessage(e.target.value); autoResize() }}
+                      onChange={(e) => { setMessage(e.target.value); autoResize(); sendTyping() }}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' && !e.shiftKey) {
                           e.preventDefault()

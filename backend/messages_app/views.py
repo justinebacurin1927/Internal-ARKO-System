@@ -8,14 +8,31 @@ from django.db import transaction
 from django.db import models as db_models
 from .models import Conversation, ConversationParticipant, Message
 from .serializers import ConversationListSerializer, ConversationSerializer, MessageSerializer
+from .consumers import broadcast_new_message
 
 class ConversationListView(APIView):
     def get(self, request):
         convs = Conversation.objects.filter(participants__user=request.user).prefetch_related(
             'participants__user', 'messages'
         ).order_by('-updated_at')
-        serializer = ConversationListSerializer(convs, many=True)
+        serializer = ConversationListSerializer(convs, many=True, context={'request': request})
         return Response(serializer.data)
+
+
+class MarkConversationReadView(APIView):
+    """Mark all messages in a conversation as read for the current user."""
+
+    def post(self, request, conversation_id):
+        try:
+            participant = ConversationParticipant.objects.get(
+                conversation_id=conversation_id, user=request.user
+            )
+        except ConversationParticipant.DoesNotExist:
+            return Response({'detail': 'Conversation not found'}, status=404)
+
+        participant.last_read_at = timezone.now()
+        participant.save(update_fields=['last_read_at'])
+        return Response({'status': 'read'})
 
 class MessageListView(APIView):
     def get(self, request, conversation_id):
@@ -44,6 +61,8 @@ class MessageListView(APIView):
         with transaction.atomic():
             msg = serializer.save(conversation_id=conversation_id, sender=request.user)
             Conversation.objects.filter(id=conversation_id).update(updated_at=msg.created_at)
+        # Broadcast via WebSocket for real-time delivery
+        broadcast_new_message(msg)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
@@ -86,7 +105,7 @@ class CreateConversationView(APIView):
         if not participant_ids:
             return Response({'detail': 'participant_id or participant_ids required'}, status=400)
 
-        # Filter out self and invalid users
+        # Filter out self from incoming list
         if str(request.user.id) in participant_ids:
             participant_ids = [p for p in participant_ids if p != str(request.user.id)]
 
@@ -101,19 +120,33 @@ class CreateConversationView(APIView):
         if not participant_ids:
             return Response({'detail': 'No valid users found'}, status=404)
 
-        # For exactly 2 participants total, check for existing conversation
-        if len(participant_ids) == 1:
-            other_id = participant_ids[0]
-            existing = Conversation.objects.filter(
-                participants__user=request.user
-            ).filter(
-                participants__user__id=other_id
-            ).annotate(
-                cnt=db_models.Count('participants')
-            ).filter(cnt=2)
-            if existing.exists():
-                serializer = ConversationSerializer(existing.first())
-                return Response(serializer.data)
+        # Check for existing conversation with the exact same participant set
+        target_ids = {int(request.user.id)} | {int(uid) for uid in participant_ids}
+        target_count = len(target_ids)
+
+        existing = (
+            Conversation.objects
+            .annotate(
+                total_cnt=db_models.Count('participants'),
+                match_cnt=db_models.Count(
+                    'participants',
+                    filter=db_models.Q(participants__user_id__in=target_ids),
+                ),
+                has_user=db_models.Count(
+                    'participants',
+                    filter=db_models.Q(participants__user_id=request.user.id),
+                ),
+            )
+            .filter(
+                total_cnt=target_count,
+                match_cnt=target_count,
+                has_user__gte=1,
+            )
+        )
+
+        if existing.exists():
+            serializer = ConversationSerializer(existing.first(), context={'request': request})
+            return Response(serializer.data)
 
         with transaction.atomic():
             conv = Conversation.objects.create()
@@ -121,5 +154,5 @@ class CreateConversationView(APIView):
             for uid in participant_ids:
                 ConversationParticipant.objects.create(conversation=conv, user_id=uid)
 
-        serializer = ConversationSerializer(conv)
+        serializer = ConversationSerializer(conv, context={'request': request})
         return Response(serializer.data, status=status.HTTP_201_CREATED)

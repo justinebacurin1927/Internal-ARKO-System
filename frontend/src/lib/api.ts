@@ -1,6 +1,6 @@
 const BASE = '/api'
 
-function getToken(): string | null {
+export function getToken(): string | null {
   return localStorage.getItem('token')
 }
 
@@ -61,6 +61,40 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: 'Request failed' }))
     throw new Error(err.detail || err.message || 'Request failed')
+  }
+  return res.json()
+}
+
+/** Upload a file using multipart/form-data (no JSON body). */
+async function uploadFileRequest(path: string, formData: FormData): Promise<any> {
+  const token = getToken()
+  let res = await fetch(`${BASE}${path}`, {
+    method: 'POST',
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: formData,
+  })
+
+  if (res.status === 401 && getRefreshToken()) {
+    if (!refreshing) refreshing = attemptRefresh()
+    const ok = await refreshing
+    refreshing = null
+    if (ok) {
+      const newToken = getToken()
+      res = await fetch(`${BASE}${path}`, {
+        method: 'POST',
+        headers: {
+          ...(newToken ? { Authorization: `Bearer ${newToken}` } : {}),
+        },
+        body: formData,
+      })
+    }
+  }
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: 'Upload failed' }))
+    throw new Error(err.detail || err.message || 'Upload failed')
   }
   return res.json()
 }
@@ -136,6 +170,10 @@ export const api = {
     }),
   deleteMessage: (messageId: number) =>
     request<void>(`/messages/item/${messageId}/`, { method: 'DELETE' }),
+  markConversationRead: (conversationId: string) =>
+    request<{ status: string }>(`/messages/conversations/${conversationId}/read/`, {
+      method: 'POST',
+    }),
 
   // Reminders
   getReminders: () => request<any[]>('/reminders/'),
@@ -209,4 +247,47 @@ export const api = {
     request<any>(`/auth/users/${id}/`, { method: 'PATCH', body: JSON.stringify(data) }),
   adminDeleteUser: (id: number) =>
     request<void>(`/auth/users/${id}/delete/`, { method: 'DELETE' }),
+
+  // File uploads
+  uploadFile: (file: File, objectType: string, objectId?: number | string) => {
+    const fd = new FormData()
+    fd.append('file', file)
+    fd.append('object_type', objectType)
+    if (objectId !== undefined) fd.append('object_id', String(objectId))
+    return uploadFileRequest('/upload/', fd)
+  },
+  getFiles: (objectType: string, objectId: number | string) =>
+    request<any[]>(`/upload/?object_type=${objectType}&object_id=${objectId}`),
+  deleteFile: (id: number) =>
+    request<void>(`/upload/${id}/`, { method: 'DELETE' }),
+
+  // Task comments
+  getComments: (taskId: string, page?: number) =>
+    request<any>(`/tasks/${taskId}/comments/${page ? `?page=${page}` : ''}`),
+  createComment: (taskId: string, content: string) =>
+    request<any>(`/tasks/${taskId}/comments/`, {
+      method: 'POST',
+      body: JSON.stringify({ content }),
+    }),
+  editComment: (id: number, content: string) =>
+    request<any>(`/tasks/comments/${id}/`, {
+      method: 'PATCH',
+      body: JSON.stringify({ content }),
+    }),
+  deleteComment: (id: number) =>
+    request<void>(`/tasks/comments/${id}/`, { method: 'DELETE' }),
+
+  // Notifications
+  getNotifications: (page?: number) =>
+    request<any>(`/notifications/${page ? `?page=${page}` : ''}`),
+  markNotificationRead: (id: number) =>
+    request<any>(`/notifications/${id}/read/`, { method: 'PATCH' }),
+  markAllNotificationsRead: () =>
+    request<any>('/notifications/read-all/', { method: 'PATCH' }),
+  getUnreadNotificationCount: () =>
+    request<{ count: number }>('/notifications/unread-count/'),
+
+  // Task subtasks & dependencies
+  getTask: (id: string) =>
+    request<any>(`/tasks/${id}/`),
 }
