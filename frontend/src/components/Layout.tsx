@@ -2,6 +2,7 @@ import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { api } from '../lib/api'
 import { useState, useRef, useEffect } from 'react'
+import NotificationBell from './NotificationBell'
 import {
   LayoutDashboard,
   TrendingUp,
@@ -183,6 +184,8 @@ export default function DashboardLayout() {
             </div>
 
             <div className="flex items-center gap-1.5">
+              <NotificationBell />
+
               {showSearch ? (
                 <div className="flex items-center rounded-full bg-bg-app ring-1 ring-black/[0.06] px-3 py-1.5">
                   <Search className="h-4 w-4 text-text-tertiary shrink-0" />

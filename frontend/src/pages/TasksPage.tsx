@@ -4,9 +4,11 @@ import { api } from '../lib/api'
 import { Card, CardContent } from '../components/Card'
 import { Button } from '../components/Button'
 import ConfirmDialog from '../components/ConfirmDialog'
+import TaskDetailDrawer from '../components/TaskDetailDrawer'
 import { useToast } from '../lib/toast'
 import {
   Plus, AlertCircle, User, Loader2, Trash2, Search, GripVertical,
+  MessageSquare, Link2, Layers,
 } from 'lucide-react'
 import {
   DragDropContext, Droppable, Draggable,
@@ -44,7 +46,11 @@ function PriorityBadge({ priority }: { priority: string }) {
 
 /* ─── Task card ─── */
 
-function TaskCard({ task, index, onDelete }: { task: any; index: number; onDelete: (id: string) => void }) {
+function TaskCard({ task, index, onDelete, onClick }: { task: any; index: number; onDelete: (id: string) => void; onClick?: (id: string) => void }) {
+  const blocked = task.blocked
+  const sp = task.subtask_progress
+  const cc = task.comment_count
+
   return (
     <Draggable draggableId={task.id.toString()} index={index}>
       {(provided: DraggableProvided, snapshot: DraggableStateSnapshot) => (
@@ -64,7 +70,7 @@ function TaskCard({ task, index, onDelete }: { task: any; index: number; onDelet
             opacity: snapshot.isDragging ? 0.95 : 1,
           }}
         >
-          {/* Drag handle bar — visible on hover */}
+          {/* Drag handle bar */}
           <div
             {...provided.dragHandleProps}
             className="flex items-center gap-1.5 px-3 pt-2 pb-0.5 cursor-grab active:cursor-grabbing select-none"
@@ -77,11 +83,33 @@ function TaskCard({ task, index, onDelete }: { task: any; index: number; onDelet
 
           <div className="px-3 pb-2">
             {task.description && (
-              <p className="text-xs text-text-tertiary line-clamp-2 mt-1.5 leading-relaxed">
+              <p className="text-xs text-text-tertiary line-clamp-2 mt-1 leading-relaxed">
                 {task.description}
               </p>
             )}
-            <div className="flex items-center gap-2 mt-3 flex-wrap">
+
+            {/* Subtask progress bar */}
+            {sp && sp.total > 0 && (
+              <div className="mt-2 flex items-center gap-1.5">
+                <Layers className="h-3 w-3 text-text-tertiary shrink-0" />
+                <div className="flex-1 h-1 rounded-full bg-gray-100 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-accent-500 transition-all duration-300"
+                    style={{ width: `${(sp.done / sp.total) * 100}%` }}
+                  />
+                </div>
+                <span className="text-[9px] text-text-tertiary font-medium tabular-nums">{sp.done}/{sp.total}</span>
+              </div>
+            )}
+
+            {/* Badges row */}
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
+              {blocked && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-warn-bg px-2 py-0.5 text-[9px] font-medium text-warn">
+                  <Link2 className="h-2.5 w-2.5" />
+                  Blocked
+                </span>
+              )}
               {task.priority && <PriorityBadge priority={task.priority} />}
               {task.assignee_name && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-gray-50 px-2 py-0.5 text-[10px] text-gray-500">
@@ -89,12 +117,31 @@ function TaskCard({ task, index, onDelete }: { task: any; index: number; onDelet
                   {task.assignee_name}
                 </span>
               )}
-              <button
-                onClick={(e) => { e.stopPropagation(); onDelete(task.id) }}
-                className="ml-auto p-1 text-[#D8DCD6] hover:text-neg transition-colors cursor-pointer rounded-md hover:bg-neg-bg"
-              >
-                <Trash2 className="h-3 w-3" />
-              </button>
+
+              {/* Action buttons */}
+              <div className="ml-auto flex items-center gap-0.5">
+                {cc > 0 && (
+                  <span className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[9px] text-text-tertiary">
+                    <MessageSquare className="h-2.5 w-2.5" />
+                    {cc}
+                  </span>
+                )}
+                {onClick && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onClick(task.id) }}
+                    className="p-1 text-[#D8DCD6] hover:text-accent-500 transition-colors cursor-pointer rounded-md hover:bg-accent-50"
+                    title="View details"
+                  >
+                    <Layers className="h-3 w-3" />
+                  </button>
+                )}
+                <button
+                  onClick={(e) => { e.stopPropagation(); onDelete(task.id) }}
+                  className="p-1 text-[#D8DCD6] hover:text-neg transition-colors cursor-pointer rounded-md hover:bg-neg-bg"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -111,12 +158,14 @@ function TaskColumn({
   isLoading,
   search,
   onDelete,
+  onClick,
 }: {
   column: string
   tasks: any[]
   isLoading: boolean
   search: string
   onDelete: (id: string) => void
+  onClick?: (id: string) => void
 }) {
   const meta = columnMeta[column]
   const filtered = tasks.filter(
@@ -175,7 +224,7 @@ function TaskColumn({
                 </div>
               ) : (
                 filtered.map((task: any, i: number) => (
-                  <TaskCard key={task.id} task={task} index={i} onDelete={(id) => onDelete(id)} />
+                  <TaskCard key={task.id} task={task} index={i} onDelete={(id) => onDelete(id)} onClick={(id) => onClick?.(id)} />
                 ))
               )}
               {provided.placeholder}
@@ -211,6 +260,7 @@ export default function TasksPage() {
   const [showAssigneeSearch, setShowAssigneeSearch] = useState(false)
   const [assigneeSearch, setAssigneeSearch] = useState('')
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
   const [taskSearch, setTaskSearch] = useState('')
   // Optimistic local state for instant drag feedback (cleaned up after refetch)
   const [optimisticStatus, setOptimisticStatus] = useState<Record<string, string>>({})
@@ -256,6 +306,13 @@ export default function TasksPage() {
     if (!result.destination) return
     const { draggableId, source, destination } = result
     if (destination.droppableId === source.droppableId && source.index === destination.index) return
+
+    // Block dragging to DONE if task is blocked by incomplete dependencies
+    const task = displayTasks.find((t: any) => t.id.toString() === draggableId)
+    if (task?.blocked && destination.droppableId === 'DONE') {
+      toast('This task is blocked by incomplete dependencies', 'error')
+      return
+    }
 
     // Optimistic update: instantly move the card so @hello-pangea/dnd's
     // drop animation plays to the correct final position
@@ -451,10 +508,17 @@ export default function TasksPage() {
               isLoading={isLoading}
               search={taskSearch}
               onDelete={setConfirmDeleteId}
+              onClick={(id) => setSelectedTaskId(id)}
             />
           ))}
         </div>
       </DragDropContext>
+
+      <TaskDetailDrawer
+        open={selectedTaskId !== null}
+        taskId={selectedTaskId}
+        onClose={() => setSelectedTaskId(null)}
+      />
 
       <ConfirmDialog
         open={!!confirmDeleteId}
