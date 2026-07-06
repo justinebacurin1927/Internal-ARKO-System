@@ -2,6 +2,7 @@ import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { api } from '../lib/api'
 import { useState, useRef, useEffect } from 'react'
+import NotificationBell from './NotificationBell'
 import {
   LayoutDashboard,
   TrendingUp,

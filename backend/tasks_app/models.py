@@ -1,5 +1,7 @@
 from django.db import models
 from django.conf import settings
+from django.core.exceptions import ValidationError
+
 
 class Task(models.Model):
     STATUS_CHOICES = [('TODO', 'Todo'), ('IN_PROGRESS', 'In Progress'), ('REVIEW', 'Review'), ('DONE', 'Done')]
@@ -13,6 +15,8 @@ class Task(models.Model):
     parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='subtasks')
     due_date = models.DateTimeField(null=True, blank=True)
     position = models.IntegerField(default=0)
+    parent = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='subtasks')
+    depends_on = models.ManyToManyField('self', symmetrical=False, blank=True, related_name='blocked_by')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

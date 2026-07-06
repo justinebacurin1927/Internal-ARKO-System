@@ -22,11 +22,12 @@ interface CalendarEvent {
    Helpers
    ═══════════════════════════════════════════════ */
 
-const DAY_ABBRS = ['Mo','Tu','We','Th','Fr','Sa','Su']
+const DAY_ABBRS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
+const DAY_SHORT = ['M','T','W','T','F','S','S']
 const SLOTS = ['8 AM','9 AM','10 AM','11 AM','12 PM','1 PM','2 PM','3 PM','4 PM','5 PM','6 PM','7 PM']
 const SLOT_COUNT = SLOTS.length
 const EVENT_COLORS = ['#2D6A4F','#5FA87A','#C28B5E','#C2655C','#4A5B4E','#7A8B7E']
-const TASK_COLOR = '#4A7B9D'; const REMINDER_COLOR = '#C28B5E'
+const TASK_COLOR = '#4A7B9D'; const REMINDER_COLOR = '#B87D4E'
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 const FULL_MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
 
@@ -40,21 +41,21 @@ const fmtShort = (d: Date) => d.toLocaleDateString('en-US',{month:'short',day:'n
 const weekLabel = (m: Date) => `${fmtShort(m)} – ${fmtShort(addDays(m,6))}`
 const toDS = (d: Date) => d.toISOString().split('T')[0]
 const timeToSlot = (t: string) => { const h=+t.split(':')[0], m=+t.split(':')[1]; return Math.max(0,Math.min(SLOT_COUNT-1,h-8+(m>=30?.5:0))) }
-const slotToTime = (s: number) => `${String(s+8).padStart(2,'0')}:00`
+const slotToTime = (s: number) => `${String(Math.floor(s)+8).padStart(2,'0')}:${s%1===0?'00':'30'}`
 const daysBetween = (a: Date, b: Date) => Math.round((b.getTime()-a.getTime())/86400000)
 
 /** Get the date range for the current view */
 function viewDateRange(view: ViewMode, focus: Date): { from: string; to: string; days: {ds:string;date:Date;today:boolean;num:number}[]; label: string } {
   if (view === 'week') {
     const mon = getMonday(focus)
-    const d = Array.from({length:7},(_,i)=>{const x=addDays(mon,i); return {ds:toDS(x),date:x,today:isToday(x),num:x.getDate(),abbr:DAY_ABBRS[i]}})
+    const d = Array.from({length:7},(_,i)=>{const x=addDays(mon,i); return {ds:toDS(x),date:x,today:isToday(x),num:x.getDate(),abbr:DAY_ABBRS[i%7],dayIndex:i}})
     return {from:toDS(mon),to:toDS(addDays(mon,6)),days:d,label:weekLabel(mon)}
   }
   if (view === 'month') {
     const y=focus.getFullYear(),m=focus.getMonth()
     const first=new Date(y,m,1)
     const start = getMonday(first)
-    const monthDays = Array.from({length:42},(_,i)=>{const x=addDays(start,i); return {ds:toDS(x),date:x,today:isToday(x),num:x.getDate(),inMonth:x.getMonth()===m}})
+    const monthDays = Array.from({length:42},(_,i)=>{const x=addDays(start,i); return {ds:toDS(x),date:x,today:isToday(x),num:x.getDate(),inMonth:x.getMonth()===m,abbr:DAY_ABBRS[i%7],dayIndex:i%7}})
     return {from:toDS(start),to:toDS(addDays(start,41)),days:monthDays,label:`${FULL_MONTHS[m]} ${y}`}
   }
   // year
@@ -79,6 +80,8 @@ export default function CalendarPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('week')
   const [focusDate, setFocusDate] = useState(new Date())
 
+  const goToday = useCallback(()=>setFocusDate(new Date()),[])
+
   const navLeft = useCallback(()=>{
     if(viewMode==='week')setFocusDate(d=>addDays(d,-7))
     else if(viewMode==='month')setFocusDate(d=>new Date(d.getFullYear(),d.getMonth()-1,1))
@@ -89,18 +92,17 @@ export default function CalendarPage() {
     else if(viewMode==='month')setFocusDate(d=>new Date(d.getFullYear(),d.getMonth()+1,1))
     else setFocusDate(d=>new Date(d.getFullYear()+1,0,1))
   },[viewMode])
-  const goToday = useCallback(()=>setFocusDate(new Date()),[])
 
   const range = useMemo(()=>viewDateRange(viewMode,focusDate),[viewMode,focusDate])
 
   const weekDays = useMemo(()=>{
     if(viewMode!=='week')return []
-    return viewDateRange('week',focusDate).days as ({ds:string;date:Date;today:boolean;num:number;abbr:string})[]
+    return viewDateRange('week',focusDate).days as ({ds:string;date:Date;today:boolean;num:number;abbr:string;dayIndex:number})[]
   },[viewMode,focusDate])
 
   const monthDays = useMemo(()=>{
     if(viewMode!=='month')return []
-    return viewDateRange('month',focusDate).days as ({ds:string;date:Date;today:boolean;num:number;inMonth:boolean})[]
+    return viewDateRange('month',focusDate).days as ({ds:string;date:Date;today:boolean;num:number;inMonth:boolean;abbr:string;dayIndex:number})[]
   },[viewMode,focusDate])
 
   /* ── Data ── */
@@ -196,43 +198,50 @@ export default function CalendarPage() {
   /*  Render                                                     */
   /* ══════════════════════════════════════════════════════════════ */
 
+  const isCurrentPeriod = useMemo(()=>{
+    const n=new Date()
+    if(viewMode==='week'){const s=getMonday(n),e=addDays(s,6);return focusDate>=s&&focusDate<=e}
+    if(viewMode==='month')return focusDate.getFullYear()===n.getFullYear()&&focusDate.getMonth()===n.getMonth()
+    return focusDate.getFullYear()===n.getFullYear()
+  },[viewMode,focusDate])
+
   return (
     <div className="flex flex-col h-full">
 
       {/* ── Header ── */}
-      <header className="flex items-center justify-between shrink-0 mb-3">
+      <header className="flex items-center justify-between shrink-0 mb-4">
         <div className="flex items-center gap-3">
-          <h1 className="text-base font-bold text-text-primary tracking-tight">Calendar</h1>
+          <h1 className="text-sm font-bold text-text-primary tracking-tight">Calendar</h1>
           {activeSprint && (
-            <span className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-semibold text-white uppercase tracking-widest shadow-xs"
+            <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold text-white"
               style={{backgroundColor:activeSprint.color}}>
-              <span>{activeSprint.name}</span>
-              <span className="opacity-60">·</span>
-              <span className="opacity-75">D{sprintProgress.cur}/{sprintProgress.tot}</span>
+              {activeSprint.name}
+              <span className="opacity-50">·</span>
+              <span className="tabular-nums">D{sprintProgress.cur}/{sprintProgress.tot}</span>
             </span>
           )}
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {/* View toggle */}
           <div className="flex items-center rounded-lg bg-black/[0.04] p-0.5">
             {(['week','month','year'] as ViewMode[]).map(m=>(
               <button key={m} onClick={()=>setViewMode(m)}
-                className={`px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider rounded-md transition-all cursor-pointer ${viewMode===m?'bg-white text-text-primary shadow-xs':'text-text-tertiary hover:text-text-secondary'}`}>
+                className={`px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider rounded-md transition-all cursor-pointer ${viewMode===m?'bg-white text-text-primary shadow-xs':'text-text-tertiary hover:text-text-secondary'}`}>
                 {m}
               </button>
             ))}
           </div>
           <Button size="sm" variant="outline" onClick={goToday}>
-            <CalendarDays className="h-3 w-3" /> Today
+            <CalendarDays className="h-3.5 w-3.5" /> {isCurrentPeriod?'Today':viewMode==='year'?'This year':'This period'}
           </Button>
           <div className="flex items-center rounded-lg border border-border-subtle">
-            <button onClick={navLeft} className="p-1 text-text-tertiary hover:text-text-primary hover:bg-bg-app transition-colors rounded-l-lg cursor-pointer">
+            <button onClick={navLeft} className="p-1.5 text-text-tertiary hover:text-text-primary hover:bg-bg-app transition-colors rounded-l-lg cursor-pointer">
               <ChevronLeft className="h-3.5 w-3.5" />
             </button>
-            <span className="px-2.5 py-1 text-[11px] font-medium text-text-secondary tabular-nums border-x border-border-subtle min-w-[130px] text-center select-none">
+            <span className="px-3 py-1 text-[12px] font-semibold text-text-secondary tabular-nums border-x border-border-subtle min-w-[140px] text-center select-none leading-none">
               {range.label}
             </span>
-            <button onClick={navRight} className="p-1 text-text-tertiary hover:text-text-primary hover:bg-bg-app transition-colors rounded-r-lg cursor-pointer">
+            <button onClick={navRight} className="p-1.5 text-text-tertiary hover:text-text-primary hover:bg-bg-app transition-colors rounded-r-lg cursor-pointer">
               <ChevronRight className="h-3.5 w-3.5" />
             </button>
           </div>
@@ -244,24 +253,13 @@ export default function CalendarPage() {
         <div className="flex-1 flex items-center justify-center">
           <div className="flex flex-col items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-full bg-neg-bg"><AlertCircle className="h-5 w-5 text-neg" /></div>
-            <p className="text-sm font-medium text-text-primary">Failed to load</p>
+            <p className="text-sm font-medium text-text-primary">Couldn't load calendar data</p>
             <Button size="sm" variant="outline" onClick={()=>eq.refetch()}>Retry</Button>
           </div>
         </div>
       ) : loading ? (
         <div className="flex-1 rounded-lg ring-1 ring-black/[0.06] bg-white overflow-hidden">
-          <div className="grid h-full" style={{gridTemplateColumns:'44px repeat(7,1fr)',gridTemplateRows:'auto repeat(12,1fr)'}}>
-            <div className="h-[36px] border-b border-r border-border-subtle" />
-            {Array.from({length:7},(_,i)=>(
-              <div key={i} className="h-[36px] border-b border-border-subtle flex flex-col items-center justify-center">
-                <div className="h-2 w-5 animate-pulse rounded bg-gray-100 mb-0.5" />
-                <div className="h-3 w-3 animate-pulse rounded bg-gray-100" />
-              </div>
-            ))}
-            {Array.from({length:12*7},(_,idx)=>(
-              <div key={`sk-${idx}`} className="border-b border-r border-border-subtle" />
-            ))}
-          </div>
+          <CalendarSkeleton viewMode={viewMode} />
         </div>
       ) : viewMode==='week' ? (
         <WeekView weekDays={weekDays as any[]} sprint={activeSprint} events={gridEvs} onCellClick={openCreate} onEventClick={openEdit} isInSprint={isInSprint} />
@@ -271,23 +269,21 @@ export default function CalendarPage() {
         <YearView focusYear={focusDate.getFullYear()} eventsByDate={eventsByDate} onMonthClick={(y,m)=>setFocusDate(new Date(y,m,1))} />
       )}
 
-      {/* ══════════════════════════════════════════════════════════
-         FAB — shown in week & month views
-         ══════════════════════════════════════════════════════════ */}
+      {/* ── FAB ── */}
       {viewMode!=='year' && !loading && !error && (
-        <button onClick={()=>openCreate()} className="fixed bottom-6 right-6 z-20 flex h-11 w-11 items-center justify-center rounded-full bg-accent-500 text-white shadow-lg hover:bg-accent-600 hover:shadow-xl active:scale-95 transition-all cursor-pointer" title="Add event">
+        <button onClick={()=>{
+          const todayStr = toDS(new Date())
+          openCreate(todayStr)
+        }} className="fixed bottom-6 right-6 z-20 flex h-11 w-11 items-center justify-center rounded-full bg-accent-500 text-white shadow-lg hover:bg-accent-600 hover:shadow-xl active:scale-95 transition-all cursor-pointer" title="Add event">
           <Plus className="h-5 w-5" />
         </button>
       )}
 
-      {/* ══════════════════════════════════════════════════════════
-         Modal
-         ══════════════════════════════════════════════════════════ */}
+      {/* ── Modal ── */}
       {showSheet&&(
         <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={closeSheet}>
-          <div className="absolute inset-0 bg-black/25 backdrop-blur-sm animate-fade-in" />
+          <div className="absolute inset-0 bg-black/25 backdrop-blur-sm" />
           <div className="relative w-full max-w-[420px] mx-4 animate-modal-in" onClick={e=>e.stopPropagation()}>
-            <div className="absolute top-0 left-0 right-0 h-[3px] rounded-t-xl bg-accent-500" />
             <div className="rounded-xl bg-white px-6 pb-6 pt-6 shadow-2xl">
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-[15px] font-bold text-text-primary">{editing?'Edit event':'New event'}</h2>
@@ -321,7 +317,7 @@ export default function CalendarPage() {
                 </div>
                 <div>
                   <label className="mb-2 block text-[11px] font-semibold text-text-secondary uppercase tracking-wider">Color</label>
-                  <div className="flex gap-3">
+                  <div className="flex gap-2.5">
                     {EVENT_COLORS.map(c=>(
                       <button key={c} type="button" onClick={()=>setFColor(c)}
                         className={`h-7 w-7 rounded-full transition-all cursor-pointer ${fColor===c?'ring-2 ring-offset-2 ring-accent-500 scale-110':'ring-1 ring-black/[0.06] hover:scale-105'}`}
@@ -337,7 +333,7 @@ export default function CalendarPage() {
                   <Button size="default" variant="ghost" onClick={closeSheet}>Cancel</Button>
                   {editing&&(
                     <button onClick={()=>{setConfirmId(editing.id);closeSheet()}}
-                      className="ml-auto p-2 text-text-tertiary hover:text-neg rounded-lg hover:bg-neg-bg transition-colors cursor-pointer">
+                      className="ml-auto p-2 text-text-tertiary hover:text-neg rounded-lg hover:neg-bg transition-colors cursor-pointer">
                       <Trash2 className="h-4 w-4" />
                     </button>
                   )}
@@ -361,12 +357,41 @@ export default function CalendarPage() {
   )
 }
 
+/* ── Skeleton ── */
+function CalendarSkeleton({viewMode}:{viewMode:string}) {
+  if (viewMode === 'week') {
+    return (
+      <div className="grid h-full" style={{gridTemplateColumns:'44px repeat(7,1fr)',gridTemplateRows:'auto repeat(12,1fr)'}}>
+        <div className="h-[36px] border-b border-r border-border-subtle" />
+        {Array.from({length:7},(_,i)=>(
+          <div key={i} className="h-[36px] border-b border-border-subtle flex flex-col items-center justify-center gap-1">
+            <div className="h-2 w-6 animate-pulse rounded bg-gray-100" />
+            <div className="h-3 w-3 animate-pulse rounded bg-gray-100" />
+          </div>
+        ))}
+        {Array.from({length:12*7},(_,idx)=>(
+          <div key={`sk-${idx}`} className="border-b border-r border-border-subtle" />
+        ))}
+      </div>
+    )
+  }
+  if (viewMode === 'month') {
+    return (
+      <div className="grid h-full" style={{gridTemplateColumns:'repeat(7,1fr)',gridAutoRows:'1fr'}}>
+        {Array.from({length:7},(_,i)=><div key={`h-${i}`} className="h-[30px] border-b border-border-subtle" />)}
+        {Array.from({length:42},(_,i)=><div key={`c-${i}`} className="border-r border-b border-border-subtle" />)}
+      </div>
+    )
+  }
+  return null
+}
+
 /* ═══════════════════════════════════════════════
-   Week View (existing time-slot grid)
+   Week View — time-slot grid
    ═══════════════════════════════════════════════ */
 
 function WeekView({weekDays,sprint,events,onCellClick,onEventClick,isInSprint}:{
-  weekDays: ({ds:string;date:Date;today:boolean;num:number;abbr:string})[]
+  weekDays: ({ds:string;date:Date;today:boolean;num:number;abbr:string;dayIndex:number})[]
   sprint:any; events:CalendarEvent[]
   onCellClick:(d?:string,slotIdx?:number)=>void; onEventClick:(ev:CalendarEvent)=>void
   isInSprint:(ds:string)=>boolean
@@ -397,28 +422,54 @@ function WeekView({weekDays,sprint,events,onCellClick,onEventClick,isInSprint}:{
             ))}
           </div>
         ))}
-        {events.map(ev=>{
-          const n=ev.endSlot-ev.startSlot; if(n<=0)return null
-          return (
-            <div key={ev.id} className="relative z-10 mx-px flex items-center"
-              style={{gridColumn:`${ev.day+2}`,gridRow:`${ev.startSlot+2}/span ${n}`}}>
-              <div className={`w-full h-[calc(100%-3px)] flex items-center rounded-[3px] px-1.5 transition-shadow hover:shadow-sm ${ev.source==='event'?'cursor-pointer':'cursor-default'}`}
-                style={{backgroundColor:ev.color}}
-                title={`${ev.title} · ${SLOTS[ev.startSlot]}–${SLOTS[ev.endSlot-1]}${ev.description?`\n${ev.description}`:''}`}
-                onClick={()=>ev.source==='event'&&onEventClick(ev)}>
-                <span className="text-[10px] font-semibold text-white leading-tight truncate">{ev.title}</span>
-                {ev.source!=='event'&&<span className="ml-auto shrink-0 text-[8px] text-white/60 uppercase ml-1">{ev.source==='task'?'T':'R'}</span>}
+      </div>
+      {/* Scrollable grid area */}
+      <div className="flex-1 overflow-y-auto overscroll-contain">
+        <div className="relative min-h-full">
+          {/* Time slots */}
+          {SLOTS.map((label,si)=>(
+            <div key={si} className="flex border-b border-border-subtle" style={{minHeight:52}}>
+              <div className="w-[44px] shrink-0 flex items-start justify-end pr-1.5 pt-1">
+                <span className="text-[10px] font-medium text-text-tertiary tabular-nums leading-none">{label}</span>
               </div>
+              {weekDays.map((d,di)=>(
+                <button key={`${si}-${di}`} onClick={()=>onCellClick(d.ds,si)}
+                  className={`flex-1 transition-colors cursor-pointer ${di<6?'border-r border-border-subtle':''} ${d.today?'bg-accent-50/40':isInSprint(d.ds)?'bg-accent-500/[0.02]':''} hover:bg-accent-50/60 relative`} />
+              ))}
             </div>
-          )
-        })}
-        {events.length===0&&(
-          <div className="flex flex-col items-center justify-center text-center select-none pointer-events-none" style={{gridColumn:'2/-1',gridRow:'2/-1'}}>
-            <CalendarDays className="h-7 w-7 text-text-tertiary/30 mb-1.5" />
-            <p className="text-xs text-text-tertiary">Clear week</p>
-            <p className="text-[10px] text-text-tertiary/50 mt-0.5">Tap + or any cell</p>
-          </div>
-        )}
+          ))}
+          {/* Events overlay */}
+          {events.length>0 && (
+            <div className="absolute inset-0 pointer-events-none" style={{top:0,left:44,right:0}}>
+              {events.map(ev=>{
+                const n=ev.endSlot-ev.startSlot; if(n<=0)return null
+                const rowH = 52 // matches minHeight above
+                return (
+                  <div key={ev.id}
+                    className="absolute mx-px pointer-events-auto"
+                    style={{left:`${(ev.day/7)*100}%`,width:`${100/7}%`,top:`${ev.startSlot*(rowH+1)}px`,height:`${n*(rowH+1)-1}px`}}>
+                    <div className={`h-[calc(100%-2px)] flex items-center rounded-[3px] px-1.5 transition-shadow hover:shadow-sm cursor-pointer overflow-hidden`}
+                      style={{backgroundColor:ev.color}}
+                      title={`${ev.title}${ev.description?`\n${ev.description}`:''}`}
+                      onClick={()=>ev.source==='event'&&onEventClick(ev)}>
+                      <span className="text-[10px] font-semibold text-white leading-tight truncate">{ev.title}</span>
+                      {ev.source!=='event'&&<span className="ml-auto shrink-0 text-[8px] text-white/60 uppercase ml-1">{ev.source==='task'?'T':'R'}</span>}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+          {/* Empty state */}
+          {events.length===0 && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none"
+              style={{left:44}}>
+              <CalendarDays className="h-8 w-8 text-text-tertiary/20 mb-2" />
+              <p className="text-sm font-medium text-text-tertiary/60">No events this week</p>
+              <p className="text-xs text-text-tertiary/40 mt-1">Click a cell or tap + to add one</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
@@ -429,7 +480,7 @@ function WeekView({weekDays,sprint,events,onCellClick,onEventClick,isInSprint}:{
    ═══════════════════════════════════════════════ */
 
 function MonthView({days,eventsByDate,onDayClick,isInSprint}:{
-  days: ({ds:string;date:Date;today:boolean;num:number;inMonth:boolean})[]
+  days: ({ds:string;date:Date;today:boolean;num:number;inMonth:boolean;abbr:string;dayIndex:number})[]
   eventsByDate: Map<string,{color:string;title:string}[]>
   onDayClick:(d:string)=>void
   isInSprint:(ds:string)=>boolean
@@ -443,20 +494,22 @@ function MonthView({days,eventsByDate,onDayClick,isInSprint}:{
             <span className="text-[9px] font-semibold text-text-tertiary uppercase tracking-widest">{a}</span>
           </div>
         ))}
-        {/* Day cells */}
+      </div>
+      {/* Day cells */}
+      <div className="flex-1 grid grid-cols-7 min-h-0" style={{gridAutoRows:'1fr'}}>
         {days.map((d,i)=>{
           const evs=eventsByDate.get(d.ds)??[]
           const sp=isInSprint(d.ds)
           return (
             <button key={i} onClick={()=>onDayClick(d.ds)}
-              className={`flex flex-col items-start justify-start p-1.5 text-left transition-colors cursor-pointer ${(i%7!==6)?'border-r border-border-subtle':''} border-b border-border-subtle ${d.today?'bg-accent-50':sp?'bg-accent-500/[0.03]':!d.inMonth?'opacity-30':''} hover:bg-accent-50/50`}>
+              className={`flex flex-col items-start justify-start p-1.5 text-left transition-colors cursor-pointer ${(i%7!==6)?'border-r':''} border-b border-border-subtle ${d.today?'bg-accent-50':sp?'bg-accent-500/[0.03]':!d.inMonth?'opacity-30':''} hover:bg-accent-50/50`}>
               <span className={`text-[11px] font-semibold leading-none ${d.today?'text-accent-500':''}`}>{d.num}</span>
               {evs.length>0&&(
                 <div className="flex flex-wrap gap-px mt-auto pt-1">
-                  {evs.slice(0,4).map((ev,ei)=>(
-                    <div key={ei} className="h-[5px] w-[5px] rounded-full" style={{backgroundColor:ev.color}} />
+                  {evs.slice(0,3).map((ev,ei)=>(
+                    <div key={ei} className="h-[5px] w-[5px] rounded-full shrink-0" style={{backgroundColor:ev.color}} />
                   ))}
-                  {evs.length>4&&<span className="text-[8px] text-text-tertiary font-medium leading-none">+{evs.length-4}</span>}
+                  {evs.length>3&&<span className="text-[8px] text-text-tertiary font-medium leading-none ml-0.5">+{evs.length-3}</span>}
                 </div>
               )}
             </button>
@@ -485,13 +538,13 @@ function YearView({focusYear,eventsByDate,onMonthClick}:{
           return (
             <button key={m} onClick={()=>onMonthClick(focusYear,m)}
               className="rounded-lg bg-white ring-1 ring-black/[0.06] p-3 text-left transition-shadow hover:shadow-md cursor-pointer">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-bold text-text-primary">{MONTH_NAMES[m]}</span>
-                {evCount>0&&<span className="text-[9px] text-text-tertiary font-medium">{evCount}</span>}
+              <div className="flex items-center justify-between mb-2.5">
+                <span className="text-[12px] font-bold text-text-primary">{MONTH_NAMES[m]}</span>
+                {evCount>0&&<span className="text-[9px] text-text-tertiary font-medium tabular-nums">{evCount}</span>}
               </div>
               <div className="grid grid-cols-7 gap-0">
-                {['Mo','Tu','We','Th','Fr','Sa','Su'].map(a=>(
-                  <span key={a} className="text-[7px] font-semibold text-text-tertiary text-center leading-none mb-0.5">{a[0]}</span>
+                  {DAY_SHORT.map(a=>(
+                  <span key={a} className="text-[7px] font-semibold text-text-tertiary text-center leading-none mb-0.5">{a}</span>
                 ))}
                 {days.map((d,i)=>{
                   const hasEvent=eventsByDate.has(d.ds)
@@ -499,7 +552,7 @@ function YearView({focusYear,eventsByDate,onMonthClick}:{
                     <div key={i}
                       className={`text-center text-[8px] py-0.5 leading-none rounded-sm ${d.today?'bg-accent-500/10 font-bold text-accent-500':'text-text-tertiary/80'} ${!d.inMonth?'opacity-20':''}`}>
                       {d.inMonth&&<span>{d.num}</span>}
-                      {hasEvent&&d.inMonth&&<div className="flex justify-center"><div className="h-[2px] w-[2px] rounded-full bg-accent-500/20" /></div>}
+                      {hasEvent&&d.inMonth&&<div className="flex justify-center"><div className="h-[2px] w-[2px] rounded-full bg-accent-500/40" /></div>}
                     </div>
                   )
                 })}

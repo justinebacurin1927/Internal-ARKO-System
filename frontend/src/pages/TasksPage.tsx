@@ -70,7 +70,7 @@ function TaskCard({ task, index, onDelete, expanded, onToggleExpand }: {
             opacity: snapshot.isDragging ? 0.95 : 1,
           }}
         >
-          {/* Drag handle bar — visible on hover */}
+          {/* Drag handle bar */}
           <div
             {...provided.dragHandleProps}
             className="flex items-center gap-1.5 px-3 pt-2 pb-0.5 cursor-grab active:cursor-grabbing select-none"
@@ -83,7 +83,7 @@ function TaskCard({ task, index, onDelete, expanded, onToggleExpand }: {
 
           <div className="px-3 pb-2">
             {task.description && (
-              <p className="text-xs text-text-tertiary line-clamp-2 mt-1.5 leading-relaxed">
+              <p className="text-xs text-text-tertiary line-clamp-2 mt-1 leading-relaxed">
                 {task.description}
               </p>
             )}
@@ -283,6 +283,7 @@ export default function TasksPage() {
   const [assigneeSearch, setAssigneeSearch] = useState('')
   const [parentSearch, setParentSearch] = useState('')
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
   const [taskSearch, setTaskSearch] = useState('')
   const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set())
 
@@ -342,6 +343,13 @@ export default function TasksPage() {
     if (!result.destination) return
     const { draggableId, source, destination } = result
     if (destination.droppableId === source.droppableId && source.index === destination.index) return
+
+    // Block dragging to DONE if task is blocked by incomplete dependencies
+    const task = displayTasks.find((t: any) => t.id.toString() === draggableId)
+    if (task?.blocked && destination.droppableId === 'DONE') {
+      toast('This task is blocked by incomplete dependencies', 'error')
+      return
+    }
 
     // Optimistic update: instantly move the card so @hello-pangea/dnd's
     // drop animation plays to the correct final position
@@ -596,6 +604,12 @@ export default function TasksPage() {
           ))}
         </div>
       </DragDropContext>
+
+      <TaskDetailDrawer
+        open={selectedTaskId !== null}
+        taskId={selectedTaskId}
+        onClose={() => setSelectedTaskId(null)}
+      />
 
       <ConfirmDialog
         open={!!confirmDeleteId}

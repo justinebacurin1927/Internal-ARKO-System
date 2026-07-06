@@ -2,11 +2,15 @@ from django.urls import path, include
 from django.http import JsonResponse
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
+from django.conf import settings
+from django.conf.urls.static import static
+
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def health(request):
     return JsonResponse({'status': 'ok'})
+
 
 urlpatterns = [
     path('api/health/', health, name='health'),
@@ -25,3 +29,7 @@ urlpatterns = [
     path('api/ideas/', include('ideas_app.urls')),
     path('api/resources/', include('resources_app.urls')),
 ]
+
+# Serve media files in development
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

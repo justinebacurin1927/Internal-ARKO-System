@@ -1,6 +1,6 @@
 const BASE = '/api'
 
-function getToken(): string | null {
+export function getToken(): string | null {
   return localStorage.getItem('token')
 }
 
@@ -61,6 +61,40 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: 'Request failed' }))
     throw new Error(err.detail || err.message || 'Request failed')
+  }
+  return res.json()
+}
+
+/** Upload a file using multipart/form-data (no JSON body). */
+async function uploadFileRequest(path: string, formData: FormData): Promise<any> {
+  const token = getToken()
+  let res = await fetch(`${BASE}${path}`, {
+    method: 'POST',
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: formData,
+  })
+
+  if (res.status === 401 && getRefreshToken()) {
+    if (!refreshing) refreshing = attemptRefresh()
+    const ok = await refreshing
+    refreshing = null
+    if (ok) {
+      const newToken = getToken()
+      res = await fetch(`${BASE}${path}`, {
+        method: 'POST',
+        headers: {
+          ...(newToken ? { Authorization: `Bearer ${newToken}` } : {}),
+        },
+        body: formData,
+      })
+    }
+  }
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: 'Upload failed' }))
+    throw new Error(err.detail || err.message || 'Upload failed')
   }
   return res.json()
 }
@@ -136,6 +170,10 @@ export const api = {
     }),
   deleteMessage: (messageId: number) =>
     request<void>(`/messages/item/${messageId}/`, { method: 'DELETE' }),
+  markConversationRead: (conversationId: string) =>
+    request<{ status: string }>(`/messages/conversations/${conversationId}/read/`, {
+      method: 'POST',
+    }),
 
   // Reminders
   getReminders: () => request<any[]>('/reminders/'),
