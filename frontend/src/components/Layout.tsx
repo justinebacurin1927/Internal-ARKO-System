@@ -22,7 +22,6 @@ import {
   X,
   ChevronRight,
 } from 'lucide-react'
-import NotificationBell from './NotificationBell'
 
 const today = new Date()
 const dateStr = today.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })

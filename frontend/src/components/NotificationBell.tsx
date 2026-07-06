@@ -98,8 +98,8 @@ export default function NotificationBell() {
               <div className="flex justify-center py-6">
                 <Loader2 className="h-5 w-5 animate-spin text-text-tertiary" />
               </div>
-            ) : notifications && notifications.length > 0 ? (
-              notifications.map((n: any) => (
+            ) : notifications && notifications.results?.length > 0 ? (
+              notifications.results.map((n: any) => (
                 <div
                   key={n.id}
                   className={`group flex gap-2.5 rounded-lg px-2.5 py-2 transition-colors ${

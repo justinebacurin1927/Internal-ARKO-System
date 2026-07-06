@@ -38,7 +38,7 @@ export default function NotificationDropdown({ onClose }: NotificationDropdownPr
     queryFn: () => api.getNotifications(),
   })
 
-  const notifications = data?.results || []
+  const notifications = Array.isArray(data) ? data : []
 
   // Close on click outside
   useEffect(() => {

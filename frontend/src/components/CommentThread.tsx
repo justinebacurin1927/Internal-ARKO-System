@@ -46,13 +46,13 @@ export default function CommentThread({ taskId, onCommentAdded }: CommentThreadP
 
   const { data: commentsData, isLoading: commentsLoading } = useQuery({
     queryKey: ['task-comments', taskId],
-    queryFn: () => api.getComments(taskId),
+    queryFn: () => api.getComments('task', taskId),
     enabled: !!taskId,
   })
-  const comments: Comment[] = commentsData?.results || []
+  const comments: Comment[] = Array.isArray(commentsData) ? commentsData : []
 
   const createMutation = useMutation({
-    mutationFn: () => api.createComment(taskId, newComment.trim()),
+    mutationFn: () => api.createComment('task', taskId, newComment.trim()),
     onSuccess: () => {
       setNewComment('')
       queryClient.invalidateQueries({ queryKey: ['tasks'] })

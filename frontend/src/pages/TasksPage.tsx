@@ -5,6 +5,7 @@ import { Card, CardContent } from '../components/Card'
 import { Button } from '../components/Button'
 import ConfirmDialog from '../components/ConfirmDialog'
 import CommentSection from '../components/CommentSection'
+import TaskDetailDrawer from '../components/TaskDetailDrawer'
 import { useToast } from '../lib/toast'
 import {
   Plus, AlertCircle, User, Loader2, Trash2, Search, GripVertical,

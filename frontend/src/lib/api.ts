@@ -66,7 +66,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 }
 
 /** Upload a file using multipart/form-data (no JSON body). */
-async function uploadFileRequest(path: string, formData: FormData): Promise<any> {
+export const uploadFileRequest = async (path: string, formData: FormData): Promise<any> => {
   const token = getToken()
   let res = await fetch(`${BASE}${path}`, {
     method: 'POST',
@@ -250,11 +250,11 @@ export const api = {
     request<void>(`/auth/users/${id}/delete/`, { method: 'DELETE' }),
 
   // File uploads
-  uploadFile: (file: File, resourceType: string, resourceId?: string) => {
+  uploadFile: (file: File, resourceType: string, resourceId?: string | number) => {
     const formData = new FormData()
     formData.append('file', file)
     formData.append('resource_type', resourceType)
-    if (resourceId) formData.append('resource_id', resourceId)
+    if (resourceId !== undefined) formData.append('resource_id', String(resourceId))
 
     const token = getToken()
     return fetch(`${BASE}/storage/upload/`, {
@@ -269,11 +269,11 @@ export const api = {
       return res.json()
     })
   },
-  listFiles: (resourceType: string, resourceId?: string) =>
+  listFiles: (resourceType: string, resourceId?: string | number) =>
     request<any[]>(`/storage/list/${resourceType}/${resourceId ?? ''}`),
   getFileMeta: (id: string) =>
     request<any>(`/storage/${id}/`),
-  deleteFile: (id: string) =>
+  deleteFile: (id: number | string) =>
     request<void>(`/storage/${id}/delete/`, { method: 'DELETE' }),
 
   // Task dependencies
@@ -302,8 +302,8 @@ export const api = {
     request<void>(`/comments/item/${commentId}/`, { method: 'DELETE' }),
 
   // Notifications
-  getNotifications: () =>
-    request<any[]>('/notifications/'),
+  getNotifications: (page?: number) =>
+    request<{ results: any[]; total: number; has_next: boolean }>(`/notifications/${page ? `?page=${page}` : ''}`),
   unreadNotificationCount: () =>
     request<{ count: number }>('/notifications/unread/'),
   markNotificationRead: (id: string) =>
@@ -344,4 +344,9 @@ export const api = {
     request<any>(`/resources/${id}/`, { method: 'PATCH', body: JSON.stringify(data) }),
   deleteResource: (id: string) =>
     request<void>(`/resources/${id}/`, { method: 'DELETE' }),
+
+  // Aliases for components that use different names
+  getTask: (id: string) => request<any>(`/tasks/${id}/`),
+  getFiles: (resourceType: string, resourceId?: string | number) =>
+    request<any[]>(`/storage/list/${resourceType}/${resourceId ?? ''}`),
 }
