@@ -100,13 +100,23 @@ The frontend runs on **http://localhost:5173** and proxies `/api/*` to Django at
 | Database | Neon Postgres | ap-southeast-2 region |
 | File Storage | Supabase Storage | Project: Internal-ARKO-System |
 
-### Deploy
+### Deploy (current)
 
 ```bash
 vercel deploy --prod --scope justinebacurin1927s-projects
 ```
 
 Environment variables are managed via Vercel CLI (`vercel env add`).
+
+### Planned — Hybrid Architecture
+
+The backend (Django API) is planned to move to **Render** for persistent server hosting, leaving the frontend SPA on Vercel's edge CDN. This enables:
+- Zero cold starts on the API
+- WebSocket support (real-time messaging)
+- Background workers and cron jobs
+- Rolling deploys with zero downtime
+
+See [[DEPLOY-INFRA.md]] for the full infrastructure analysis and migration checklist.
 
 ## Auth
 
@@ -118,6 +128,7 @@ Django JWT authentication (Bearer tokens via SimpleJWT). Token refresh on expiry
 - [[ARKO - Brief]](docs/BRIEF.md)
 - [[ARKO - Roadmap]](docs/ROADMAP.md)
 - [[ARKO - Phase 1 Report]](docs/PHASE1-REPORT.md)
+- [[ARKO - Deploy & Infra]](docs/DEPLOY-INFRA.md)
 
 ---
 
