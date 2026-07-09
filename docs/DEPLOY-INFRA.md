@@ -38,6 +38,24 @@ Backing Services:
 - Runs pending database migrations (with auto-fake for existing tables)
 - Returns a WSGI app via `get_wsgi_application()`
 
+## Pre-deploy Verification
+
+Always run these before pushing to production:
+
+```bash
+# 1. Dependency parity check
+diff <(sort api/requirements.txt) <(sort backend/requirements.txt) \
+  || echo "⚠️  MISMATCH — api/ and backend/ dependencies differ"
+
+# 2. Migration graph conflict check
+cd backend && python manage.py migrate --check && cd ..
+
+# 3. Static validation (missing imports, bad settings, etc.)
+cd backend && python manage.py check --deploy --fail-level WARNING && cd ..
+```
+
+These steps catch the three failure modes that caused recent production outages (missing module, migration conflict, undefined name reference).
+
 ## Pain Points — Vercel as Django Host
 
 | Issue | Severity | Detail |

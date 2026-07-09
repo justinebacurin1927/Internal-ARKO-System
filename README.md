@@ -100,6 +100,23 @@ The frontend runs on **http://localhost:5173** and proxies `/api/*` to Django at
 | Database | Neon Postgres | ap-southeast-2 region |
 | File Storage | Supabase Storage | Project: Internal-ARKO-System |
 
+## Pre-deploy Checklist
+
+Before deploying, run these checks to catch common failures:
+
+```bash
+# 1. Ensure api/requirements.txt and backend/requirements.txt are in sync
+diff <(sort api/requirements.txt) <(sort backend/requirements.txt) || echo "⚠️  MISMATCH — dependencies differ between api/ and backend/"
+
+# 2. Check for migration graph conflicts
+cd backend && python manage.py migrate --check && cd ..
+
+# 3. Static validation — catches missing imports, bad settings
+cd backend && python manage.py check --deploy --fail-level WARNING && cd ..
+```
+
+If all three pass, deploy is safe.
+
 ### Deploy (current)
 
 ```bash
