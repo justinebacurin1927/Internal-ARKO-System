@@ -1,14 +1,22 @@
-# ARKO Migration — Remaining Steps (credential-gated)
+# ARKO Migration — Status & Remaining Steps
 
-Phases 0–4 are complete and committed on branch `feat/nextjs-migration`. The app builds
-(`pnpm --filter @arko/web build` → 22 routes) and 18 unit tests pass. What's left needs
-your accounts/secrets. Run these locally (use `! <cmd>` in the session to run interactively).
+Branch `feat/nextjs-migration`. **DB migration is DONE and verified against the real Supabase
+database** (project `ommsjbvcevgzzowlavdm`, region ap-southeast-1). Only the Vercel deploy and
+the Django/Vite cleanup remain.
 
-## 1. Reuse Django's existing database
-Decision: point the Next.js app at the **same Postgres DB Django already uses** (Neon/Supabase
-per your Render env). Prisma creates its own tables (`User`, `Task`, …) **alongside** Django's
-(`auth_app_user`, …) in that one database — no collision, app starts with empty Prisma tables.
-Grab the existing `DATABASE_URL` from your Django/Render environment.
+## ✅ DONE (verified 2026-07-22)
+- Prisma migration applied to Supabase in a **dedicated `arko` schema** (Django's 40 `public`
+  tables untouched). Migration `20260721220905_init` is committed.
+- Seeded: admin `admin@arko.app` / `admin123` + 7 finance categories.
+- Real-DB router verification: CRUD green across 11 domains via actual tRPC callers.
+- Connection: IPv4 **pooler** `aws-1-ap-southeast-1.pooler.supabase.com` (the direct
+  `db.<ref>.supabase.co` host is IPv6-only and unreachable from this network).
+- Local `apps/web/.env` + `packages/db/.env` already point at Supabase (gitignored; hold the
+  DB password — rotate in Supabase if you want it out of local files).
+
+## 1. (done) Database — Supabase, dedicated `arko` schema
+Prisma lives in its own `arko` schema in the same Supabase DB Django uses. Connection URLs carry
+`schema=arko` (+ `pgbouncer=true` on the :6543 transaction pooler). See `apps/web/.env.example`.
 
 ## 2. Fill local env
 Edit `apps/web/.env` (gitignored) using `apps/web/.env.example` as the template:
@@ -48,8 +56,10 @@ users, comments, events, ideas, journal, notifications, resources, storage (S3 u
 ## 6. Deploy to Vercel
 ```
 vercel link            # set project root dir = apps/web
-vercel env add DATABASE_URL AUTH_SECRET AUTH_URL NEXT_PUBLIC_APP_URL S3_ENDPOINT \
+vercel env add DATABASE_URL DIRECT_URL AUTH_SECRET AUTH_URL NEXT_PUBLIC_APP_URL S3_ENDPOINT \
                S3_REGION S3_ACCESS_KEY_ID S3_SECRET_ACCESS_KEY S3_BUCKET   # add each
+# DATABASE_URL/DIRECT_URL are the Supabase pooler URLs WITH schema=arko (see apps/web/.env).
+# Set AUTH_URL/NEXT_PUBLIC_APP_URL to the real Vercel domain, not localhost.
 vercel                 # preview deploy → verify login + one CRUD flow
 ```
 The Vercel build runs `pnpm --filter @arko/db db:deploy` (applies committed migrations) then
