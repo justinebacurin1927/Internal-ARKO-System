@@ -34,6 +34,15 @@ model User {
   sentMessages      Message[]
   reminders         Reminder[]
   notes             Note[]
+  events            Event[]
+  sprints           Sprint[]
+  ideas             Idea[]
+  journalEntries    JournalEntry[]
+  notifications     Notification[]
+  resources         Resource[]
+  fileAttachments   FileAttachment[]
+  metrics           BusinessMetric[]
+  recurring         RecurringTransaction[]
 }
 
 model Account {
@@ -112,6 +121,7 @@ model AccountCategory {
 
   transactions Transaction[]
   budget       Budget?       @relation(fields: [budgetId], references: [id])
+  recurring    RecurringTransaction[]
 }
 
 enum AccountType {
@@ -258,7 +268,6 @@ model Task {
   assignee   User?    @relation(fields: [assigneeId], references: [id])
   parent     Task?    @relation("TaskDependencies", fields: [parentId], references: [id])
   subtasks   Task[]   @relation("TaskDependencies")
-  comments   Comment[]
 }
 
 enum TaskStatus {
@@ -276,15 +285,18 @@ enum Priority {
 }
 
 model Comment {
-  id        String   @id @default(cuid())
-  content   String
-  userId    String
-  taskId    String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(cuid())
+  content      String
+  edited       Boolean  @default(false)
+  userId       String
+  resourceType String // 'TASK' | 'NOTE' | 'IDEA' ...
+  resourceId   String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id])
-  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([resourceType, resourceId])
 }
 
 // ===== MESSAGING MODELS =====
@@ -346,4 +358,165 @@ model Note {
   updatedAt DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ===== EVENTS / SPRINTS =====
+
+model Event {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  date        DateTime
+  endDate     DateTime?
+  startTime   String
+  endTime     String
+  color       String    @default("#2D6A4F")
+  userId      String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Sprint {
+  id        String   @id @default(cuid())
+  name      String
+  goal      String?
+  startDate DateTime
+  endDate   DateTime
+  color     String   @default("#2D6A4F")
+  isActive  Boolean  @default(true)
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ===== IDEAS =====
+
+model Idea {
+  id            String   @id @default(cuid())
+  title         String
+  description   String?
+  status        String   @default("IDEA") // IDEA | EXPLORING | VALIDATED | ARCHIVED
+  tags          String[] @default([])
+  spawnedTaskId String?
+  userId        String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ===== JOURNAL =====
+
+model JournalEntry {
+  id        String   @id @default(cuid())
+  title     String
+  content   String?
+  mood      String?
+  date      DateTime @default(now())
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ===== NOTIFICATIONS =====
+
+model Notification {
+  id        String   @id @default(cuid())
+  notifType String
+  title     String
+  message   String?
+  link      String?
+  read      Boolean  @default(false)
+  userId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+}
+
+// ===== RESOURCES =====
+
+model Resource {
+  id           String   @id @default(cuid())
+  title        String
+  url          String?
+  resourceType String   @default("LINK") // LINK | FILE | DOC
+  description  String?
+  tags         String[] @default([])
+  fileId       String?
+  userId       String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ===== STORAGE (S3) =====
+
+model FileAttachment {
+  id           String   @id @default(cuid())
+  userId       String
+  resourceType String
+  resourceId   String?
+  fileKey      String
+  fileName     String
+  fileSize     Int      @default(0)
+  mimeType     String   @default("application/octet-stream")
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([resourceType, resourceId])
+}
+
+// ===== FINANCE EXTRAS =====
+
+model BusinessMetric {
+  id          String   @id @default(cuid())
+  userId      String
+  key         String
+  name        String
+  value       Float    @default(0)
+  calculation String   @default("manual")
+  suffix      String   @default("")
+  upIsGood    Boolean  @default(true)
+  decimals    Int      @default(0)
+  updatedAt   DateTime @updatedAt
+
+  user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  history MetricHistory[]
+
+  @@unique([userId, key])
+}
+
+model MetricHistory {
+  id         String   @id @default(cuid())
+  metricId   String
+  value      Float
+  recordedAt DateTime @default(now())
+
+  metric BusinessMetric @relation(fields: [metricId], references: [id], onDelete: Cascade)
+}
+
+model RecurringTransaction {
+  id          String          @id @default(cuid())
+  userId      String
+  description String
+  amount      Float
+  type        TransactionType
+  frequency   String // DAILY | WEEKLY | MONTHLY | YEARLY
+  categoryId  String?
+  nextDate    DateTime
+  isActive    Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+
+  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category AccountCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 }
