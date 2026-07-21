@@ -106,6 +106,27 @@ export const messagesRouter = router({
       return message
     }),
 
+  /** Mark a conversation as read up to now for the current participant (polling-friendly). */
+  markRead: protectedProcedure
+    .input(z.object({ conversationId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.user.id!
+      const participant = await ctx.prisma.conversationParticipant.findUnique({
+        where: {
+          conversationId_userId: { conversationId: input.conversationId, userId },
+        },
+      })
+      if (!participant) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Not a participant in this conversation' })
+      }
+      return ctx.prisma.conversationParticipant.update({
+        where: {
+          conversationId_userId: { conversationId: input.conversationId, userId },
+        },
+        data: { lastReadAt: new Date() },
+      })
+    }),
+
   createConversation: protectedProcedure
     .input(
       z.object({

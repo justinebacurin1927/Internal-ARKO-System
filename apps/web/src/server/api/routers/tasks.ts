@@ -11,7 +11,6 @@ export const tasksRouter = router({
         where: { assigneeId: userId },
         orderBy: { position: 'asc' },
         include: {
-          comments: true,
           assignee: { select: { id: true, name: true, email: true, image: true } },
         },
       })

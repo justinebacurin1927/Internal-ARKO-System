@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { TRPCError } from '@trpc/server'
 import { router, protectedProcedure } from '../trpc'
 
 export const financeRouter = router({
@@ -147,5 +148,101 @@ export const financeRouter = router({
         where: { id: input.splitId },
         data: { settled: true },
       })
+    }),
+
+  // ----- Business metrics -----
+  listMetrics: protectedProcedure.query(async ({ ctx }) => {
+    return ctx.prisma.businessMetric.findMany({
+      where: { userId: ctx.user.id! },
+      orderBy: { name: 'asc' },
+    })
+  }),
+
+  upsertMetric: protectedProcedure
+    .input(
+      z.object({
+        key: z.string().min(1),
+        name: z.string().min(1),
+        value: z.number().default(0),
+        calculation: z.string().default('manual'),
+        suffix: z.string().default(''),
+        upIsGood: z.boolean().default(true),
+        decimals: z.number().int().min(0).default(0),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.user.id!
+      const metric = await ctx.prisma.businessMetric.upsert({
+        where: { userId_key: { userId, key: input.key } },
+        update: {
+          name: input.name,
+          value: input.value,
+          calculation: input.calculation,
+          suffix: input.suffix,
+          upIsGood: input.upIsGood,
+          decimals: input.decimals,
+        },
+        create: { ...input, userId },
+      })
+      // Record a history point for the value.
+      await ctx.prisma.metricHistory.create({
+        data: { metricId: metric.id, value: input.value },
+      })
+      return metric
+    }),
+
+  // ----- Recurring transactions -----
+  listRecurring: protectedProcedure.query(async ({ ctx }) => {
+    return ctx.prisma.recurringTransaction.findMany({
+      where: { userId: ctx.user.id! },
+      orderBy: { nextDate: 'asc' },
+      include: { category: true },
+    })
+  }),
+
+  createRecurring: protectedProcedure
+    .input(
+      z.object({
+        description: z.string().min(1),
+        amount: z.number().positive(),
+        type: z.enum(['INCOME', 'EXPENSE', 'TRANSFER']),
+        frequency: z.enum(['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY']),
+        categoryId: z.string().optional(),
+        nextDate: z.coerce.date(),
+        isActive: z.boolean().default(true),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      return ctx.prisma.recurringTransaction.create({
+        data: { ...input, userId: ctx.user.id! },
+      })
+    }),
+
+  updateRecurring: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        description: z.string().min(1).optional(),
+        amount: z.number().positive().optional(),
+        type: z.enum(['INCOME', 'EXPENSE', 'TRANSFER']).optional(),
+        frequency: z.enum(['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY']).optional(),
+        categoryId: z.string().optional(),
+        nextDate: z.coerce.date().optional(),
+        isActive: z.boolean().optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const row = await ctx.prisma.recurringTransaction.findUnique({ where: { id: input.id } })
+      if (!row || row.userId !== ctx.user.id!) throw new TRPCError({ code: 'FORBIDDEN' })
+      const { id, ...data } = input
+      return ctx.prisma.recurringTransaction.update({ where: { id }, data })
+    }),
+
+  deleteRecurring: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const row = await ctx.prisma.recurringTransaction.findUnique({ where: { id: input.id } })
+      if (!row || row.userId !== ctx.user.id!) throw new TRPCError({ code: 'FORBIDDEN' })
+      return ctx.prisma.recurringTransaction.delete({ where: { id: input.id } })
     }),
 })
