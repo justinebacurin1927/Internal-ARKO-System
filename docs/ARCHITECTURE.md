@@ -4,12 +4,12 @@ tags:
   - arko
   - architecture
 created: 2026-07-01
-updated: 2026-07-05
+updated: 2026-07-08
 ---
 
 # ARKO Architecture
 
-## System Design
+## System Design (Current — Vercel + Neon)
 
 ```mermaid
 graph TD
@@ -65,6 +65,33 @@ graph TD
     end
 ```
 
+## Proposed Architecture — Hybrid (Vercel Frontend + Render Backend)
+
+This is the recommended next step for scalability, WebSocket support, and ops resilience. See [[DEPLOY-INFRA.md]] for the full analysis and migration checklist.
+
+```mermaid
+graph TD
+    Browser[Browser] --> Vercel[Vercel Edge CDN]
+    Vercel --> SPA[React SPA (Vite)]
+    SPA --> APIClient[API Client (fetch)]
+    
+    subgraph Render
+        APIClient --> Django[Django + Daphne]
+        Django --> WebSocket[WebSocket / WSS]
+        Django --> DRF[Django REST Framework]
+        DRF --> Background[Workers / Cron]
+        DRF --> DB[(Neon PostgreSQL)]
+        DRF --> S3[Supabase Storage / S3]
+    end
+
+    subgraph Local Dev
+        Docker[Docker Compose]
+        Docker --> Pg[(Postgres 16)]
+        Docker --> MinIO[S3 (MinIO)]
+        Docker --> MH[MailHog]
+    end
+```
+
 ## Data Model
 
 ```mermaid
@@ -110,7 +137,8 @@ erDiagram
 | Backend | Django 6 + DRF | Mature ORM, admin interface, JWT auth via SimpleJWT |
 | API layer | Django REST Framework + JWT | Type-safe serializers, browsable API, token auth |
 | Database | PostgreSQL (Neon) | Serverless Postgres with IPv4 + IPv6, free tier |
-| Hosting | Vercel | Both static SPA and Python serverless on one platform |
+| Hosting (current) | Vercel | Both static SPA and Python serverless on one platform |
+| Hosting (recommended) | Vercel (FE) + Render (BE) | Persistent server for Django — cold starts, WebSocket, cron, rolling deploys |
 | ORM | Django ORM | Native Django, migrations built in |
 | Styling | Tailwind CSS v4 | Utility-first, consistent design system |
 | State | React Query (TanStack Query) | Server state caching, invalidation, mutations |
@@ -134,7 +162,7 @@ The `ideas_app` can create a task from an idea with a single API call. The idea 
 ### File Uploads
 The `storage_app` abstracts S3-compatible storage behind a simple upload/download/delete API. Falls back to local filesystem when S3 isn't configured (local dev).
 
-## Deployment Architecture
+## Deployment Architecture (Current)
 
 ```
 Vercel (arko-internal-system.vercel.app)
@@ -146,12 +174,32 @@ Backing Services:
 └── Supabase Storage  → File storage (S3-compatible API)
 ```
 
-### How API routing works
+### How API routing works (current)
 
 1. Vercel rewrites `/{path}` → `index.html` (SPA handles all client routes)
 2. Vercel rewrites `/api/{path}` → `api/index.py` serverless function
 3. `api/index.py` loads Django WSGI app with production settings (`config.production`)
 4. Django routes the request through URL dispatcher
+
+## Deployment Architecture (Proposed — Hybrid)
+
+```
+Vercel (arko-internal-system.vercel.app)     Render (arko-api.onrender.com)
+├── / (root) → Vite React SPA                 ├── Django + Daphne (persistent)
+├── /api/*   → proxy to Render URL            ├── WebSocket server
+│                                              ├── Background workers / Cron
+Backing Services:                              └── Same Neon + Supabase
+├── Neon Postgres (unchanged)
+└── Supabase Storage (unchanged)
+```
+
+### How API routing would work (hybrid)
+
+1. Vercel serves the SPA at the root — same as today, no change
+2. Vercel rewrites `/api/*` to `https://arko-api.onrender.com/api/*`
+3. Render runs Django persistently via `daphne` — zero cold starts
+4. WebSocket connections go directly to Render's `wss://arko-api.onrender.com/ws/*`
+5. Database and file storage remain on Neon Postgres and Supabase — no data migration needed
 
 ## Auth & Permission Model
 

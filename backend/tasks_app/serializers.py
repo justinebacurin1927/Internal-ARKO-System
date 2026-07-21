@@ -1,5 +1,7 @@
 from rest_framework import serializers
+from django.utils import timezone
 from .models import Task, TaskDependency
+from comments_app.models import Comment
 
 
 class TaskDependencySerializer(serializers.ModelSerializer):

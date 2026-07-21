@@ -53,6 +53,18 @@ updated: 2026-07-04
 - [x] R&D Ideas Board (brainstorm → task spawning)
 - [x] Resource Library (links/docs/references with tags, search, type filter)
 
+## Infrastructure — Backend Migration to Render ⏳ (Planned)
+
+- [ ] Create `render.yaml` for Django + Daphne service definition
+- [ ] Add `Dockerfile` / `Procfile` for Render deployment
+- [ ] Remove `api/index.py` serverless wrapper (no longer needed)
+- [ ] Update Vercel rewrites to proxy `/api/*` → Render URL
+- [ ] Configure WebSocket routing for real-time messaging
+- [ ] Set up Render Blueprint (infra-as-code from repo)
+- [ ] Enable rolling deploys (zero-downtime cuts over)
+- [ ] Provision background worker service if needed
+- [ ] Deploy `feat/real-time-messaging` branch (blocked without this)
+
 ## Future
 
 - [ ] Multi-workspace support
