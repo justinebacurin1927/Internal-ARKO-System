@@ -1,6 +1,6 @@
 {
   "framework": "nextjs",
-  "buildCommand": "cd ../.. && pnpm install && pnpm --filter @arko/web build",
+  "buildCommand": "cd ../.. && pnpm install && pnpm --filter @arko/db db:deploy && pnpm --filter @arko/web build",
   "outputDirectory": ".next",
   "installCommand": "cd ../.. && pnpm install",
   "ignoreCommand": "git diff --quiet HEAD^ HEAD -- ../.."
