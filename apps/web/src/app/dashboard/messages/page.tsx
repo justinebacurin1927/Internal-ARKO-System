@@ -24,10 +24,13 @@ export default function MessagesPage() {
   const { data: session } = useSession()
   const currentUserId = session?.user?.id
 
-  const { data: conversations, isLoading, error } = api.messages.listConversations.useQuery()
+  const { data: conversations, isLoading, error } = api.messages.listConversations.useQuery(
+    undefined,
+    { refetchInterval: 5000 },
+  )
   const { data: messages, isLoading: msgsLoading } = api.messages.getMessages.useQuery(
     { conversationId: selectedConv!, limit: 50 },
-    { enabled: !!selectedConv },
+    { enabled: !!selectedConv, refetchInterval: 4000 },
   )
   const { data: users } = api.users.search.useQuery(
     { query: searchQuery || undefined },
