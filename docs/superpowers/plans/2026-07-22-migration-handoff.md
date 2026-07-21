@@ -4,20 +4,24 @@ Phases 0–4 are complete and committed on branch `feat/nextjs-migration`. The a
 (`pnpm --filter @arko/web build` → 22 routes) and 18 unit tests pass. What's left needs
 your accounts/secrets. Run these locally (use `! <cmd>` in the session to run interactively).
 
-## 1. Provision a Neon Postgres database
-- Create a database at https://neon.tech (or `vercel storage` → Neon integration).
-- Copy the **pooled** connection string.
+## 1. Reuse Django's existing database
+Decision: point the Next.js app at the **same Postgres DB Django already uses** (Neon/Supabase
+per your Render env). Prisma creates its own tables (`User`, `Task`, …) **alongside** Django's
+(`auth_app_user`, …) in that one database — no collision, app starts with empty Prisma tables.
+Grab the existing `DATABASE_URL` from your Django/Render environment.
 
 ## 2. Fill local env
 Edit `apps/web/.env` (gitignored) using `apps/web/.env.example` as the template:
 ```
-DATABASE_URL="postgresql://…-pooler…/arko?sslmode=require"
+DATABASE_URL="…your existing Django Postgres URL…"
 AUTH_SECRET="$(openssl rand -base64 32)"
 AUTH_URL="http://localhost:3000"
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
-AWS_REGION="…"; AWS_ACCESS_KEY_ID="…"; AWS_SECRET_ACCESS_KEY="…"; S3_BUCKET="…"
+# S3-compatible storage (Django uses Supabase Storage):
+S3_ENDPOINT="https://<proj>.supabase.co/storage/v1/s3"; S3_REGION="…"
+S3_ACCESS_KEY_ID="…"; S3_SECRET_ACCESS_KEY="…"; S3_BUCKET="arko-attachments"
 ```
-Prisma reads env from `packages/db/.env`, so also symlink or copy `DATABASE_URL` there:
+Prisma reads env from `packages/db/.env`, so also copy `DATABASE_URL` there:
 ```
 echo 'DATABASE_URL="…same as above…"' > packages/db/.env
 ```
@@ -44,8 +48,8 @@ users, comments, events, ideas, journal, notifications, resources, storage (S3 u
 ## 6. Deploy to Vercel
 ```
 vercel link            # set project root dir = apps/web
-vercel env add DATABASE_URL AUTH_SECRET AUTH_URL NEXT_PUBLIC_APP_URL AWS_REGION \
-               AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY S3_BUCKET   # add each
+vercel env add DATABASE_URL AUTH_SECRET AUTH_URL NEXT_PUBLIC_APP_URL S3_ENDPOINT \
+               S3_REGION S3_ACCESS_KEY_ID S3_SECRET_ACCESS_KEY S3_BUCKET   # add each
 vercel                 # preview deploy → verify login + one CRUD flow
 ```
 The Vercel build runs `pnpm --filter @arko/db db:deploy` (applies committed migrations) then
