@@ -26,6 +26,19 @@
   --color-accent-600: #1b4332;
   --color-accent-700: #143828;
 
+  /* Neutral surface + text + status tokens (ported from production shell) */
+  --color-bg-app: #f4f5f2;
+  --color-bg-sidebar: #ffffff;
+  --color-bg-sidebar-active: #1a1d1a;
+  --color-text-primary: #1a1d1a;
+  --color-text-secondary: #4a5b4e;
+  --color-text-tertiary: #7a8b7e;
+  --color-border-subtle: #d8dcd6;
+  --color-pos: #5fa87a;
+  --color-pos-bg: #eef6f0;
+  --color-neg: #c2655c;
+  --color-neg-bg: #f9edec;
+
   /* Domain colors */
   --color-finance-50: #f0fdf4;
   --color-finance-500: #22c55e;
