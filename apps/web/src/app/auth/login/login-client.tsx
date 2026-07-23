@@ -381,7 +381,7 @@ function LoginForm() {
         </div>
 
         <p className="mt-3 text-center text-[10px] text-zinc-800" style={{ fontFamily: "'DM Sans', sans-serif" }}>
-          &copy; 2026 Arko. All rights reserved. &middot; v1.0.0
+          &copy; 2026 Arko. All rights reserved. &middot; v2.0.0
         </p>
       </div>
     </div>
