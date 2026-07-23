@@ -225,7 +225,7 @@ export default function RemindersPage() {
           <CardContent className="flex flex-col items-center py-16 text-center">
             <Bell className="h-10 w-10 text-gray-200 mb-3" />
             <p className="text-sm text-gray-400">No reminders yet</p>
-            <p className="text-xs text-gray-300 mt-1">Click "New reminder" to get started</p>
+            <p className="text-xs text-gray-300 mt-1">Click &quot;New reminder&quot; to get started</p>
           </CardContent>
         </Card>
       ) : (

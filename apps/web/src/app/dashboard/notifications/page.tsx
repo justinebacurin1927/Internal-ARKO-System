@@ -40,7 +40,7 @@ export default function NotificationsPage() {
         <Card className="border-dashed border-gray-200">
           <CardContent className="flex flex-col items-center py-12 text-center">
             <Bell className="mb-3 h-8 w-8 text-gray-200" />
-            <p className="text-sm text-gray-400">You're all caught up</p>
+            <p className="text-sm text-gray-400">You&apos;re all caught up</p>
           </CardContent>
         </Card>
       ) : (
