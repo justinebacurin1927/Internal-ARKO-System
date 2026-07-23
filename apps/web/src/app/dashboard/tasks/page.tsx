@@ -14,6 +14,10 @@ import {
   CornerDownRight,
 } from 'lucide-react'
 import { api } from '../../../lib/trpc/client'
+import { CommentThread } from './comment-thread'
+
+// resourceType key for the generic comments system (see comments router)
+const TASK_RESOURCE = 'TASK'
 
 const columns = ['TODO', 'IN_PROGRESS', 'REVIEW', 'DONE'] as const
 const columnLabels: Record<string, string> = {
@@ -376,6 +380,9 @@ export default function TasksPage() {
                                   Blocked
                                 </span>
                               )}
+                              {/* Comment-count badge intentionally deferred: Comment has no FK
+                                  to Task (generic resourceType/resourceId), so a per-card count
+                                  needs a batched count proc — out of scope for this story. */}
                             </div>
                           </CardContent>
                         </Card>
@@ -394,6 +401,7 @@ export default function TasksPage() {
           task={selected}
           allTasks={tasks ?? []}
           onClose={() => setSelectedId(null)}
+          onError={setNotice}
           updateTask={updateTask}
           updateStatus={updateStatus}
           deleteTask={deleteTask}
@@ -410,6 +418,7 @@ function TaskDetail({
   task,
   allTasks,
   onClose,
+  onError,
   updateTask,
   updateStatus,
   deleteTask,
@@ -615,6 +624,9 @@ function TaskDetail({
               </div>
             )}
           </div>
+
+          {/* Comments */}
+          <CommentThread resourceType={TASK_RESOURCE} resourceId={task.id} onError={onError} />
 
           {/* Delete — two-step inline confirm (no native dialog) */}
           <div className="border-t border-gray-100 pt-4">

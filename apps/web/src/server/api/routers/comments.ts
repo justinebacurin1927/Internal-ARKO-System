@@ -18,7 +18,7 @@ export const commentsRouter = router({
       z.object({
         resourceType: z.string(),
         resourceId: z.string(),
-        content: z.string().min(1),
+        content: z.string().min(1).max(2000),
       }),
     )
     .mutation(({ ctx, input }) =>
@@ -33,7 +33,7 @@ export const commentsRouter = router({
     ),
 
   update: protectedProcedure
-    .input(z.object({ id: z.string(), content: z.string().min(1) }))
+    .input(z.object({ id: z.string(), content: z.string().min(1).max(2000) }))
     .mutation(async ({ ctx, input }) => {
       const c = await ctx.prisma.comment.findUnique({ where: { id: input.id } })
       if (!c || c.userId !== ctx.user.id!) throw new TRPCError({ code: 'FORBIDDEN' })
