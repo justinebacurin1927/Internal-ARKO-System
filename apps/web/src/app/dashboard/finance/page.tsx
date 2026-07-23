@@ -116,7 +116,7 @@ export default function FinancePage() {
                 className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
                   scopeFilter === s
                     ? s === 'ALL'
-                      ? 'bg-gray-900 text-white'
+                      ? 'bg-primary-500 text-white'
                       : s === 'PERSONAL'
                         ? 'bg-primary-100 text-primary-800'
                         : 'bg-blue-100 text-blue-800'

@@ -166,7 +166,7 @@ export default function UsersPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by name, email, or phone..."
-          className="block w-full rounded-xl border border-gray-200 bg-white py-2 pl-9 pr-3 text-[12px] placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
+          className="block w-full rounded-xl border border-gray-200 bg-card py-2 pl-9 pr-3 text-[12px] placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
         />
       </div>
 
@@ -273,7 +273,7 @@ export default function UsersPage() {
                         {openDropdown === user.id && (
                           <>
                             <div className="fixed inset-0 z-10" onClick={() => setOpenDropdown(null)} />
-                            <div className="absolute right-0 top-full z-20 mt-1 w-52 rounded-xl border border-gray-200 bg-white p-2 shadow-xl">
+                            <div className="absolute right-0 top-full z-20 mt-1 w-52 rounded-xl border border-gray-200 bg-card p-2 shadow-xl">
                               {/* Edit profile */}
                               <div className="px-1 mb-1">
                                 <button
@@ -443,7 +443,7 @@ export default function UsersPage() {
       )}
       {resetPasswordData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
+          <div className="w-full max-w-sm rounded-2xl bg-card p-5 shadow-xl">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-bold text-gray-900">Reset Password</h2>
               <button onClick={() => setResetPasswordData(null)} className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 transition-colors">
@@ -474,7 +474,7 @@ export default function UsersPage() {
       )}
       {resetPasswordResult && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+          <div className="w-full max-w-md rounded-2xl bg-card p-6 shadow-xl">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="text-sm font-bold text-gray-900">Password Reset</h2>
@@ -508,7 +508,7 @@ export default function UsersPage() {
             </div>
             <button
               onClick={() => setResetPasswordResult(null)}
-              className="mt-4 w-full rounded-xl bg-gray-900 px-3 py-2.5 text-[12px] font-semibold text-white hover:bg-gray-800 transition-colors"
+              className="mt-4 w-full rounded-xl bg-gray-900 px-3 py-2.5 text-[12px] font-semibold text-white hover:bg-primary-600 transition-colors"
             >
               Done
             </button>
@@ -575,7 +575,7 @@ function AddUserModal({ onClose }: { onClose: () => void }) {
   if (success) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-        <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+        <div className="w-full max-w-md rounded-2xl bg-card p-6 shadow-xl">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-sm font-bold text-gray-900">User Created</h2>
@@ -632,7 +632,7 @@ function AddUserModal({ onClose }: { onClose: () => void }) {
 
           <button
             onClick={onClose}
-            className="mt-4 w-full rounded-xl bg-gray-900 px-3 py-2.5 text-[12px] font-semibold text-white hover:bg-gray-800 transition-colors"
+            className="mt-4 w-full rounded-xl bg-gray-900 px-3 py-2.5 text-[12px] font-semibold text-white hover:bg-primary-600 transition-colors"
           >
             Done
           </button>
@@ -644,7 +644,7 @@ function AddUserModal({ onClose }: { onClose: () => void }) {
   // ── Form state ─────────────────────────────────────
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+      <div className="w-full max-w-md rounded-2xl bg-card p-6 shadow-xl">
         <div className="flex items-center justify-between mb-5">
           <div>
             <h2 className="text-sm font-bold text-gray-900">Add User</h2>
@@ -667,7 +667,7 @@ function AddUserModal({ onClose }: { onClose: () => void }) {
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                   required
-                  className="block w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-[13px] placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
+                  className="block w-full rounded-xl border border-gray-200 bg-card px-3 py-2 text-[13px] placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
                   placeholder="John"
                 />
               </div>
@@ -678,7 +678,7 @@ function AddUserModal({ onClose }: { onClose: () => void }) {
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                   required
-                  className="block w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-[13px] placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
+                  className="block w-full rounded-xl border border-gray-200 bg-card px-3 py-2 text-[13px] placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
                   placeholder="Doe"
                 />
               </div>
@@ -694,7 +694,7 @@ function AddUserModal({ onClose }: { onClose: () => void }) {
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="block w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-[13px] placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
+                className="block w-full rounded-xl border border-gray-200 bg-card px-3 py-2 text-[13px] placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
                 placeholder="+1 (555) 000-0000"
               />
             </div>
@@ -729,7 +729,7 @@ function AddUserModal({ onClose }: { onClose: () => void }) {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Or type a custom title..."
-              className="mt-1.5 block w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-[13px] placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
+              className="mt-1.5 block w-full rounded-xl border border-gray-200 bg-card px-3 py-2 text-[13px] placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
             />
           </div>
 
@@ -824,7 +824,7 @@ function EditProfileModal({ userId, initialName, initialPhone, initialTitle, onC
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
+      <div className="w-full max-w-sm rounded-2xl bg-card p-5 shadow-xl">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-bold text-gray-900">Edit Profile</h2>
           <button onClick={onClose} className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 transition-colors">
@@ -840,7 +840,7 @@ function EditProfileModal({ userId, initialName, initialPhone, initialTitle, onC
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              className="block w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-[13px] focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
+              className="block w-full rounded-xl border border-gray-200 bg-card px-3 py-2 text-[13px] focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
             />
           </div>
           <div>
@@ -849,7 +849,7 @@ function EditProfileModal({ userId, initialName, initialPhone, initialTitle, onC
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="block w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-[13px] placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
+              className="block w-full rounded-xl border border-gray-200 bg-card px-3 py-2 text-[13px] placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
               placeholder="No phone set"
             />
           </div>
@@ -875,7 +875,7 @@ function EditProfileModal({ userId, initialName, initialPhone, initialTitle, onC
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="block w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-[13px] placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
+              className="block w-full rounded-xl border border-gray-200 bg-card px-3 py-2 text-[13px] placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
               placeholder="Custom title..."
             />
           </div>

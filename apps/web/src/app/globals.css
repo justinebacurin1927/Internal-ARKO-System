@@ -26,18 +26,37 @@
   --color-accent-600: #1b4332;
   --color-accent-700: #143828;
 
-  /* Neutral surface + text + status tokens (ported from production shell) */
-  --color-bg-app: #f4f5f2;
-  --color-bg-sidebar: #ffffff;
-  --color-bg-sidebar-active: #1a1d1a;
-  --color-text-primary: #1a1d1a;
-  --color-text-secondary: #4a5b4e;
-  --color-text-tertiary: #7a8b7e;
-  --color-border-subtle: #d8dcd6;
-  --color-pos: #5fa87a;
-  --color-pos-bg: #eef6f0;
-  --color-neg: #c2655c;
-  --color-neg-bg: #f9edec;
+  /* Neutral surface + text + status tokens — DARK (black + green) */
+  --color-bg-app: #0a0b0d;
+  --color-bg-sidebar: #0e1013;
+  --color-bg-sidebar-active: #16181d;
+  --color-text-primary: #f4f6f5;
+  --color-text-secondary: #a7b0aa;
+  --color-text-tertiary: #6d7872;
+  --color-border-subtle: #23262b;
+  --color-pos: #4ade80;
+  --color-pos-bg: #10231a;
+  --color-neg: #f87171;
+  --color-neg-bg: #2a1414;
+
+  /* Dark surfaces */
+  --color-rail: #000000;
+  --color-card: #16181d;
+  --color-card-elevated: #1c1f25;
+
+  /* Inverted gray ramp so hardcoded gray/white utilities render dark.
+     white is intentionally left untouched (used for text on green buttons). */
+  --color-gray-50: #17191c;
+  --color-gray-100: #1c1f23;
+  --color-gray-200: #262a30;
+  --color-gray-300: #363b42;
+  --color-gray-400: #6b7580;
+  --color-gray-500: #9aa4ad;
+  --color-gray-600: #b8c0c7;
+  --color-gray-700: #d3d8dd;
+  --color-gray-800: #e6e9ec;
+  --color-gray-900: #f3f5f6;
+  --color-gray-950: #fafbfc;
 
   /* Domain colors */
   --color-finance-50: #f0fdf4;
@@ -60,8 +79,8 @@
   --color-sidebar-text-active: #ffffff;
 
   /* Surfaces */
-  --color-surface: #f5f5f5;
-  --color-surface-card: #ffffff;
+  --color-surface: #0a0b0d;
+  --color-surface-card: #16181d;
 
   /* Tinted shadows (green-primary hue, not pure black) */
   --shadow-card: 0 1px 3px 0 color-mix(in srgb, var(--color-primary-800) 12%, transparent),
@@ -79,8 +98,11 @@
   * {
     @apply border-gray-200;
   }
+  html {
+    color-scheme: dark;
+  }
   body {
-    @apply bg-surface text-gray-900 antialiased;
+    @apply bg-bg-app text-text-primary antialiased;
   }
 }
 

@@ -151,7 +151,7 @@ export default function MessagesPage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search users..."
-                  className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                  className="w-full rounded-lg border border-gray-200 bg-card py-2 pl-9 pr-3 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
                   autoFocus
                 />
               </div>
@@ -193,7 +193,7 @@ export default function MessagesPage() {
       </div>
 
       {/* Right — messages view */}
-      <div className="flex flex-1 flex-col rounded-2xl border border-gray-200 bg-white">
+      <div className="flex flex-1 flex-col rounded-2xl border border-gray-200 bg-card">
         {selectedConv && selectedConversation ? (
           <>
             {/* Header */}

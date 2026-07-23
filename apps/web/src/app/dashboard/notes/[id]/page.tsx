@@ -124,7 +124,7 @@ export default function NoteDetailPage() {
       </div>
 
       {/* Editor */}
-      <div className="rounded-2xl border border-gray-200 bg-white">
+      <div className="rounded-2xl border border-gray-200 bg-card">
         <input
           type="text"
           value={title}

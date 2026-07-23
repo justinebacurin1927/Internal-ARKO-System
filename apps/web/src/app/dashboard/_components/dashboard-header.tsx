@@ -28,7 +28,7 @@ export function DashboardHeader() {
   const initial = (user?.name ?? user?.email ?? '?').charAt(0).toUpperCase()
 
   return (
-    <header className="flex h-12 shrink-0 items-center justify-between border-b border-gray-200 bg-white px-4 lg:px-6">
+    <header className="flex h-12 shrink-0 items-center justify-between border-b border-gray-200 bg-card px-4 lg:px-6">
       {/* Left side — greeting */}
       <div className="flex items-center gap-2">
         <span className="text-sm font-semibold text-gray-800">
@@ -74,7 +74,7 @@ export function DashboardHeader() {
         </button>
 
         {showMenu && (
-          <div className="absolute right-0 top-full z-30 mt-1.5 w-56 rounded-xl border border-gray-200 bg-white p-1.5 shadow-xl">
+          <div className="absolute right-0 top-full z-30 mt-1.5 w-56 rounded-xl border border-gray-200 bg-card p-1.5 shadow-xl">
             <div className="border-b border-gray-100 px-3 py-2 mb-1">
               <p className="text-sm font-medium text-gray-900 truncate">{user?.name ?? 'User'}</p>
               <p className="text-xs text-gray-500 truncate">{user?.email ?? ''}</p>

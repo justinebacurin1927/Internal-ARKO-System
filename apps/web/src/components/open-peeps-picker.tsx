@@ -104,7 +104,7 @@ function PartSelect({
       <select
         value={value ?? ''}
         onChange={(e) => onChange(e.target.value || undefined)}
-        className="w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-800 outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-500 transition-colors"
+        className="w-full rounded-lg border border-gray-200 bg-card px-2 py-1.5 text-xs text-gray-800 outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-500 transition-colors"
       >
         {noneOption && <option value="">{noneOption}</option>}
         {parts.map((p) => (

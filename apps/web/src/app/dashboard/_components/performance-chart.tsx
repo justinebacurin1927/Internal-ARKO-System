@@ -293,11 +293,11 @@ const PerformanceChart = memo(function PerformanceChart({
 
       {/* Legend (bottom-right, inside chart area) */}
       <div className="absolute bottom-1 right-1 flex items-center gap-2 pointer-events-none">
-        <div className="flex items-center gap-1 rounded-full bg-white/80 px-1.5 py-0.5 text-[8px] font-semibold text-gray-500 shadow-sm">
+        <div className="flex items-center gap-1 rounded-full bg-card/80 px-1.5 py-0.5 text-[8px] font-semibold text-gray-500 shadow-sm">
           <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
           Income
         </div>
-        <div className="flex items-center gap-1 rounded-full bg-white/80 px-1.5 py-0.5 text-[8px] font-semibold text-gray-500 shadow-sm">
+        <div className="flex items-center gap-1 rounded-full bg-card/80 px-1.5 py-0.5 text-[8px] font-semibold text-gray-500 shadow-sm">
           <span className="h-1.5 w-1.5 rounded-full bg-orange-400 border border-orange-500" />
           Expenses
         </div>

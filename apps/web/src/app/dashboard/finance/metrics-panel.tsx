@@ -164,7 +164,7 @@ export function MetricsPanel() {
                   : m.value.toLocaleString(undefined, { minimumFractionDigits: m.decimals, maximumFractionDigits: m.decimals })
 
                 return (
-                  <div key={m.key} className="rounded-lg border border-gray-200 bg-white p-4 hover:shadow-sm transition-shadow">
+                  <div key={m.key} className="rounded-lg border border-gray-200 bg-card p-4 hover:shadow-sm transition-shadow">
                     <div className="flex items-center justify-between mb-2">
                       <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{m.name}</p>
                       <div className="flex items-center gap-1">

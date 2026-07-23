@@ -103,7 +103,7 @@ export function AddTransactionDialog({ open, onOpenChange }: AddTransactionDialo
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl bg-white p-6 shadow-2xl data-[state=open]:animate-in data-[state=closed]:animate-out max-h-[90vh] overflow-y-auto">
+        <Dialog.Content className="fixed left-1/2 top-1/2 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl bg-card p-6 shadow-2xl data-[state=open]:animate-in data-[state=closed]:animate-out max-h-[90vh] overflow-y-auto">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <Dialog.Title className="text-lg font-bold tracking-tight text-gray-900">

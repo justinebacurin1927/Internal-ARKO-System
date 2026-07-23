@@ -29,7 +29,7 @@ function SectionCard({
   children: React.ReactNode
 }) {
   return (
-    <div className="rounded-xl border border-black/[0.06] bg-white p-5 space-y-4">
+    <div className="rounded-xl border border-black/[0.06] bg-card p-5 space-y-4">
       <div>
         <h2 className="text-base font-semibold text-gray-900">{title}</h2>
         <p className="text-sm text-gray-500 mt-0.5">{description}</p>

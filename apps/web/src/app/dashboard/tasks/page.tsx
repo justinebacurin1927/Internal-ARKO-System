@@ -193,7 +193,7 @@ export default function TasksPage() {
                         : 'Myself'}
                     </div>
                     {showAssigneeSearch && (
-                      <div className="absolute left-0 top-full z-10 mt-1 w-full rounded-lg border border-gray-200 bg-white p-2 shadow-lg">
+                      <div className="absolute left-0 top-full z-10 mt-1 w-full rounded-lg border border-gray-200 bg-card p-2 shadow-lg">
                         <input
                           type="text"
                           value={assigneeSearch}
@@ -465,7 +465,7 @@ function TaskDetail({
       onClick={onClose}
     >
       <div
-        className="h-full w-full max-w-md overflow-y-auto bg-white p-6 shadow-xl"
+        className="h-full w-full max-w-md overflow-y-auto bg-card p-6 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">

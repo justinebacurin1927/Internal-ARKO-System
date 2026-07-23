@@ -90,7 +90,7 @@ export default function DashboardContent() {
       {/* ── Header row — action buttons ──────────────── */}
       <div className="flex items-center justify-end shrink-0 mb-3">
         <div className="flex items-center gap-2">
-          <button className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-[11px] font-medium text-gray-600 shadow-sm hover:border-gray-300 active:scale-[0.97]">
+          <button className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-card px-3 py-1.5 text-[11px] font-medium text-gray-600 shadow-sm hover:border-gray-300 active:scale-[0.97]">
             <Plus className="h-3 w-3" />
             Task
           </button>

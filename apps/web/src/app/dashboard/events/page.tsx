@@ -178,13 +178,13 @@ export default function EventsPage() {
                   <div className="flex items-center gap-1 shrink-0 ml-3">
                     <button
                       onClick={() => { setEditSprintId(s.id); setSprintDialogOpen(true) }}
-                      className="rounded p-1.5 text-gray-400 hover:bg-white hover:text-gray-700 transition-colors"
+                      className="rounded p-1.5 text-gray-400 hover:bg-card hover:text-gray-700 transition-colors"
                     >
                       <Pencil className="h-3.5 w-3.5" />
                     </button>
                     <button
                       onClick={() => confirm('Delete this sprint?') && deleteSprintMut.mutate({ id: s.id })}
-                      className="rounded p-1.5 text-gray-400 hover:bg-white hover:text-red-500 transition-colors"
+                      className="rounded p-1.5 text-gray-400 hover:bg-card hover:text-red-500 transition-colors"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>

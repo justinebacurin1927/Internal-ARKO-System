@@ -110,13 +110,13 @@ function QuotePanel({ quote, loading }: { quote: Quote | null; loading: boolean 
         <div className="flex flex-col justify-center flex-1 min-h-0 max-w-xl mx-auto w-full">
           {loading ? (
             <div className="space-y-4 animate-pulse">
-              <div className="h-5 w-16 rounded bg-white/5" />
+              <div className="h-5 w-16 rounded bg-card/5" />
               <div className="space-y-3">
-                <div className="h-7 bg-white/5 rounded w-full" />
-                <div className="h-7 bg-white/5 rounded w-5/6" />
-                <div className="h-7 bg-white/5 rounded w-4/6" />
+                <div className="h-7 bg-card/5 rounded w-full" />
+                <div className="h-7 bg-card/5 rounded w-5/6" />
+                <div className="h-7 bg-card/5 rounded w-4/6" />
               </div>
-              <div className="h-4 bg-white/5 rounded w-1/3" />
+              <div className="h-4 bg-card/5 rounded w-1/3" />
             </div>
           ) : quote ? (
             <div style={{ animation: 'fade-in 0.8s ease-out' }}>
@@ -240,7 +240,7 @@ function LoginForm() {
                 placeholder="you@example.com"
                 required
                 autoComplete="email"
-                className="block w-full rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-3 text-sm text-white placeholder:text-zinc-600 focus:border-accent-500/60 focus:outline-none focus:ring-2 focus:ring-accent-500/15 focus:bg-white/[0.05] transition-all duration-200"
+                className="block w-full rounded-xl border border-white/[0.08] bg-card/[0.03] px-4 py-3 text-sm text-white placeholder:text-zinc-600 focus:border-accent-500/60 focus:outline-none focus:ring-2 focus:ring-accent-500/15 focus:bg-card/[0.05] transition-all duration-200"
                 style={{ fontFamily: "'DM Sans', sans-serif" }}
               />
             </div>
@@ -257,7 +257,7 @@ function LoginForm() {
                   placeholder="Enter your password"
                   required
                   autoComplete="current-password"
-                  className="block w-full rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-3 pr-11 text-sm text-white placeholder:text-zinc-600 focus:border-accent-500/60 focus:outline-none focus:ring-2 focus:ring-accent-500/15 focus:bg-white/[0.05] transition-all duration-200"
+                  className="block w-full rounded-xl border border-white/[0.08] bg-card/[0.03] px-4 py-3 pr-11 text-sm text-white placeholder:text-zinc-600 focus:border-accent-500/60 focus:outline-none focus:ring-2 focus:ring-accent-500/15 focus:bg-card/[0.05] transition-all duration-200"
                   style={{ fontFamily: "'DM Sans', sans-serif" }}
                 />
                 <button
@@ -331,7 +331,7 @@ function LoginForm() {
             <div className="mt-4 grid grid-cols-2 gap-3">
               <button
                 type="button"
-                className="inline-flex items-center justify-center gap-2.5 rounded-xl border border-white/[0.08] bg-white/[0.02] px-4 py-2.5 text-sm font-medium text-zinc-300 hover:bg-white/[0.05] hover:border-white/[0.12] transition-all duration-200 active:scale-[0.98]"
+                className="inline-flex items-center justify-center gap-2.5 rounded-xl border border-white/[0.08] bg-card/[0.02] px-4 py-2.5 text-sm font-medium text-zinc-300 hover:bg-card/[0.05] hover:border-white/[0.12] transition-all duration-200 active:scale-[0.98]"
                 style={{ fontFamily: "'DM Sans', sans-serif" }}
               >
                 <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none">
@@ -344,7 +344,7 @@ function LoginForm() {
               </button>
               <button
                 type="button"
-                className="inline-flex items-center justify-center gap-2.5 rounded-xl border border-white/[0.08] bg-white/[0.02] px-4 py-2.5 text-sm font-medium text-zinc-300 hover:bg-white/[0.05] hover:border-white/[0.12] transition-all duration-200 active:scale-[0.98]"
+                className="inline-flex items-center justify-center gap-2.5 rounded-xl border border-white/[0.08] bg-card/[0.02] px-4 py-2.5 text-sm font-medium text-zinc-300 hover:bg-card/[0.05] hover:border-white/[0.12] transition-all duration-200 active:scale-[0.98]"
                 style={{ fontFamily: "'DM Sans', sans-serif" }}
               >
                 <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">

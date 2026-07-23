@@ -92,7 +92,7 @@ export function AttachmentList({ resourceType, resourceId }: AttachmentListProps
               >
                 {/* Thumbnail or icon */}
                 {isImage ? (
-                  <div className="h-8 w-8 shrink-0 overflow-hidden rounded border border-gray-200 bg-white">
+                  <div className="h-8 w-8 shrink-0 overflow-hidden rounded border border-gray-200 bg-card">
                     <Icon className="h-full w-full p-1 text-gray-400" />
                   </div>
                 ) : (
