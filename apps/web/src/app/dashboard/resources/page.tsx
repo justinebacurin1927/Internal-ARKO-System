@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Card, CardContent, Button } from '@arko/ui'
-import { Link2, Plus, Trash2, Pencil, Loader2, ExternalLink, Paperclip } from 'lucide-react'
+import { Link2, Plus, Trash2, Pencil, Loader2, ExternalLink, Paperclip, AlertCircle } from 'lucide-react'
 import { api } from '../../../lib/trpc/client'
 import { FileUploader } from '../../../components/file-uploader'
 import { AttachmentList } from '../../../components/attachment-list'
@@ -15,6 +15,7 @@ export default function ResourcesPage() {
   const [title, setTitle] = useState('')
   const [url, setUrl] = useState('')
   const [description, setDescription] = useState('')
+  const [error, setError] = useState('')
   const [showAttachments, setShowAttachments] = useState<Set<string>>(new Set())
 
   const toggleAttachments = (id: string) => {
@@ -31,6 +32,7 @@ export default function ResourcesPage() {
 
   const create = api.resources.create.useMutation({
     onSuccess: () => {
+      setError('')
       setTitle('')
       setUrl('')
       setDescription('')
@@ -38,9 +40,11 @@ export default function ResourcesPage() {
       setShowForm(false)
       utils.resources.list.invalidate()
     },
+    onError: (e) => setError(e.message),
   })
   const update = api.resources.update.useMutation({
     onSuccess: () => {
+      setError('')
       setTitle('')
       setUrl('')
       setDescription('')
@@ -48,8 +52,12 @@ export default function ResourcesPage() {
       setShowForm(false)
       utils.resources.list.invalidate()
     },
+    onError: (e) => setError(e.message),
   })
-  const del = api.resources.delete.useMutation({ onSuccess: () => utils.resources.list.invalidate() })
+  const del = api.resources.delete.useMutation({
+    onSuccess: () => utils.resources.list.invalidate(),
+    onError: (e) => setError(e.message),
+  })
 
   const isSaving = create.isPending || update.isPending
 
@@ -108,6 +116,12 @@ export default function ResourcesPage() {
                 rows={2}
                 className="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
               />
+              {error && (
+                <div className="flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2">
+                  <AlertCircle className="h-3.5 w-3.5 text-red-500 shrink-0" />
+                  <p className="text-[11px] text-red-600">{error}</p>
+                </div>
+              )}
               <div className="flex items-center gap-2">
                 <Button type="submit" size="sm" disabled={isSaving}>
                   {isSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : editId ? 'Save Changes' : 'Add'}

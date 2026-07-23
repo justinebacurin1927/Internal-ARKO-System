@@ -235,6 +235,7 @@ export const usersRouter = router({
         name: z.string().min(1).optional(),
         phone: z.string().optional(),
         title: z.string().optional(),
+        image: z.string().nullable().optional(),
         avatar: z
           .object({
             body: z.string(),
@@ -273,6 +274,7 @@ export const usersRouter = router({
       if (input.name !== undefined) data.name = input.name
       if (input.phone !== undefined) data.phone = input.phone
       if (input.title !== undefined) data.title = input.title
+      if (input.image !== undefined) data.image = input.image as string | null
       if (input.avatar !== undefined) data.avatar = input.avatar as any
 
       return ctx.prisma.user.update({

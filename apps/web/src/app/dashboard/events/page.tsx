@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, Button } from '@arko/ui'
-import { Calendar, Plus, Trash2, Loader2, Clock, Target, Pencil, Flag } from 'lucide-react'
+import { Calendar, Plus, Trash2, Loader2, Clock, Target, Pencil, Flag, AlertCircle } from 'lucide-react'
 import { api } from '../../../lib/trpc/client'
 import { SprintDialog } from './sprint-dialog'
 
@@ -12,6 +12,7 @@ export default function EventsPage() {
   const [date, setDate] = useState('')
   const [startTime, setStartTime] = useState('09:00')
   const [endTime, setEndTime] = useState('10:00')
+  const [error, setError] = useState('')
   const [sprintDialogOpen, setSprintDialogOpen] = useState(false)
   const [editSprintId, setEditSprintId] = useState<string | undefined>()
 
@@ -25,13 +26,18 @@ export default function EventsPage() {
 
   const create = api.events.create.useMutation({
     onSuccess: () => {
+      setError('')
       setTitle('')
       setDate('')
       setShowForm(false)
       utils.events.list.invalidate()
     },
+    onError: (e) => setError(e.message),
   })
-  const del = api.events.delete.useMutation({ onSuccess: () => utils.events.list.invalidate() })
+  const del = api.events.delete.useMutation({
+    onSuccess: () => utils.events.list.invalidate(),
+    onError: (e) => setError(e.message),
+  })
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -85,6 +91,12 @@ export default function EventsPage() {
                   className="rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
                 />
               </div>
+              {error && (
+                <div className="flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2">
+                  <AlertCircle className="h-3.5 w-3.5 text-red-500 shrink-0" />
+                  <p className="text-[11px] text-red-600">{error}</p>
+                </div>
+              )}
               <Button type="submit" size="sm" disabled={create.isPending}>
                 {create.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Create'}
               </Button>

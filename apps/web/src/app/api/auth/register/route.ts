@@ -44,11 +44,16 @@ export async function POST(req: Request) {
 
     const hashedPassword = await hash(body.password, 12)
 
+    // First registered user gets ADMIN so they can manage the system
+    const userCount = await prisma.user.count()
+    const role = userCount === 0 ? 'ADMIN' : 'USER'
+
     const user = await prisma.user.create({
       data: {
         name: body.name,
         email: body.email,
         password: hashedPassword,
+        role,
       },
     })
 

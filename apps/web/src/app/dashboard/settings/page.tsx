@@ -69,6 +69,7 @@ function ProfileForm() {
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [title, setTitle] = useState('')
+  const [image, setImage] = useState('')
   const [avatar, setAvatar] = useState<AvatarConfigJson | null>(null)
   const [status, setStatus] = useState<FormStatus | null>(null)
 
@@ -77,6 +78,7 @@ function ProfileForm() {
       setName(profile.name ?? '')
       setPhone(profile.phone ?? '')
       setTitle(profile.title ?? '')
+      setImage(profile.image ?? '')
     }
   }, [profile])
 
@@ -97,6 +99,7 @@ function ProfileForm() {
       name: name.trim() || undefined,
       phone: phone.trim() || undefined,
       title: title.trim() || undefined,
+      image: image.trim() || null,
       avatar: avatar ?? undefined,
     })
   }
@@ -116,6 +119,7 @@ function ProfileForm() {
     (name !== (profile?.name ?? '')) ||
     (phone !== (profile?.phone ?? '')) ||
     (title !== (profile?.title ?? '')) ||
+    (image !== (profile?.image ?? '')) ||
     avatar !== null
 
   const sessionAvatar = session?.user && 'avatar' in session.user
@@ -131,14 +135,26 @@ function ProfileForm() {
       {/* Avatar + basic fields */}
       <div className="flex items-start gap-5">
         {/* Avatar preview */}
-        <div className="shrink-0 text-center">
-          <OpenPeepsAvatar
-            userId={profile?.id}
-            avatarJson={storedAvatar ? JSON.stringify(storedAvatar) : undefined}
-            config={avatar ?? undefined}
-            size={80}
-          />
-          <p className="mt-1 text-[10px] text-gray-400">Preview</p>
+        <div className="shrink-0 text-center space-y-1">
+          <div className="relative">
+            <OpenPeepsAvatar
+              userId={profile?.id}
+              avatarJson={storedAvatar ? JSON.stringify(storedAvatar) : undefined}
+              config={avatar ?? undefined}
+              size={80}
+            />
+            {image && (
+              <img
+                src={image}
+                alt=""
+                className="absolute inset-0 h-full w-full rounded-full object-cover"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+              />
+            )}
+          </div>
+          <p className="text-[10px] text-gray-400">
+            {image ? 'Photo + Avatar' : 'Avatar preview'}
+          </p>
         </div>
 
         <div className="flex-1 space-y-3 min-w-0">
@@ -183,18 +199,46 @@ function ProfileForm() {
         </div>
       </div>
 
-      {/* Avatar builder */}
-      <details className="group">
-        <summary className="cursor-pointer text-sm font-medium text-accent-600 hover:text-accent-700 transition-colors select-none">
-          Customise avatar
-        </summary>
-        <div className="mt-3">
-          <OpenPeepsPicker
-            currentAvatar={avatar ?? storedAvatar ?? undefined}
-            onChange={setAvatar}
+      {/* Profile photo URL */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Profile photo URL</label>
+        <div className="flex gap-2">
+          <input
+            value={image}
+            onChange={(e) => setImage(e.target.value)}
+            placeholder="https://example.com/photo.jpg"
+            className="flex-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-500 transition-colors"
           />
+          {image && (
+            <button
+              onClick={() => setImage('')}
+              className="shrink-0 rounded-lg border border-gray-200 px-3 py-2 text-xs text-gray-500 hover:bg-gray-50 transition-colors"
+            >
+              Clear
+            </button>
+          )}
         </div>
-      </details>
+        <p className="mt-0.5 text-[11px] text-gray-400">Paste a link to your profile picture. Overlays on top of your avatar.</p>
+      </div>
+
+      {/* Avatar builder */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <label className="text-sm font-medium text-gray-700">Avatar customization</label>
+          {!avatar && storedAvatar && (
+            <button
+              onClick={() => setAvatar(null)}
+              className="text-xs text-accent-600 hover:text-accent-700 transition-colors"
+            >
+              Reset
+            </button>
+          )}
+        </div>
+        <OpenPeepsPicker
+          currentAvatar={avatar ?? storedAvatar ?? undefined}
+          onChange={setAvatar}
+        />
+      </div>
 
       <div className="flex justify-end pt-1">
         <button

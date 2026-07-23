@@ -32,7 +32,7 @@ const ALLOWED_MIME_TYPES = new Set([
 ])
 
 // Resource types that support file attachments
-const ALLOWED_RESOURCE_TYPES = new Set(['TASK', 'RESOURCE'])
+const ALLOWED_RESOURCE_TYPES = new Set(['TASK', 'RESOURCE', 'USER'])
 
 export const storageRouter = router({
   createUploadUrl: protectedProcedure
