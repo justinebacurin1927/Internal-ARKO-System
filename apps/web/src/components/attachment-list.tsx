@@ -34,6 +34,7 @@ export function AttachmentList({ resourceType, resourceId }: AttachmentListProps
     { resourceType, resourceId },
     { enabled: !!resourceId },
   )
+  const utils = api.useUtils()
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [downloading, setDownloading] = useState<Set<string>>(new Set())
 
@@ -48,7 +49,7 @@ export function AttachmentList({ resourceType, resourceId }: AttachmentListProps
   const downloadFile = async (id: string) => {
     setDownloading((prev) => new Set(prev).add(id))
     try {
-      const { url } = await api.storage.getDownloadUrl.fetch({ id })
+      const { url } = await utils.storage.getDownloadUrl.fetch({ id })
       window.open(url, '_blank')
     } catch {
       // Silently fail — the console will show the error
