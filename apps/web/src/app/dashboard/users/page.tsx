@@ -3,7 +3,12 @@
 import { useState, useMemo } from 'react'
 import { useSession } from 'next-auth/react'
 import { Card, CardContent } from '@arko/ui'
-import { OpenPeepsAvatar } from '../../../components/open-peeps-avatar'
+import dynamic from 'next/dynamic'
+
+const OpenPeepsAvatar = dynamic(() =>
+  import('../../../components/open-peeps-avatar').then((m) => ({ default: m.OpenPeepsAvatar })),
+  { ssr: false },
+)
 import {
   Users as UsersIcon,
   Search,
@@ -33,7 +38,7 @@ import { generateAvatarSeed, avatarConfigToJson } from '../../../lib/avatar'
 const roleConfig = {
   ADMIN: { label: 'Admin', color: 'bg-red-50 text-red-700', icon: ShieldAlert },
   MEMBER: { label: 'Member', color: 'bg-primary-50 text-primary-700', icon: ShieldCheck },
-  USER: { label: 'User', color: 'bg-gray-100 text-gray-600', icon: Shield },
+  USER: { label: 'User', color: 'bg-card text-text-secondary', icon: Shield },
 }
 
 const statusConfig = {
@@ -140,11 +145,11 @@ export default function UsersPage() {
       {/* Header */}
       <div className="flex items-center justify-between shrink-0 mb-4">
         <div>
-          <h1 className="text-lg font-bold tracking-tight text-gray-900">Users</h1>
-          <p className="text-[11px] text-gray-400">Manage team members and permissions</p>
+          <h1 className="text-lg font-bold tracking-tight text-text-primary">Users</h1>
+          <p className="text-[11px] text-text-tertiary">Manage team members and permissions</p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-[10px] text-gray-500">
+          <span className="inline-flex items-center gap-1 rounded-full bg-card px-2.5 py-1 text-[10px] text-text-tertiary">
             <UsersIcon className="h-3 w-3" />
             {users?.length ?? 0} members
           </span>
@@ -160,13 +165,13 @@ export default function UsersPage() {
 
       {/* Search */}
       <div className="relative max-w-sm shrink-0 mb-3">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-tertiary" />
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by name, email, or phone..."
-          className="block w-full rounded-xl border border-gray-200 bg-card py-2 pl-9 pr-3 text-[12px] placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
+          className="block w-full rounded-xl border border-border-subtle bg-card py-2 pl-9 pr-3 text-[12px] placeholder:text-text-tertiary focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
         />
       </div>
 
@@ -184,7 +189,7 @@ export default function UsersPage() {
       {isLoading && (
         <div className="space-y-2 flex-1 overflow-hidden">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-14 animate-pulse rounded-xl bg-gray-100" />
+            <div key={i} className="h-14 animate-pulse rounded-xl bg-card" />
           ))}
         </div>
       )}
@@ -193,8 +198,8 @@ export default function UsersPage() {
       {!isLoading && !error && filteredUsers.length === 0 && (
         <Card className="flex-1">
           <CardContent className="flex flex-col items-center justify-center h-full text-center">
-            <UsersIcon className="h-8 w-8 text-gray-200 mb-2" />
-            <p className="text-[12px] text-gray-400">
+            <UsersIcon className="h-8 w-8 text-text-muted mb-2" />
+            <p className="text-[12px] text-text-tertiary">
               {search ? 'No users match your search' : 'No users found'}
             </p>
           </CardContent>
@@ -218,25 +223,25 @@ export default function UsersPage() {
                   {/* Info */}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <p className={`text-[13px] font-medium truncate ${isRestricted ? 'text-gray-400' : 'text-gray-900'}`}>
+                      <p className={`text-[13px] font-medium truncate ${isRestricted ? 'text-text-tertiary' : 'text-text-primary'}`}>
                         {user.name ?? 'Unnamed'}
                         {isCurrentUser && (
-                          <span className="ml-1 text-[10px] text-gray-400 font-normal">(you)</span>
+                          <span className="ml-1 text-[10px] text-text-tertiary font-normal">(you)</span>
                         )}
                       </p>
                       {user.title && (
-                        <span className="ml-2 inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[9px] font-medium text-gray-600">
+                        <span className="ml-2 inline-flex items-center rounded-full bg-card px-2 py-0.5 text-[9px] font-medium text-text-secondary">
                           {user.title}
                         </span>
                       )}
                     </div>
                     <div className="flex items-center gap-3 mt-0.5">
-                      <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                      <span className="flex items-center gap-1 text-[10px] text-text-tertiary">
                         <Mail className="h-3 w-3" />
                         {user.email}
                       </span>
                       {user.phone && (
-                        <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                        <span className="flex items-center gap-1 text-[10px] text-text-tertiary">
                           <Phone className="h-3 w-3" />
                           {user.phone}
                         </span>
@@ -265,7 +270,7 @@ export default function UsersPage() {
                       <div className="relative">
                         <button
                           onClick={() => setOpenDropdown(openDropdown === user.id ? null : user.id)}
-                          className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+                          className="rounded-lg p-1.5 text-text-tertiary hover:bg-card hover:text-text-secondary transition-colors"
                         >
                           <UserCog className="h-3.5 w-3.5" />
                         </button>
@@ -273,7 +278,7 @@ export default function UsersPage() {
                         {openDropdown === user.id && (
                           <>
                             <div className="fixed inset-0 z-10" onClick={() => setOpenDropdown(null)} />
-                            <div className="absolute right-0 top-full z-20 mt-1 w-52 rounded-xl border border-gray-200 bg-card p-2 shadow-xl">
+                            <div className="absolute right-0 top-full z-20 mt-1 w-52 rounded-xl border border-border-subtle bg-card p-2 shadow-xl">
                               {/* Edit profile */}
                               <div className="px-1 mb-1">
                                 <button
@@ -281,7 +286,7 @@ export default function UsersPage() {
                                     setShowEditModal({ id: user.id, name: user.name ?? '', phone: user.phone, title: user.title })
                                     setOpenDropdown(null)
                                   }}
-                                  className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[11px] text-gray-600 hover:bg-gray-50 transition-colors"
+                                  className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[11px] text-text-secondary hover:bg-card transition-colors"
                                 >
                                   <Pencil className="h-3 w-3" />
                                   Edit profile
@@ -293,7 +298,7 @@ export default function UsersPage() {
                                     setResetPasswordData({ id: user.id, name: user.name ?? '', email: user.email })
                                     setOpenDropdown(null)
                                   }}
-                                  className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[11px] text-gray-600 hover:bg-gray-50 transition-colors"
+                                  className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[11px] text-text-secondary hover:bg-card transition-colors"
                                 >
                                   <KeyRound className="h-3 w-3" />
                                   Reset password
@@ -305,7 +310,7 @@ export default function UsersPage() {
                                     setOpenDropdown(null)
                                   }}
                                   disabled={updateProfile.isPending}
-                                  className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[11px] text-gray-600 hover:bg-gray-50 transition-colors"
+                                  className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[11px] text-text-secondary hover:bg-card transition-colors"
                                 >
                                   {updateProfile.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
                                   Reset avatar
@@ -314,7 +319,7 @@ export default function UsersPage() {
 
                               {/* Role */}
                               <div className="mb-1 px-1">
-                                <p className="text-[9px] font-semibold uppercase tracking-wider text-gray-400 mb-1">Role</p>
+                                <p className="text-[9px] font-semibold uppercase tracking-wider text-text-tertiary mb-1">Role</p>
                                 <div className="space-y-0.5">
                                   {(['ADMIN', 'MEMBER', 'USER'] as const).map((role) => (
                                     <button
@@ -327,7 +332,7 @@ export default function UsersPage() {
                                       className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[11px] transition-colors ${
                                         user.role === role
                                           ? 'bg-primary-50 text-primary-700 font-medium'
-                                          : 'text-gray-600 hover:bg-gray-50'
+                                          : 'text-text-secondary hover:bg-card'
                                       }`}
                                     >
                                       {role === 'ADMIN' ? <ShieldAlert className="h-3 w-3" /> :
@@ -340,8 +345,8 @@ export default function UsersPage() {
                               </div>
 
                               {/* Status toggle */}
-                              <div className="border-t border-gray-100 mb-1 pt-1 px-1">
-                                <p className="text-[9px] font-semibold uppercase tracking-wider text-gray-400 mb-1">Status</p>
+                              <div className="border-t border-border-subtle mb-1 pt-1 px-1">
+                                <p className="text-[9px] font-semibold uppercase tracking-wider text-text-tertiary mb-1">Status</p>
                                 {user.status === 'ACTIVE' ? (
                                   <button
                                     onClick={() => {
@@ -379,7 +384,7 @@ export default function UsersPage() {
 
                               {/* Delete */}
                               {confirmDelete !== user.id ? (
-                                <div className="border-t border-gray-100 pt-1 px-1">
+                                <div className="border-t border-border-subtle pt-1 px-1">
                                   {deleteError && (
                                     <div className="mb-1.5 flex items-center gap-1.5 rounded-lg bg-red-50 px-2 py-1.5">
                                       <AlertCircle className="h-3 w-3 shrink-0 text-red-500" />
@@ -388,7 +393,7 @@ export default function UsersPage() {
                                   )}
                                   <button
                                     onClick={() => { setDeleteError(null); setConfirmDelete(user.id) }}
-                                    className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[11px] text-red-600 hover:bg-red-50 transition-colors"
+                                    className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[11px] text-red-600 hover:bg-neg-bg transition-colors"
                                   >
                                     <Trash2 className="h-3 w-3" />
                                     Delete user
@@ -411,7 +416,7 @@ export default function UsersPage() {
                                     </button>
                                     <button
                                       onClick={() => setConfirmDelete(null)}
-                                      className="flex-1 rounded-lg bg-gray-100 px-2 py-1.5 text-[10px] font-medium text-gray-600 hover:bg-gray-200 transition-colors"
+                                      className="flex-1 rounded-lg bg-card px-2 py-1.5 text-[10px] font-medium text-text-secondary hover:bg-card/[0.04] transition-colors"
                                     >
                                       Cancel
                                     </button>
@@ -445,18 +450,18 @@ export default function UsersPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="w-full max-w-sm rounded-2xl bg-card p-5 shadow-xl">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-bold text-gray-900">Reset Password</h2>
-              <button onClick={() => setResetPasswordData(null)} className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 transition-colors">
+              <h2 className="text-sm font-bold text-text-primary">Reset Password</h2>
+              <button onClick={() => setResetPasswordData(null)} className="rounded-lg p-1 text-text-tertiary hover:bg-card transition-colors">
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <p className="text-[12px] text-gray-600 mb-4">
+            <p className="text-[12px] text-text-secondary mb-4">
               Generate a new password for <strong>{resetPasswordData.name}</strong> ({resetPasswordData.email})?
             </p>
             <div className="flex gap-2">
               <button
                 onClick={() => setResetPasswordData(null)}
-                className="flex-1 rounded-xl border border-gray-200 px-3 py-2.5 text-[12px] font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+                className="flex-1 rounded-xl border border-border-subtle px-3 py-2.5 text-[12px] font-medium text-text-secondary hover:bg-card transition-colors"
               >
                 Cancel
               </button>
@@ -477,29 +482,29 @@ export default function UsersPage() {
           <div className="w-full max-w-md rounded-2xl bg-card p-6 shadow-xl">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h2 className="text-sm font-bold text-gray-900">Password Reset</h2>
-                <p className="text-[11px] text-gray-400 mt-0.5">Share this password with the user</p>
+                <h2 className="text-sm font-bold text-text-primary">Password Reset</h2>
+                <p className="text-[11px] text-text-tertiary mt-0.5">Share this password with the user</p>
               </div>
-              <button onClick={() => setResetPasswordResult(null)} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 transition-colors">
+              <button onClick={() => setResetPasswordResult(null)} className="rounded-lg p-1.5 text-text-tertiary hover:bg-card transition-colors">
                 <X className="h-4 w-4" />
               </button>
             </div>
             <div className="space-y-3">
-              <div className="rounded-xl bg-gray-50 p-3">
-                <p className="text-[9px] font-semibold uppercase tracking-wider text-gray-400 mb-1">Email</p>
-                <code className="text-[12px] text-gray-700 font-mono">{resetPasswordResult.email}</code>
+              <div className="rounded-xl bg-card p-3">
+                <p className="text-[9px] font-semibold uppercase tracking-wider text-text-tertiary mb-1">Email</p>
+                <code className="text-[12px] text-text-secondary font-mono">{resetPasswordResult.email}</code>
               </div>
-              <div className="rounded-xl bg-gray-50 p-3">
-                <p className="text-[9px] font-semibold uppercase tracking-wider text-gray-400 mb-1">New Password</p>
+              <div className="rounded-xl bg-card p-3">
+                <p className="text-[9px] font-semibold uppercase tracking-wider text-text-tertiary mb-1">New Password</p>
                 <div className="flex items-center justify-between">
-                  <code className="text-[12px] text-gray-700 font-mono">{resetPasswordResult.password}</code>
+                  <code className="text-[12px] text-text-secondary font-mono">{resetPasswordResult.password}</code>
                   <button
                     onClick={() => {
                       navigator.clipboard.writeText(resetPasswordResult.password)
                       setCopiedPass(true)
                       setTimeout(() => setCopiedPass(false), 2000)
                     }}
-                    className="shrink-0 rounded-lg p-1.5 text-gray-400 hover:bg-gray-200 transition-colors"
+                    className="shrink-0 rounded-lg p-1.5 text-text-tertiary hover:bg-card/[0.04] transition-colors"
                   >
                     {copiedPass ? <CheckCheck className="h-3.5 w-3.5 text-finance-600" /> : <Copy className="h-3.5 w-3.5" />}
                   </button>
@@ -508,7 +513,7 @@ export default function UsersPage() {
             </div>
             <button
               onClick={() => setResetPasswordResult(null)}
-              className="mt-4 w-full rounded-xl bg-gray-900 px-3 py-2.5 text-[12px] font-semibold text-white hover:bg-primary-600 transition-colors"
+              className="mt-4 w-full rounded-xl bg-primary-500 px-3 py-2.5 text-[12px] font-semibold text-white hover:bg-primary-600 transition-colors"
             >
               Done
             </button>
@@ -578,23 +583,23 @@ function AddUserModal({ onClose }: { onClose: () => void }) {
         <div className="w-full max-w-md rounded-2xl bg-card p-6 shadow-xl">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-sm font-bold text-gray-900">User Created</h2>
-              <p className="text-[11px] text-gray-400 mt-0.5">Share these credentials with the new user</p>
+              <h2 className="text-sm font-bold text-text-primary">User Created</h2>
+              <p className="text-[11px] text-text-tertiary mt-0.5">Share these credentials with the new user</p>
             </div>
-            <button onClick={onClose} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 transition-colors">
+            <button onClick={onClose} className="rounded-lg p-1.5 text-text-tertiary hover:bg-card transition-colors">
               <X className="h-4 w-4" />
             </button>
           </div>
 
           <div className="space-y-3">
             {/* Sign-in URL */}
-            <div className="rounded-xl bg-gray-50 p-3">
-              <p className="text-[9px] font-semibold uppercase tracking-wider text-gray-400 mb-1">Sign-in URL</p>
+            <div className="rounded-xl bg-card p-3">
+              <p className="text-[9px] font-semibold uppercase tracking-wider text-text-tertiary mb-1">Sign-in URL</p>
               <div className="flex items-center justify-between">
-                <code className="text-[12px] text-gray-700 font-mono truncate">{typeof window !== 'undefined' ? window.location.origin + '/auth/login' : ''}</code>
+                <code className="text-[12px] text-text-secondary font-mono truncate">{typeof window !== 'undefined' ? window.location.origin + '/auth/login' : ''}</code>
                 <button
                   onClick={() => copyToClipboard(typeof window !== 'undefined' ? window.location.origin + '/auth/login' : '', 'url')}
-                  className="shrink-0 rounded-lg p-1.5 text-gray-400 hover:bg-gray-200 transition-colors"
+                  className="shrink-0 rounded-lg p-1.5 text-text-tertiary hover:bg-card/[0.04] transition-colors"
                 >
                   {copiedField === 'url' ? <CheckCheck className="h-3.5 w-3.5 text-finance-600" /> : <Copy className="h-3.5 w-3.5" />}
                 </button>
@@ -602,13 +607,13 @@ function AddUserModal({ onClose }: { onClose: () => void }) {
             </div>
 
             {/* Email */}
-            <div className="rounded-xl bg-gray-50 p-3">
-              <p className="text-[9px] font-semibold uppercase tracking-wider text-gray-400 mb-1">Email</p>
+            <div className="rounded-xl bg-card p-3">
+              <p className="text-[9px] font-semibold uppercase tracking-wider text-text-tertiary mb-1">Email</p>
               <div className="flex items-center justify-between">
-                <code className="text-[12px] text-gray-700 font-mono truncate">{success.email}</code>
+                <code className="text-[12px] text-text-secondary font-mono truncate">{success.email}</code>
                 <button
                   onClick={() => copyToClipboard(success.email, 'email')}
-                  className="shrink-0 rounded-lg p-1.5 text-gray-400 hover:bg-gray-200 transition-colors"
+                  className="shrink-0 rounded-lg p-1.5 text-text-tertiary hover:bg-card/[0.04] transition-colors"
                 >
                   {copiedField === 'email' ? <CheckCheck className="h-3.5 w-3.5 text-finance-600" /> : <Copy className="h-3.5 w-3.5" />}
                 </button>
@@ -616,13 +621,13 @@ function AddUserModal({ onClose }: { onClose: () => void }) {
             </div>
 
             {/* Password */}
-            <div className="rounded-xl bg-gray-50 p-3">
-              <p className="text-[9px] font-semibold uppercase tracking-wider text-gray-400 mb-1">Temporary Password</p>
+            <div className="rounded-xl bg-card p-3">
+              <p className="text-[9px] font-semibold uppercase tracking-wider text-text-tertiary mb-1">Temporary Password</p>
               <div className="flex items-center justify-between">
-                <code className="text-[12px] text-gray-700 font-mono">{success.password}</code>
+                <code className="text-[12px] text-text-secondary font-mono">{success.password}</code>
                 <button
                   onClick={() => copyToClipboard(success.password, 'pass')}
-                  className="shrink-0 rounded-lg p-1.5 text-gray-400 hover:bg-gray-200 transition-colors"
+                  className="shrink-0 rounded-lg p-1.5 text-text-tertiary hover:bg-card/[0.04] transition-colors"
                 >
                   {copiedField === 'pass' ? <CheckCheck className="h-3.5 w-3.5 text-finance-600" /> : <Copy className="h-3.5 w-3.5" />}
                 </button>
@@ -632,7 +637,7 @@ function AddUserModal({ onClose }: { onClose: () => void }) {
 
           <button
             onClick={onClose}
-            className="mt-4 w-full rounded-xl bg-gray-900 px-3 py-2.5 text-[12px] font-semibold text-white hover:bg-primary-600 transition-colors"
+            className="mt-4 w-full rounded-xl bg-primary-500 px-3 py-2.5 text-[12px] font-semibold text-white hover:bg-primary-600 transition-colors"
           >
             Done
           </button>
@@ -647,10 +652,10 @@ function AddUserModal({ onClose }: { onClose: () => void }) {
       <div className="w-full max-w-md rounded-2xl bg-card p-6 shadow-xl">
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h2 className="text-sm font-bold text-gray-900">Add User</h2>
-            <p className="text-[11px] text-gray-400 mt-0.5">Credentials are auto-generated</p>
+            <h2 className="text-sm font-bold text-text-primary">Add User</h2>
+            <p className="text-[11px] text-text-tertiary mt-0.5">Credentials are auto-generated</p>
           </div>
-          <button onClick={onClose} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 transition-colors">
+          <button onClick={onClose} className="rounded-lg p-1.5 text-text-tertiary hover:bg-card transition-colors">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -658,27 +663,27 @@ function AddUserModal({ onClose }: { onClose: () => void }) {
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Name */}
           <div>
-            <p className="text-[9px] font-semibold uppercase tracking-wider text-gray-400 mb-2">Full Name</p>
+            <p className="text-[9px] font-semibold uppercase tracking-wider text-text-tertiary mb-2">Full Name</p>
             <div className="grid grid-cols-2 gap-2.5">
               <div>
-                <label className="text-[10px] font-medium text-gray-500 mb-1 block">First name</label>
+                <label className="text-[10px] font-medium text-text-tertiary mb-1 block">First name</label>
                 <input
                   type="text"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                   required
-                  className="block w-full rounded-xl border border-gray-200 bg-card px-3 py-2 text-[13px] placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
+                  className="block w-full rounded-xl border border-border-subtle bg-card px-3 py-2 text-[13px] placeholder:text-text-tertiary focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
                   placeholder="John"
                 />
               </div>
               <div>
-                <label className="text-[10px] font-medium text-gray-500 mb-1 block">Last name</label>
+                <label className="text-[10px] font-medium text-text-tertiary mb-1 block">Last name</label>
                 <input
                   type="text"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                   required
-                  className="block w-full rounded-xl border border-gray-200 bg-card px-3 py-2 text-[13px] placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
+                  className="block w-full rounded-xl border border-border-subtle bg-card px-3 py-2 text-[13px] placeholder:text-text-tertiary focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
                   placeholder="Doe"
                 />
               </div>
@@ -687,14 +692,14 @@ function AddUserModal({ onClose }: { onClose: () => void }) {
 
           {/* Contact */}
           <div>
-            <p className="text-[9px] font-semibold uppercase tracking-wider text-gray-400 mb-2">Contact</p>
+            <p className="text-[9px] font-semibold uppercase tracking-wider text-text-tertiary mb-2">Contact</p>
             <div>
-              <label className="text-[10px] font-medium text-gray-500 mb-1 block">Mobile number</label>
+              <label className="text-[10px] font-medium text-text-tertiary mb-1 block">Mobile number</label>
               <input
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="block w-full rounded-xl border border-gray-200 bg-card px-3 py-2 text-[13px] placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
+                className="block w-full rounded-xl border border-border-subtle bg-card px-3 py-2 text-[13px] placeholder:text-text-tertiary focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
                 placeholder="+1 (555) 000-0000"
               />
             </div>
@@ -702,7 +707,7 @@ function AddUserModal({ onClose }: { onClose: () => void }) {
 
           {/* Title / Position */}
           <div>
-            <p className="text-[9px] font-semibold uppercase tracking-wider text-gray-400 mb-2">Position / Title</p>
+            <p className="text-[9px] font-semibold uppercase tracking-wider text-text-tertiary mb-2">Position / Title</p>
             <div className="flex flex-wrap gap-1.5">
               {['Employee', 'Admin', 'CEO', 'CTO', 'CRO', 'Accountant', 'Designer', 'Engineer', 'Manager', 'Supervisor'].map((t) => (
                 <button
@@ -712,7 +717,7 @@ function AddUserModal({ onClose }: { onClose: () => void }) {
                   className={`rounded-lg px-2.5 py-1.5 text-[10px] font-medium transition-colors ${
                     title === t
                       ? 'bg-primary-50 text-primary-700 ring-1 ring-primary-200'
-                      : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
+                      : 'bg-card text-text-tertiary hover:bg-card'
                   }`}
                 >
                   {t}
@@ -729,29 +734,29 @@ function AddUserModal({ onClose }: { onClose: () => void }) {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Or type a custom title..."
-              className="mt-1.5 block w-full rounded-xl border border-gray-200 bg-card px-3 py-2 text-[13px] placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
+              className="mt-1.5 block w-full rounded-xl border border-border-subtle bg-card px-3 py-2 text-[13px] placeholder:text-text-tertiary focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
             />
           </div>
 
           {/* Auto-generated credentials preview */}
           {(firstName.trim() || lastName.trim()) && (
-            <div className="rounded-xl bg-gray-50 p-3 space-y-2">
-              <p className="text-[9px] font-semibold uppercase tracking-wider text-gray-400">Auto-generated credentials</p>
+            <div className="rounded-xl bg-card p-3 space-y-2">
+              <p className="text-[9px] font-semibold uppercase tracking-wider text-text-tertiary">Auto-generated credentials</p>
               <div className="flex items-center justify-between text-[11px]">
-                <span className="text-gray-500">Email:</span>
-                <code className="text-gray-800 font-mono">{generatedEmail}</code>
+                <span className="text-text-tertiary">Email:</span>
+                <code className="text-text-primary font-mono">{generatedEmail}</code>
               </div>
               <div className="flex items-center justify-between text-[11px]">
-                <span className="text-gray-500">Password:</span>
-                <code className="text-gray-800 font-mono">{generatedPassword}</code>
+                <span className="text-text-tertiary">Password:</span>
+                <code className="text-text-primary font-mono">{generatedPassword}</code>
               </div>
-              <p className="text-[9px] text-gray-400 italic">Credentials will be shown after creation</p>
+              <p className="text-[9px] text-text-tertiary italic">Credentials will be shown after creation</p>
             </div>
           )}
 
           {/* Role */}
           <div>
-            <p className="text-[9px] font-semibold uppercase tracking-wider text-gray-400 mb-2">Permission Level</p>
+            <p className="text-[9px] font-semibold uppercase tracking-wider text-text-tertiary mb-2">Permission Level</p>
             <div className="flex gap-2">
               {(['MEMBER', 'ADMIN', 'USER'] as const).map((r) => (
                 <button
@@ -761,7 +766,7 @@ function AddUserModal({ onClose }: { onClose: () => void }) {
                   className={`flex-1 rounded-lg px-3 py-2 text-[11px] font-medium transition-colors ${
                     role === r
                       ? 'bg-primary-50 text-primary-700 ring-1 ring-primary-200'
-                      : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
+                      : 'bg-card text-text-tertiary hover:bg-card'
                   }`}
                 >
                   {r === 'ADMIN' ? 'Admin' : r === 'MEMBER' ? 'Member' : 'User'}
@@ -780,7 +785,7 @@ function AddUserModal({ onClose }: { onClose: () => void }) {
 
           {/* Actions */}
           <div className="flex gap-2 pt-1">
-            <button type="button" onClick={onClose} className="flex-1 rounded-xl border border-gray-200 px-3 py-2.5 text-[12px] font-medium text-gray-600 hover:bg-gray-50 transition-colors">
+            <button type="button" onClick={onClose} className="flex-1 rounded-xl border border-border-subtle px-3 py-2.5 text-[12px] font-medium text-text-secondary hover:bg-card transition-colors">
               Cancel
             </button>
             <button
@@ -826,35 +831,35 @@ function EditProfileModal({ userId, initialName, initialPhone, initialTitle, onC
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="w-full max-w-sm rounded-2xl bg-card p-5 shadow-xl">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-bold text-gray-900">Edit Profile</h2>
-          <button onClick={onClose} className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 transition-colors">
+          <h2 className="text-sm font-bold text-text-primary">Edit Profile</h2>
+          <button onClick={onClose} className="rounded-lg p-1 text-text-tertiary hover:bg-card transition-colors">
             <X className="h-4 w-4" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
-            <label className="text-[10px] font-medium text-gray-500 mb-1 block">Full name</label>
+            <label className="text-[10px] font-medium text-text-tertiary mb-1 block">Full name</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              className="block w-full rounded-xl border border-gray-200 bg-card px-3 py-2 text-[13px] focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
+              className="block w-full rounded-xl border border-border-subtle bg-card px-3 py-2 text-[13px] focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
             />
           </div>
           <div>
-            <label className="text-[10px] font-medium text-gray-500 mb-1 block">Phone</label>
+            <label className="text-[10px] font-medium text-text-tertiary mb-1 block">Phone</label>
             <input
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="block w-full rounded-xl border border-gray-200 bg-card px-3 py-2 text-[13px] placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
+              className="block w-full rounded-xl border border-border-subtle bg-card px-3 py-2 text-[13px] placeholder:text-text-tertiary focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
               placeholder="No phone set"
             />
           </div>
           <div>
-            <label className="text-[10px] font-medium text-gray-500 mb-1 block">Title / Position</label>
+            <label className="text-[10px] font-medium text-text-tertiary mb-1 block">Title / Position</label>
             <div className="flex flex-wrap gap-1.5 mb-1.5">
               {['Employee', 'Admin', 'CEO', 'CTO', 'CRO', 'Accountant', 'Designer', 'Engineer', 'Manager', 'Supervisor'].map((t) => (
                 <button
@@ -864,7 +869,7 @@ function EditProfileModal({ userId, initialName, initialPhone, initialTitle, onC
                   className={`rounded-lg px-2.5 py-1.5 text-[10px] font-medium transition-colors ${
                     title === t
                       ? 'bg-primary-50 text-primary-700 ring-1 ring-primary-200'
-                      : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
+                      : 'bg-card text-text-tertiary hover:bg-card'
                   }`}
                 >
                   {t}
@@ -875,13 +880,13 @@ function EditProfileModal({ userId, initialName, initialPhone, initialTitle, onC
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="block w-full rounded-xl border border-gray-200 bg-card px-3 py-2 text-[13px] placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
+              className="block w-full rounded-xl border border-border-subtle bg-card px-3 py-2 text-[13px] placeholder:text-text-tertiary focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
               placeholder="Custom title..."
             />
           </div>
 
           <div className="flex gap-2 pt-1">
-            <button type="button" onClick={onClose} className="flex-1 rounded-xl border border-gray-200 px-3 py-2.5 text-[12px] font-medium text-gray-600 hover:bg-gray-50 transition-colors">
+            <button type="button" onClick={onClose} className="flex-1 rounded-xl border border-border-subtle px-3 py-2.5 text-[12px] font-medium text-text-secondary hover:bg-card transition-colors">
               Cancel
             </button>
             <button

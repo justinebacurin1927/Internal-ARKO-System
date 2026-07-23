@@ -66,17 +66,17 @@ export function AttachmentList({ resourceType, resourceId }: AttachmentListProps
 
   return (
     <div className="space-y-2">
-      <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+      <h4 className="text-xs font-semibold text-text-tertiary uppercase tracking-wider">
         Attachments{numFiles > 0 ? ` (${numFiles})` : ''}
       </h4>
 
       {isLoading ? (
-        <div className="flex items-center gap-2 py-2 text-xs text-gray-400">
+        <div className="flex items-center gap-2 py-2 text-xs text-text-tertiary">
           <Loader2 className="h-3 w-3 animate-spin" />
           Loading attachments…
         </div>
       ) : !files || files.length === 0 ? (
-        <p className="text-xs text-gray-400">No attachments</p>
+        <p className="text-xs text-text-tertiary">No attachments</p>
       ) : (
         <div className="space-y-1.5">
           {files.map((f: any) => {
@@ -88,21 +88,21 @@ export function AttachmentList({ resourceType, resourceId }: AttachmentListProps
             return (
               <div
                 key={f.id}
-                className="flex items-center gap-2.5 rounded-md bg-gray-50 px-2.5 py-2 text-xs"
+                className="flex items-center gap-2.5 rounded-md bg-card px-2.5 py-2 text-xs"
               >
                 {/* Thumbnail or icon */}
                 {isImage ? (
-                  <div className="h-8 w-8 shrink-0 overflow-hidden rounded border border-gray-200 bg-card">
-                    <Icon className="h-full w-full p-1 text-gray-400" />
+                  <div className="h-8 w-8 shrink-0 overflow-hidden rounded border border-border-subtle bg-card">
+                    <Icon className="h-full w-full p-1 text-text-tertiary" />
                   </div>
                 ) : (
-                  <Icon className="h-4 w-4 shrink-0 text-gray-400" />
+                  <Icon className="h-4 w-4 shrink-0 text-text-tertiary" />
                 )}
 
                 {/* File info */}
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium text-gray-700">{f.fileName}</p>
-                  <p className="text-[10px] text-gray-400">
+                  <p className="truncate font-medium text-text-secondary">{f.fileName}</p>
+                  <p className="text-[10px] text-text-tertiary">
                     {formatSize(f.fileSize)} &middot; {f.mimeType.split('/').pop()}
                   </p>
                 </div>
@@ -113,7 +113,7 @@ export function AttachmentList({ resourceType, resourceId }: AttachmentListProps
                     onClick={() => downloadFile(f.id)}
                     disabled={dlInProgress}
                     title="Download"
-                    className="rounded p-1 text-gray-400 hover:bg-gray-200 hover:text-gray-600 disabled:opacity-40"
+                    className="rounded p-1 text-text-tertiary hover:bg-card/[0.05] hover:text-text-secondary disabled:opacity-40"
                   >
                     {dlInProgress ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -123,7 +123,7 @@ export function AttachmentList({ resourceType, resourceId }: AttachmentListProps
                   </button>
 
                   {deleting ? (
-                    <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                    <span className="flex items-center gap-1 text-[10px] text-text-tertiary">
                       Delete?
                       <button
                         onClick={() => deleteFile.mutate({ id: f.id })}
@@ -134,7 +134,7 @@ export function AttachmentList({ resourceType, resourceId }: AttachmentListProps
                       </button>
                       <button
                         onClick={() => setConfirmDeleteId(null)}
-                        className="font-medium text-gray-500 hover:text-gray-700"
+                        className="font-medium text-text-tertiary hover:text-text-secondary"
                       >
                         No
                       </button>
@@ -143,7 +143,7 @@ export function AttachmentList({ resourceType, resourceId }: AttachmentListProps
                     <button
                       onClick={() => setConfirmDeleteId(f.id)}
                       title="Delete"
-                      className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-500"
+                      className="rounded p-1 text-text-tertiary hover:bg-neg-bg hover:text-red-500"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>

@@ -64,8 +64,8 @@ export default function NoteDetailPage() {
   if (isLoading) {
     return (
       <div className="mx-auto max-w-3xl space-y-4 py-8">
-        <div className="h-10 w-64 animate-pulse rounded-lg bg-gray-100" />
-        <div className="h-96 animate-pulse rounded-xl bg-gray-100" />
+        <div className="h-10 w-64 animate-pulse rounded-lg bg-card" />
+        <div className="h-96 animate-pulse rounded-xl bg-card" />
       </div>
     )
   }
@@ -73,7 +73,7 @@ export default function NoteDetailPage() {
   if (error || !note) {
     return (
       <div className="flex items-center justify-center gap-4 py-24">
-        <p className="text-sm text-gray-500">Note not found</p>
+        <p className="text-sm text-text-tertiary">Note not found</p>
         <Button variant="ghost" size="sm" onClick={() => router.push('/dashboard/notes')}>
           Go back
         </Button>
@@ -88,18 +88,18 @@ export default function NoteDetailPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => router.push('/dashboard/notes')}
-            className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+            className="rounded-lg p-2 text-text-tertiary transition-colors hover:bg-card hover:text-text-secondary"
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
           <div className="flex items-center gap-2">
             {saving ? (
-              <span className="flex items-center gap-1.5 text-xs text-gray-400">
+              <span className="flex items-center gap-1.5 text-xs text-text-tertiary">
                 <Loader2 className="h-3 w-3 animate-spin" />
                 Saving...
               </span>
             ) : dirty ? (
-              <span className="text-xs text-gray-400">Unsaved changes</span>
+              <span className="text-xs text-text-tertiary">Unsaved changes</span>
             ) : (
               <span className="text-xs text-primary-600">Saved</span>
             )}
@@ -116,7 +116,7 @@ export default function NoteDetailPage() {
                 deleteNote.mutate({ id: note.id })
               }
             }}
-            className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500"
+            className="rounded-lg p-2 text-text-tertiary transition-colors hover:bg-neg-bg hover:text-red-500"
           >
             <Trash2 className="h-4 w-4" />
           </button>
@@ -124,19 +124,19 @@ export default function NoteDetailPage() {
       </div>
 
       {/* Editor */}
-      <div className="rounded-2xl border border-gray-200 bg-card">
+      <div className="rounded-2xl border border-border-subtle bg-card">
         <input
           type="text"
           value={title}
           onChange={(e) => handleTitleChange(e.target.value)}
           placeholder="Note title"
-          className="w-full border-b border-gray-100 px-8 py-6 text-2xl font-bold text-gray-900 placeholder:text-gray-300 focus:outline-none"
+          className="w-full border-b border-border-subtle px-8 py-6 text-2xl font-bold text-text-primary placeholder:text-text-muted focus:outline-none"
         />
         <textarea
           value={content}
           onChange={(e) => handleContentChange(e.target.value)}
           placeholder="Start writing..."
-          className="min-h-[400px] w-full resize-y px-8 py-6 text-sm leading-relaxed text-gray-700 placeholder:text-gray-300 focus:outline-none"
+          className="min-h-[400px] w-full resize-y px-8 py-6 text-sm leading-relaxed text-text-secondary placeholder:text-text-muted focus:outline-none"
         />
       </div>
     </div>

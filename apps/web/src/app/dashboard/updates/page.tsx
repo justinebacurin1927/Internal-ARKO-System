@@ -24,7 +24,7 @@ export default function UpdatesPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-24">
-        <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+        <Loader2 className="h-6 w-6 animate-spin text-text-tertiary" />
       </div>
     )
   }
@@ -33,7 +33,7 @@ export default function UpdatesPage() {
     return (
       <div className="flex flex-col items-center gap-3 py-24">
         <AlertCircle className="h-8 w-8 text-red-400" />
-        <p className="text-sm text-gray-500">Failed to load updates</p>
+        <p className="text-sm text-text-tertiary">Failed to load updates</p>
       </div>
     )
   }
@@ -41,9 +41,9 @@ export default function UpdatesPage() {
   if (data?.error) {
     return (
       <div className="flex flex-col items-center py-24 text-center">
-        <GitCommit className="h-10 w-10 text-gray-200 mb-3" />
-        <p className="text-sm font-medium text-gray-500">Updates unavailable</p>
-        <p className="mt-1 text-xs text-gray-400 max-w-xs">{data.error}</p>
+        <GitCommit className="h-10 w-10 text-text-muted mb-3" />
+        <p className="text-sm font-medium text-text-tertiary">Updates unavailable</p>
+        <p className="mt-1 text-xs text-text-tertiary max-w-xs">{data.error}</p>
       </div>
     )
   }
@@ -53,8 +53,8 @@ export default function UpdatesPage() {
   if (commits.length === 0) {
     return (
       <div className="flex flex-col items-center py-24 text-center">
-        <GitCommit className="h-10 w-10 text-gray-200 mb-3" />
-        <p className="text-sm text-gray-500">No recent commits</p>
+        <GitCommit className="h-10 w-10 text-text-muted mb-3" />
+        <p className="text-sm text-text-tertiary">No recent commits</p>
       </div>
     )
   }
@@ -85,17 +85,17 @@ export default function UpdatesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Updates</h1>
-        <p className="text-sm text-gray-500 mt-1">Latest commits from the repo</p>
+        <h1 className="text-2xl font-bold text-text-primary tracking-tight">Updates</h1>
+        <p className="text-sm text-text-tertiary mt-1">Latest commits from the repo</p>
       </div>
 
       <Card className="overflow-hidden">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gray-100">
-              <GitCommit className="h-3.5 w-3.5 text-gray-500" />
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-card">
+              <GitCommit className="h-3.5 w-3.5 text-text-tertiary" />
             </div>
-            <CardTitle className="text-sm font-bold text-gray-800">GitHub Commits</CardTitle>
+            <CardTitle className="text-sm font-bold text-text-primary">GitHub Commits</CardTitle>
           </div>
           <a
             href={`https://github.com/${commits[0].html_url.split('/').slice(0, 5).join('/')}`}
@@ -111,8 +111,8 @@ export default function UpdatesPage() {
         <CardContent className="px-0 pb-0">
           {groups.map((group) => (
             <div key={group.label}>
-              <div className="sticky top-0 border-b border-gray-100 bg-gray-50/80 px-6 py-1.5 backdrop-blur-sm">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+              <div className="sticky top-0 border-b border-border-subtle bg-bg-app/80 px-6 py-1.5 backdrop-blur-sm">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-text-tertiary">
                   {group.label}
                 </span>
               </div>
@@ -129,13 +129,13 @@ export default function UpdatesPage() {
                     href={commit.html_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-3 px-6 py-2.5 transition-colors hover:bg-gray-50 group border-b border-gray-50 last:border-0"
+                    className="flex items-center gap-3 px-6 py-2.5 transition-colors hover:bg-card group border-b border-border-subtle last:border-0"
                   >
-                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-100">
-                      <GitCommit className="h-3 w-3 text-gray-400" />
+                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-card">
+                      <GitCommit className="h-3 w-3 text-text-tertiary" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm text-gray-900 truncate group-hover:text-primary-600 transition-colors">
+                      <p className="text-sm text-text-primary truncate group-hover:text-primary-600 transition-colors">
                         {firstLine}
                       </p>
                     </div>
@@ -144,15 +144,15 @@ export default function UpdatesPage() {
                         badge === 'feat' ? 'bg-primary-50 text-primary-700' :
                         badge === 'fix' ? 'bg-green-50 text-green-700' :
                         badge === 'docs' ? 'bg-blue-50 text-blue-700' :
-                        'bg-gray-100 text-gray-500'
+                        'bg-card text-text-tertiary'
                       }`}>
                         {badge}
                       </span>
                     )}
-                    <span className="shrink-0 text-[10px] tabular-nums text-gray-400">
+                    <span className="shrink-0 text-[10px] tabular-nums text-text-tertiary">
                       {timeAgo(commit.commit.author.date)}
                     </span>
-                    <ExternalLink className="h-3 w-3 shrink-0 text-gray-300 group-hover:text-gray-500 transition-colors" />
+                    <ExternalLink className="h-3 w-3 shrink-0 text-text-muted group-hover:text-text-tertiary transition-colors" />
                   </a>
                 )
               })}

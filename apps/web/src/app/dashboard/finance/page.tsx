@@ -15,10 +15,10 @@ function StatsSkeleton() {
       {[...Array(3)].map((_, i) => (
         <Card key={i}>
           <CardHeader className="pb-2">
-            <div className="h-4 w-20 rounded bg-gray-100 animate-pulse" />
+            <div className="h-4 w-20 rounded bg-card animate-pulse" />
           </CardHeader>
           <CardContent>
-            <div className="h-8 w-28 rounded bg-gray-100 animate-pulse" />
+            <div className="h-8 w-28 rounded bg-card animate-pulse" />
           </CardContent>
         </Card>
       ))}
@@ -67,8 +67,8 @@ export default function FinancePage() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Finance</h1>
-          <p className="text-sm text-gray-500 mt-1">Track your income, expenses, and cashflow</p>
+          <h1 className="text-2xl font-bold text-text-primary tracking-tight">Finance</h1>
+          <p className="text-sm text-text-tertiary mt-1">Track your income, expenses, and cashflow</p>
         </div>
         <Button onClick={() => setDialogOpen(true)}>
           <Plus className="h-4 w-4" />
@@ -120,7 +120,7 @@ export default function FinancePage() {
                       : s === 'PERSONAL'
                         ? 'bg-primary-100 text-primary-800'
                         : 'bg-blue-100 text-blue-800'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    : 'bg-card text-text-secondary hover:bg-card/[0.04]'
                 }`}
               >
                 {s === 'ALL' ? 'All' : s === 'PERSONAL' ? '🏠 Personal' : '🏢 Company'}
@@ -132,17 +132,17 @@ export default function FinancePage() {
           <div className="grid gap-4 md:grid-cols-3">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-gray-500">Balance</CardTitle>
+                <CardTitle className="text-sm text-text-tertiary">Balance</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-gray-900">
+                <div className="text-2xl font-bold text-text-primary">
                   {formatCurrency(balance?.balance ?? 0)}
                 </div>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-gray-500">Income</CardTitle>
+                <CardTitle className="text-sm text-text-tertiary">Income</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center gap-2">
@@ -157,7 +157,7 @@ export default function FinancePage() {
             </Card>
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-gray-500">Expenses</CardTitle>
+                <CardTitle className="text-sm text-text-tertiary">Expenses</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center gap-2">
@@ -186,15 +186,15 @@ export default function FinancePage() {
                 </div>
               ) : transactions.length === 0 ? (
                 <div className="flex flex-col items-center py-14 text-center">
-                  <Wallet className="h-10 w-10 text-gray-200 mb-3" />
-                  <p className="text-sm text-gray-400">No transactions yet</p>
+                  <Wallet className="h-10 w-10 text-text-muted mb-3" />
+                  <p className="text-sm text-text-tertiary">No transactions yet</p>
                   <Button size="sm" className="mt-3" onClick={() => setDialogOpen(true)}>
                     <Plus className="h-3.5 w-3.5" />
                     Add Transaction
                   </Button>
                 </div>
               ) : (
-                <div className="divide-y divide-gray-100">
+                <div className="divide-y divide-border-subtle">
                   {transactions.map((tx) => {
                     const unsettledShares = tx.splitShares?.filter((s) => !s.settled) ?? []
                     return (
@@ -209,7 +209,7 @@ export default function FinancePage() {
                           </div>
                           <div className="min-w-0">
                             <div className="flex items-center gap-1.5">
-                              <p className="text-sm font-medium text-gray-900 truncate">
+                              <p className="text-sm font-medium text-text-primary truncate">
                                 {tx.description || tx.category?.name || 'Untitled'}
                               </p>
                               {/* Scope badge */}
@@ -227,7 +227,7 @@ export default function FinancePage() {
                                 </span>
                               )}
                             </div>
-                            <p className="text-xs text-gray-400">
+                            <p className="text-xs text-text-tertiary">
                               {tx.category?.name && `${tx.category.name} `}
                               {new Date(tx.date).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
                               {unsettledShares.length > 0 && (
@@ -256,10 +256,10 @@ export default function FinancePage() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Pending Splits</CardTitle>
-                <Users className="h-4 w-4 text-gray-400" />
+                <Users className="h-4 w-4 text-text-tertiary" />
               </CardHeader>
               <CardContent>
-                <div className="divide-y divide-gray-100">
+                <div className="divide-y divide-border-subtle">
                   {pendingSplits.map((split) => (
                     <div key={split.id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
                       <div className="flex items-center gap-3 min-w-0">
@@ -267,10 +267,10 @@ export default function FinancePage() {
                           <Users className="h-3.5 w-3.5 text-amber-600" />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">
+                          <p className="text-sm font-medium text-text-primary truncate">
                             {split.transaction.description || split.transaction.category?.name || 'Shared expense'}
                           </p>
-                          <p className="text-xs text-gray-400">
+                          <p className="text-xs text-text-tertiary">
                             From {split.transaction.user.name ?? split.transaction.user.email}
                           </p>
                         </div>
@@ -302,7 +302,7 @@ export default function FinancePage() {
               <div className="flex items-center gap-2">
                 <CardTitle>Recurring Transactions</CardTitle>
                 {recurringList && recurringList.length > 0 && (
-                  <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+                  <span className="rounded-full bg-card px-2 py-0.5 text-xs font-medium text-text-secondary">
                     {recurringList.length}
                   </span>
                 )}
@@ -321,15 +321,15 @@ export default function FinancePage() {
               <CardContent>
                 {!recurringList || recurringList.length === 0 ? (
                   <div className="flex flex-col items-center py-10 text-center">
-                    <RefreshCw className="h-10 w-10 text-gray-200 mb-3" />
-                    <p className="text-sm text-gray-400">No recurring transactions</p>
+                    <RefreshCw className="h-10 w-10 text-text-muted mb-3" />
+                    <p className="text-sm text-text-tertiary">No recurring transactions</p>
                     <Button size="sm" className="mt-3" onClick={() => { setEditRecurringId(undefined); setRecurringOpen(true) }}>
                       <Plus className="h-3.5 w-3.5" />
                       Add Recurring
                     </Button>
                   </div>
                 ) : (
-                  <div className="divide-y divide-gray-100">
+                  <div className="divide-y divide-border-subtle">
                     {recurringList.map((r) => {
                       const freqLabel = r.frequency === 'DAILY' ? 'Daily' : r.frequency === 'WEEKLY' ? 'Weekly' : r.frequency === 'MONTHLY' ? 'Monthly' : 'Yearly'
                       const nextDue = new Date(r.nextDate).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })
@@ -345,12 +345,12 @@ export default function FinancePage() {
                             </div>
                             <div className="min-w-0">
                               <div className="flex items-center gap-1.5">
-                                <p className="text-sm font-medium text-gray-900 truncate">{r.description}</p>
+                                <p className="text-sm font-medium text-text-primary truncate">{r.description}</p>
                                 {!r.isActive && (
-                                  <span className="rounded px-1.5 py-0.5 text-[9px] font-medium bg-gray-100 text-gray-500">Paused</span>
+                                  <span className="rounded px-1.5 py-0.5 text-[9px] font-medium bg-card text-text-tertiary">Paused</span>
                                 )}
                               </div>
-                              <p className="text-xs text-gray-400">
+                              <p className="text-xs text-text-tertiary">
                                 {freqLabel} · Next: {nextDue}
                                 {r.category && <span> · {r.category.name}</span>}
                               </p>
@@ -364,7 +364,7 @@ export default function FinancePage() {
                             </span>
                             <button
                               onClick={() => { setEditRecurringId(r.id); setRecurringOpen(true) }}
-                              className="rounded p-1 text-gray-300 hover:text-gray-600 transition-colors"
+                              className="rounded p-1 text-text-muted hover:text-text-secondary transition-colors"
                             >
                               <Pencil className="h-3.5 w-3.5" />
                             </button>
@@ -374,7 +374,7 @@ export default function FinancePage() {
                                   await deleteRecurringMut.mutateAsync({ id: r.id })
                                 }
                               }}
-                              className="rounded p-1 text-gray-300 hover:text-red-500 transition-colors"
+                              className="rounded p-1 text-text-muted hover:text-red-500 transition-colors"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
                             </button>
@@ -393,7 +393,7 @@ export default function FinancePage() {
             <div>
               <button
                 onClick={() => setShowMetrics(0)}
-                className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors mb-4"
+                className="flex items-center gap-2 text-sm font-medium text-text-tertiary hover:text-text-secondary transition-colors mb-4"
               >
                 <TrendingUp className="h-4 w-4" />
                 Hide Metrics
@@ -403,7 +403,7 @@ export default function FinancePage() {
           ) : (
             <button
               onClick={() => setShowMetrics(1)}
-              className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors"
+              className="flex items-center gap-2 text-sm font-medium text-text-tertiary hover:text-text-secondary transition-colors"
             >
               <TrendingUp className="h-4 w-4" />
               Show Business Metrics

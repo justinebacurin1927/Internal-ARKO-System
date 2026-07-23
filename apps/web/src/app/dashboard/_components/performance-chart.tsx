@@ -60,9 +60,9 @@ const PerformanceChart = memo(function PerformanceChart({
   // Guard: need at least 2 months to render lines
   if (labels.length < 2 || incomeData.length < 2 || expenseData.length < 2) {
     return (
-      <div className="flex items-center justify-center h-full text-[11px] text-gray-300 select-none">
+      <div className="flex items-center justify-center h-full text-[11px] text-text-muted select-none">
         <div className="flex flex-col items-center gap-1">
-          <span className="text-2xl font-light text-gray-200">—</span>
+          <span className="text-2xl font-light text-text-muted">—</span>
           <span>Loading data...</span>
         </div>
       </div>
@@ -149,7 +149,7 @@ const PerformanceChart = memo(function PerformanceChart({
                 x={chartL - 6}
                 y={y + 3}
                 textAnchor="end"
-                className="fill-gray-400"
+                className="fill-text-tertiary"
                 fontSize="8"
                 fontFamily="Inter, Sora, system-ui, sans-serif"
                 fontWeight="500"
@@ -219,7 +219,7 @@ const PerformanceChart = memo(function PerformanceChart({
                 x={chartL + idx * xStep}
                 y={chartT + chartH + 14}
                 textAnchor="middle"
-                className="fill-gray-400"
+                className="fill-text-tertiary"
                 fontSize="8"
                 fontFamily="Inter, Sora, system-ui, sans-serif"
                 fontWeight="500"
@@ -277,13 +277,13 @@ const PerformanceChart = memo(function PerformanceChart({
 
       {/* ══ KPI chips (top-right) ═══ */}
       <div className="absolute top-0 right-0 flex items-center gap-1.5 pointer-events-none">
-        <div className="rounded-full bg-gray-100/90 px-2 py-0.5 text-[9px] font-semibold leading-relaxed" style={{ color: '#374151' }}>
+        <div className="rounded-full bg-card/90 px-2 py-0.5 text-[9px] font-semibold leading-relaxed" style={{ color: '#374151' }}>
           Avg{' '}
           <span className="text-green-600">+{formatChartCurrency(avgIncome)}</span>
           {' / '}
           <span className="text-orange-600">{formatChartCurrency(avgExpenses)}</span>
         </div>
-        <div className="rounded-full bg-gray-100/90 px-2 py-0.5 text-[9px] font-semibold leading-relaxed" style={{ color: '#374151' }}>
+        <div className="rounded-full bg-card/90 px-2 py-0.5 text-[9px] font-semibold leading-relaxed" style={{ color: '#374151' }}>
           Ratio{' '}
           <span className={netRatio >= 1 ? 'text-green-600' : 'text-red-500'}>
             {isFinite(netRatio) ? netRatio.toFixed(2) : '∞'}x
@@ -293,11 +293,11 @@ const PerformanceChart = memo(function PerformanceChart({
 
       {/* Legend (bottom-right, inside chart area) */}
       <div className="absolute bottom-1 right-1 flex items-center gap-2 pointer-events-none">
-        <div className="flex items-center gap-1 rounded-full bg-card/80 px-1.5 py-0.5 text-[8px] font-semibold text-gray-500 shadow-sm">
+        <div className="flex items-center gap-1 rounded-full bg-card/80 px-1.5 py-0.5 text-[8px] font-semibold text-text-tertiary shadow-sm">
           <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
           Income
         </div>
-        <div className="flex items-center gap-1 rounded-full bg-card/80 px-1.5 py-0.5 text-[8px] font-semibold text-gray-500 shadow-sm">
+        <div className="flex items-center gap-1 rounded-full bg-card/80 px-1.5 py-0.5 text-[8px] font-semibold text-text-tertiary shadow-sm">
           <span className="h-1.5 w-1.5 rounded-full bg-orange-400 border border-orange-500" />
           Expenses
         </div>

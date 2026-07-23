@@ -24,7 +24,12 @@ import {
   PanelsTopLeft,
 } from 'lucide-react'
 import { api } from '../../../lib/trpc/client'
-import { OpenPeepsAvatar } from '../../../components/open-peeps-avatar'
+import dynamic from 'next/dynamic'
+
+const OpenPeepsAvatar = dynamic(() =>
+  import('../../../components/open-peeps-avatar').then((m) => ({ default: m.OpenPeepsAvatar })),
+  { ssr: false },
+)
 
 type NavCategory = {
   to: string
@@ -46,9 +51,6 @@ const ALL_CATEGORIES: NavCategory[] = [
   { to: '/dashboard/resources', icon: Bookmark, label: 'Resources' },
   { to: '/dashboard/users', icon: Users, label: 'Users' },
 ]
-
-// Icons pinned to the narrow black rail (quick jumps)
-const RAIL_SHORTCUTS = ['/dashboard', '/dashboard/finance', '/dashboard/messages', '/dashboard/events']
 
 const BOTTOM_NAV = ALL_CATEGORIES.slice(0, 5)
 
@@ -83,7 +85,7 @@ function NavRow({
       className={`group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors cursor-pointer ${
         active
           ? 'bg-card text-text-primary font-medium'
-          : 'text-text-secondary hover:bg-white/[0.03] hover:text-text-primary'
+          : 'text-text-secondary hover:bg-card/[0.03] hover:text-text-primary'
       }`}
     >
       {active && (
@@ -91,7 +93,7 @@ function NavRow({
       )}
       <item.icon
         className={`h-[18px] w-[18px] shrink-0 ${
-          active ? 'text-primary-400' : 'text-text-tertiary group-hover:text-text-secondary'
+          active ? 'text-text-primary' : 'text-text-tertiary group-hover:text-text-secondary'
         }`}
       />
       <span className="flex-1 truncate">{item.label}</span>
@@ -178,7 +180,7 @@ function MobileDrawer({
                 onClose()
                 onSettings()
               }}
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs text-text-secondary hover:bg-white/[0.04] hover:text-text-primary transition-colors cursor-pointer"
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs text-text-secondary hover:bg-card/[0.04] hover:text-text-primary transition-colors cursor-pointer"
             >
               <Settings className="h-3.5 w-3.5" />
               Settings
@@ -203,10 +205,12 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
   const { data: session, status } = useSession()
-  const user = session?.user as any
-
+  const sessionUser = session?.user as any
+  const { data: profile } = api.users.getProfile.useQuery(undefined, { enabled: status === 'authenticated' })
+  const user = profile ?? sessionUser
   const [showSearch, setShowSearch] = useState(false)
   const [showDrawer, setShowDrawer] = useState(false)
+  const [navSearch, setNavSearch] = useState('')
   const searchRef = useRef<HTMLInputElement>(null)
   const unread = useUnread()
 
@@ -221,9 +225,10 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const handleLogout = () => signOut({ callbackUrl: '/auth/login' })
 
   const categories = ALL_CATEGORIES
+  const filteredCategories = navSearch
+    ? categories.filter((c) => c.label.toLowerCase().includes(navSearch.toLowerCase()))
+    : categories
   const currentCategory = categories.find((c) => isActivePath(pathname, c))
-  const railItems = categories.filter((c) => RAIL_SHORTCUTS.includes(c.to))
-
   return (
     <div className="h-dvh bg-bg-app text-text-primary">
       <MobileDrawer
@@ -237,51 +242,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       />
 
       <div className="flex h-full">
-        {/* ── Black icon rail ── */}
-        <nav className="hidden md:flex h-full w-16 shrink-0 flex-col items-center gap-1 border-r border-border-subtle bg-rail py-3">
-          <Link
-            href="/dashboard"
-            title="ARKO"
-            className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl bg-primary-500 shadow-[0_2px_10px_rgba(34,197,94,0.35)]"
-          >
-            <span className="text-sm font-black text-white">A</span>
-          </Link>
-
-          {railItems.map((item) => {
-            const active = isActivePath(pathname, item)
-            return (
-              <Link
-                key={item.to}
-                href={item.to}
-                title={item.label}
-                className={`flex h-10 w-10 items-center justify-center rounded-xl transition-colors cursor-pointer ${
-                  active ? 'bg-card text-primary-400' : 'text-text-tertiary hover:bg-white/[0.05] hover:text-text-secondary'
-                }`}
-              >
-                <item.icon className="h-[18px] w-[18px]" />
-              </Link>
-            )
-          })}
-
-          <div className="flex-1" />
-
-          <button
-            onClick={() => router.push('/dashboard/settings')}
-            title="Settings"
-            className="flex h-10 w-10 items-center justify-center rounded-xl text-text-tertiary hover:bg-white/[0.05] hover:text-text-secondary transition-colors cursor-pointer"
-          >
-            <Settings className="h-[18px] w-[18px]" />
-          </button>
-          <button
-            onClick={handleLogout}
-            title="Sign out"
-            className="flex h-10 w-10 items-center justify-center rounded-xl text-text-tertiary hover:bg-neg-bg hover:text-neg transition-colors cursor-pointer"
-          >
-            <LogOut className="h-[18px] w-[18px]" />
-          </button>
-        </nav>
-
-        {/* ── Labelled sidebar ── */}
+        {/* ── Sidebar ── */}
         <aside className="hidden md:flex h-full w-60 shrink-0 flex-col border-r border-border-subtle bg-bg-sidebar">
           <div className="flex items-center gap-2 px-4 h-14 shrink-0">
             <PanelsTopLeft className="h-4 w-4 text-text-tertiary" />
@@ -294,26 +255,46 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               <input
                 type="text"
                 placeholder="Search here..."
+                value={navSearch}
+                onChange={(e) => setNavSearch(e.target.value)}
                 className="w-full bg-transparent text-sm text-text-primary outline-none placeholder:text-text-tertiary"
               />
+              {navSearch && (
+                <button onClick={() => setNavSearch('')} className="text-text-tertiary hover:text-text-primary shrink-0 cursor-pointer">
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
             </div>
           </div>
 
           <nav className="flex-1 overflow-y-auto px-3 py-2 space-y-0.5">
-            {categories.map((item) => (
+            {filteredCategories.length === 0 ? (
+              <p className="px-3 py-4 text-center text-xs text-text-tertiary">No results</p>
+            ) : (
+            filteredCategories.map((item) => (
               <NavRow
                 key={item.to}
                 item={item}
                 active={isActivePath(pathname, item)}
                 badge={item.to === '/dashboard/messages' ? unread : undefined}
               />
-            ))}
+            )))}
           </nav>
 
           {/* User / status card at the bottom */}
           <div className="border-t border-border-subtle p-3">
             <div className="flex items-center gap-3 rounded-xl bg-card p-3">
-              <OpenPeepsAvatar userId={user?.id} size={36} />
+              <div className="relative shrink-0">
+                <OpenPeepsAvatar userId={user?.id} avatarJson={profile?.avatar ? JSON.stringify(profile.avatar) : undefined} size={36} />
+                {profile?.image && (
+                  <img
+                    src={profile.image}
+                    alt=""
+                    className="absolute inset-0 h-full w-full rounded-full object-cover"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                  />
+                )}
+              </div>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold text-text-primary">{user?.name ?? 'User'}</p>
                 <span className="flex items-center gap-1.5 text-[11px] font-medium text-pos">
@@ -323,13 +304,22 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                   {status === 'loading' ? 'Connecting…' : 'Connected'}
                 </span>
               </div>
-              <button
-                onClick={handleLogout}
-                title="Sign out"
-                className="text-text-tertiary hover:text-neg transition-colors cursor-pointer"
-              >
-                <LogOut className="h-4 w-4" />
-              </button>
+              <div className="flex items-center gap-0.5">
+                <button
+                  onClick={() => router.push('/dashboard/settings')}
+                  title="Settings"
+                  className="rounded-lg p-1.5 text-text-tertiary hover:bg-card/[0.05] hover:text-text-primary transition-colors cursor-pointer"
+                >
+                  <Settings className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={handleLogout}
+                  title="Sign out"
+                  className="rounded-lg p-1.5 text-text-tertiary hover:bg-neg-bg hover:text-neg transition-colors cursor-pointer"
+                >
+                  <LogOut className="h-4 w-4" />
+                </button>
+              </div>
             </div>
           </div>
         </aside>
@@ -340,7 +330,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             <div className="flex items-center gap-2 min-w-0">
               <button
                 onClick={() => setShowDrawer(!showDrawer)}
-                className="flex md:hidden h-8 w-8 items-center justify-center rounded-lg text-text-tertiary hover:bg-white/[0.05] hover:text-text-primary transition-colors cursor-pointer shrink-0"
+                className="flex md:hidden h-8 w-8 items-center justify-center rounded-lg text-text-tertiary hover:bg-card/[0.05] hover:text-text-primary transition-colors cursor-pointer shrink-0"
                 title="Menu"
               >
                 {showDrawer ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
@@ -359,7 +349,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                     type="text"
                     placeholder="Search..."
                     className="ml-1.5 w-24 bg-transparent text-sm text-text-primary outline-none placeholder:text-text-tertiary sm:w-36"
-                    onBlur={() => setShowSearch(false)}
                     onKeyDown={(e) => e.key === 'Escape' && setShowSearch(false)}
                   />
                 </div>
@@ -398,7 +387,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                   key={item.to}
                   href={item.to}
                   className={`flex min-w-0 flex-col items-center gap-0.5 rounded-lg px-2 py-1 transition-colors cursor-pointer ${
-                    active ? 'text-primary-400' : 'text-text-tertiary hover:text-text-secondary'
+                    active ? 'text-text-primary' : 'text-text-tertiary hover:text-text-secondary'
                   }`}
                 >
                   <item.icon className="h-4 w-4" />

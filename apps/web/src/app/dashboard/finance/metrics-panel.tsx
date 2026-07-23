@@ -40,7 +40,7 @@ export function MetricsPanel() {
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-5 w-5 animate-spin text-gray-300" />
+            <Loader2 className="h-5 w-5 animate-spin text-text-tertiary" />
           </div>
         </CardContent>
       </Card>
@@ -101,8 +101,8 @@ export function MetricsPanel() {
       <CardContent>
         {metricList.length === 0 && !showAddForm ? (
           <div className="flex flex-col items-center py-12 text-center">
-            <TrendingUp className="h-10 w-10 text-gray-200 mb-3" />
-            <p className="text-sm text-gray-400">No metrics yet</p>
+            <TrendingUp className="h-10 w-10 text-text-tertiary mb-3" />
+            <p className="text-sm text-text-tertiary">No metrics yet</p>
             <Button size="sm" className="mt-3" onClick={() => setShowAddForm(true)}>
               <Plus className="h-3.5 w-3.5" />
               Add Metric
@@ -112,22 +112,22 @@ export function MetricsPanel() {
           <>
             {/* New metric form */}
             {showAddForm && (
-              <div className="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-3">
-                <p className="text-xs font-medium text-gray-700 mb-3">New Metric</p>
+              <div className="mb-4 rounded-lg border border-border-subtle bg-card p-3">
+                <p className="text-xs font-medium text-text-secondary mb-3">New Metric</p>
                 <div className="space-y-2">
                   <input
                     type="text"
                     placeholder="Key (e.g. revenue)"
                     value={newKey}
                     onChange={(e) => setNewKey(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
+                    className="w-full rounded-lg border border-border-subtle px-3 py-2 text-xs focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
                   />
                   <input
                     type="text"
                     placeholder="Display name (e.g. Monthly Revenue)"
                     value={newName}
                     onChange={(e) => setNewName(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
+                    className="w-full rounded-lg border border-border-subtle px-3 py-2 text-xs focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
                   />
                   <div className="flex items-center gap-2">
                     <input
@@ -136,7 +136,7 @@ export function MetricsPanel() {
                       placeholder="Value"
                       value={newValue}
                       onChange={(e) => setNewValue(e.target.value)}
-                      className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-xs focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
+                      className="flex-1 rounded-lg border border-border-subtle px-3 py-2 text-xs focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
                     />
                     <Button
                       size="sm"
@@ -164,12 +164,12 @@ export function MetricsPanel() {
                   : m.value.toLocaleString(undefined, { minimumFractionDigits: m.decimals, maximumFractionDigits: m.decimals })
 
                 return (
-                  <div key={m.key} className="rounded-lg border border-gray-200 bg-card p-4 hover:shadow-sm transition-shadow">
+                  <div key={m.key} className="rounded-lg border border-border-subtle bg-card p-4 hover:shadow-sm transition-shadow">
                     <div className="flex items-center justify-between mb-2">
-                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{m.name}</p>
+                      <p className="text-xs font-medium text-text-tertiary uppercase tracking-wide">{m.name}</p>
                       <div className="flex items-center gap-1">
                         {isNeutral ? (
-                          <Minus className="h-4 w-4 text-gray-300" />
+                          <Minus className="h-4 w-4 text-text-tertiary" />
                         ) : isUp ? (
                           <TrendingUp className="h-4 w-4 text-green-500" />
                         ) : (
@@ -177,7 +177,7 @@ export function MetricsPanel() {
                         )}
                         <button
                           onClick={() => setEditing(isEditing ? null : { key: m.key, value: String(m.value) })}
-                          className="rounded p-0.5 text-gray-300 hover:text-gray-600 transition-colors"
+                          className="rounded p-0.5 text-text-tertiary hover:text-text-secondary transition-colors"
                         >
                           <Edit3 className="h-3 w-3" />
                         </button>
@@ -206,10 +206,10 @@ export function MetricsPanel() {
                         </button>
                       </div>
                     ) : (
-                      <p className="text-xl font-bold text-gray-900">{displayValue}</p>
+                      <p className="text-xl font-bold text-text-primary">{displayValue}</p>
                     )}
 
-                    <p className="text-[10px] text-gray-400 mt-1">
+                    <p className="text-[10px] text-text-tertiary mt-1">
                       {m.calculation === 'sum' ? 'Auto-summed' : m.calculation}
                     </p>
                   </div>

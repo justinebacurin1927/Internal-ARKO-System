@@ -113,26 +113,26 @@ export default function RemindersPage() {
                 className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-all duration-150 ${
                   r.isDone
                     ? 'border-primary-500 bg-primary-500 text-white'
-                    : 'border-gray-300 hover:border-primary-400'
+                    : 'border-border-subtle hover:border-primary-400'
                 }`}
               >
                 {r.isDone && <Check className="h-3 w-3" />}
               </button>
               <div className="min-w-0 flex-1">
-                <p className={`text-sm font-medium ${r.isDone ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+                <p className={`text-sm font-medium ${r.isDone ? 'text-text-tertiary line-through' : 'text-text-primary'}`}>
                   {r.title}
                 </p>
                 {r.note && (
-                  <p className="mt-1 text-xs text-gray-500">{r.note}</p>
+                  <p className="mt-1 text-xs text-text-tertiary">{r.note}</p>
                 )}
-                <p className="mt-1.5 flex items-center gap-1.5 text-xs text-gray-400">
+                <p className="mt-1.5 flex items-center gap-1.5 text-xs text-text-tertiary">
                   <Clock className="h-3 w-3" />
                   {formatDate(new Date(r.dueAt))} {new Date(r.dueAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </p>
               </div>
               <button
                 onClick={() => deleteReminder.mutate({ id: r.id })}
-                className="shrink-0 rounded-lg p-1.5 text-gray-400 opacity-0 transition-all duration-150 hover:bg-red-50 hover:text-red-500 group-hover:opacity-100"
+                className="shrink-0 rounded-lg p-1.5 text-text-tertiary opacity-0 transition-all duration-150 hover:bg-neg-bg hover:text-red-500 group-hover:opacity-100"
               >
                 <Trash2 className="h-4 w-4" />
               </button>
@@ -147,8 +147,8 @@ export default function RemindersPage() {
     <div className="max-w-2xl space-y-6">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Reminders</h1>
-          <p className="text-sm text-gray-500 mt-1">Never miss a thing</p>
+          <h1 className="text-2xl font-bold text-text-primary tracking-tight">Reminders</h1>
+          <p className="text-sm text-text-tertiary mt-1">Never miss a thing</p>
         </div>
         <Button onClick={() => setShowForm(!showForm)}>
           <Plus className="h-4 w-4" />
@@ -162,34 +162,34 @@ export default function RemindersPage() {
           <CardContent className="p-5">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-700">Title</label>
+                <label className="mb-1.5 block text-sm font-medium text-text-secondary">Title</label>
                 <input
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="What do you need to remember?"
                   required
-                  className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                  className="block w-full rounded-lg border border-border-subtle px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-700">Note (optional)</label>
+                <label className="mb-1.5 block text-sm font-medium text-text-secondary">Note (optional)</label>
                 <textarea
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                   placeholder="Add a note..."
                   rows={2}
-                  className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                  className="block w-full rounded-lg border border-border-subtle px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-700">Due date</label>
+                <label className="mb-1.5 block text-sm font-medium text-text-secondary">Due date</label>
                 <input
                   type="datetime-local"
                   value={dueDate}
                   onChange={(e) => setDueDate(e.target.value)}
                   required
-                  className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                  className="block w-full rounded-lg border border-border-subtle px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
                 />
               </div>
               <Button type="submit" disabled={createReminder.isPending}>
@@ -217,26 +217,26 @@ export default function RemindersPage() {
       ) : isLoading ? (
         <div className="space-y-3">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-20 rounded-xl bg-gray-100 animate-pulse" />
+            <div key={i} className="h-20 rounded-xl bg-card animate-pulse" />
           ))}
         </div>
       ) : reminders?.length === 0 ? (
-        <Card className="border-dashed border-gray-200">
+        <Card className="border-dashed border-border-subtle">
           <CardContent className="flex flex-col items-center py-16 text-center">
-            <Bell className="h-10 w-10 text-gray-200 mb-3" />
-            <p className="text-sm text-gray-400">No reminders yet</p>
-            <p className="text-xs text-gray-300 mt-1">Click &quot;New reminder&quot; to get started</p>
+            <Bell className="h-10 w-10 text-text-muted mb-3" />
+            <p className="text-sm text-text-tertiary">No reminders yet</p>
+            <p className="text-xs text-text-muted mt-1">Click &quot;New reminder&quot; to get started</p>
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-6">
           <GroupSection title="Overdue" items={overdue} emptyMsg="" color="text-red-500" />
           <GroupSection title="Today" items={today} emptyMsg="" color="text-primary-600" />
-          <GroupSection title="Upcoming" items={upcoming} emptyMsg="" color="text-gray-500" />
+          <GroupSection title="Upcoming" items={upcoming} emptyMsg="" color="text-text-tertiary" />
           {done.length > 0 && (
             <>
-              <hr className="border-gray-100" />
-              <GroupSection title="Completed" items={done} emptyMsg="" color="text-gray-400" />
+              <hr className="border-border-subtle" />
+              <GroupSection title="Completed" items={done} emptyMsg="" color="text-text-tertiary" />
             </>
           )}
         </div>

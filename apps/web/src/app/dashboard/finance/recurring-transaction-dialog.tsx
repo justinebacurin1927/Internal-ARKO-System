@@ -116,13 +116,13 @@ export function RecurringTransactionDialog({ open, onOpenChange, editId }: Recur
     <Dialog.Root open={open} onOpenChange={handleClose}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl bg-card p-6 shadow-2xl data-[state=open]:animate-in data-[state=closed]:animate-out max-h-[90vh] overflow-y-auto">
+        <Dialog.Content className="fixed left-1/2 top-1/2 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-xl bg-card p-5 shadow-2xl data-[state=open]:animate-in data-[state=closed]:animate-out max-h-[90vh] overflow-y-auto">
           <div className="flex items-center justify-between mb-6">
-            <Dialog.Title className="text-lg font-bold tracking-tight text-gray-900">
+            <Dialog.Title className="text-lg font-bold tracking-tight text-text-primary">
               {editId ? 'Edit Recurring' : 'Add Recurring Transaction'}
             </Dialog.Title>
             <Dialog.Close asChild>
-              <button className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
+              <button className="rounded-lg p-1.5 text-text-tertiary hover:bg-card hover:text-text-secondary transition-colors">
                 <X className="h-4 w-4" />
               </button>
             </Dialog.Close>
@@ -131,7 +131,7 @@ export function RecurringTransactionDialog({ open, onOpenChange, editId }: Recur
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Type selector */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
+              <label className="block text-sm font-medium text-text-secondary mb-2">Type</label>
               <div className="grid grid-cols-3 gap-2">
                 {TYPES.map((t) => (
                   <button
@@ -145,7 +145,7 @@ export function RecurringTransactionDialog({ open, onOpenChange, editId }: Recur
                           : t === 'EXPENSE'
                             ? 'bg-red-50 text-red-700 ring-2 ring-red-500'
                             : 'bg-blue-50 text-blue-700 ring-2 ring-blue-500'
-                        : 'bg-gray-50 text-gray-600 hover:bg-gray-100 ring-1 ring-inset ring-gray-200'
+                        : 'bg-card text-text-secondary hover:bg-card ring-1 ring-inset ring-border-subtle'
                     }`}
                   >
                     {t.charAt(0) + t.slice(1).toLowerCase()}
@@ -156,7 +156,7 @@ export function RecurringTransactionDialog({ open, onOpenChange, editId }: Recur
 
             {/* Description */}
             <div>
-              <label htmlFor="recur-desc" className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label htmlFor="recur-desc" className="block text-sm font-medium text-text-secondary mb-1.5">
                 Description
               </label>
               <input
@@ -165,18 +165,18 @@ export function RecurringTransactionDialog({ open, onOpenChange, editId }: Recur
                 placeholder="e.g. Netflix subscription"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all placeholder:text-gray-400"
+                className="w-full rounded-lg border border-border-subtle px-3 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all placeholder:text-text-tertiary"
                 required
               />
             </div>
 
             {/* Amount */}
             <div>
-              <label htmlFor="recur-amount" className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label htmlFor="recur-amount" className="block text-sm font-medium text-text-secondary mb-1.5">
                 Amount
               </label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">₱</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary text-sm font-medium">₱</span>
                 <input
                   id="recur-amount"
                   type="number"
@@ -185,7 +185,7 @@ export function RecurringTransactionDialog({ open, onOpenChange, editId }: Recur
                   placeholder="0.00"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 py-2.5 pl-8 pr-3 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
+                  className="w-full rounded-lg border border-border-subtle py-2.5 pl-8 pr-3 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
                   required
                 />
               </div>
@@ -193,7 +193,7 @@ export function RecurringTransactionDialog({ open, onOpenChange, editId }: Recur
 
             {/* Frequency */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Frequency</label>
+              <label className="block text-sm font-medium text-text-secondary mb-2">Frequency</label>
               <div className="grid grid-cols-4 gap-2">
                 {FREQUENCIES.map((f) => (
                   <button
@@ -203,7 +203,7 @@ export function RecurringTransactionDialog({ open, onOpenChange, editId }: Recur
                     className={`rounded-lg px-2 py-2 text-xs font-medium transition-all ${
                       frequency === f
                         ? 'bg-primary-500 text-white'
-                        : 'bg-gray-50 text-gray-600 hover:bg-gray-100 ring-1 ring-inset ring-gray-200'
+                        : 'bg-card text-text-secondary hover:bg-card ring-1 ring-inset ring-border-subtle'
                     }`}
                   >
                     {f.charAt(0) + f.slice(1).toLowerCase()}
@@ -214,17 +214,17 @@ export function RecurringTransactionDialog({ open, onOpenChange, editId }: Recur
 
             {/* Next due date */}
             <div>
-              <label htmlFor="recur-date" className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label htmlFor="recur-date" className="block text-sm font-medium text-text-secondary mb-1.5">
                 Next Due Date
               </label>
               <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary" />
                 <input
                   id="recur-date"
                   type="date"
                   value={nextDate}
                   onChange={(e) => setNextDate(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 py-2.5 pl-10 pr-3 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
+                  className="w-full rounded-lg border border-border-subtle py-2.5 pl-10 pr-3 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
                   required
                 />
               </div>
@@ -236,21 +236,21 @@ export function RecurringTransactionDialog({ open, onOpenChange, editId }: Recur
                 type="checkbox"
                 checked={isActive}
                 onChange={(e) => setIsActive(e.target.checked)}
-                className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                className="rounded border-border-subtle text-primary-600 focus:ring-primary-500"
               />
-              <span className="text-sm font-medium text-gray-700">Active</span>
+              <span className="text-sm font-medium text-text-secondary">Active</span>
             </label>
 
             {/* Category */}
             <div>
-              <label htmlFor="recur-cat" className="block text-sm font-medium text-gray-700 mb-1.5">
-                Category <span className="text-gray-400 font-normal">(optional)</span>
+              <label htmlFor="recur-cat" className="block text-sm font-medium text-text-secondary mb-1.5">
+                Category <span className="text-text-tertiary font-normal">(optional)</span>
               </label>
               <select
                 id="recur-cat"
                 value={categoryId}
                 onChange={(e) => setCategoryId(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
+                className="w-full rounded-lg border border-border-subtle px-3 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
               >
                 <option value="">Select a category</option>
                 {filteredCategories?.map((cat) => (

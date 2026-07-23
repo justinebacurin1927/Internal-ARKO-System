@@ -2,11 +2,20 @@
 
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
-import { Loader2, Check, X, AlertCircle } from 'lucide-react'
+import { Loader2, Check, AlertCircle } from 'lucide-react'
 import { api } from '../../../lib/trpc/client'
-import { OpenPeepsAvatar } from '../../../components/open-peeps-avatar'
-import { OpenPeepsPicker } from '../../../components/open-peeps-picker'
+import dynamic from 'next/dynamic'
 import type { AvatarConfigJson } from '../../../lib/avatar'
+
+const OpenPeepsAvatar = dynamic(() =>
+  import('../../../components/open-peeps-avatar').then((m) => ({ default: m.OpenPeepsAvatar })),
+  { ssr: false },
+)
+
+const OpenPeepsPicker = dynamic(() =>
+  import('../../../components/open-peeps-picker').then((m) => ({ default: m.OpenPeepsPicker })),
+  { ssr: false },
+)
 
 // ── Types ───────────────────────────────────────────────
 
@@ -23,16 +32,18 @@ function SectionCard({
   title,
   description,
   children,
+  noPadding,
 }: {
   title: string
   description: string
   children: React.ReactNode
+  noPadding?: boolean
 }) {
   return (
     <div className="rounded-xl border border-black/[0.06] bg-card p-5 space-y-4">
       <div>
-        <h2 className="text-base font-semibold text-gray-900">{title}</h2>
-        <p className="text-sm text-gray-500 mt-0.5">{description}</p>
+        <h2 className="text-base font-semibold text-text-primary">{title}</h2>
+        <p className="text-sm text-text-tertiary mt-0.5">{description}</p>
       </div>
       {children}
     </div>
@@ -107,7 +118,7 @@ function ProfileForm() {
   if (isLoading) {
     return (
       <SectionCard title="Profile" description="Manage your personal information and avatar.">
-        <div className="flex items-center gap-2 text-sm text-gray-400">
+        <div className="flex items-center gap-2 text-sm text-text-tertiary">
           <Loader2 className="h-4 w-4 animate-spin" />
           Loading profile…
         </div>
@@ -132,123 +143,119 @@ function ProfileForm() {
     <SectionCard title="Profile" description="Manage your personal information and avatar.">
       <StatusBanner status={status} />
 
-      {/* Avatar + basic fields */}
-      <div className="flex items-start gap-5">
-        {/* Avatar preview */}
-        <div className="shrink-0 text-center space-y-1">
-          <div className="relative">
-            <OpenPeepsAvatar
-              userId={profile?.id}
-              avatarJson={storedAvatar ? JSON.stringify(storedAvatar) : undefined}
-              config={avatar ?? undefined}
-              size={80}
-            />
-            {image && (
-              <img
-                src={image}
-                alt=""
-                className="absolute inset-0 h-full w-full rounded-full object-cover"
-                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
-              />
-            )}
-          </div>
-          <p className="text-[10px] text-gray-400">
-            {image ? 'Photo + Avatar' : 'Avatar preview'}
-          </p>
-        </div>
-
-        <div className="flex-1 space-y-3 min-w-0">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-8">
+        {/* Left column: form fields */}
+        <div className="space-y-4 min-w-0">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+            <label className="block text-sm font-medium text-text-secondary mb-1">Name</label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-500 transition-colors"
+              className="w-full rounded-lg border border-border-subtle px-3 py-2 text-sm text-text-primary outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-500 transition-colors"
               placeholder="Your name"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <label className="block text-sm font-medium text-text-secondary mb-1">Email</label>
             <input
               value={profile?.email ?? ''}
               disabled
-              className="w-full rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 text-sm text-gray-500 cursor-not-allowed"
+              className="w-full rounded-lg border border-border-subtle bg-card px-3 py-2 text-sm text-text-tertiary cursor-not-allowed"
             />
-            <p className="mt-0.5 text-[11px] text-gray-400">Email cannot be changed</p>
+            <p className="mt-0.5 text-[11px] text-text-tertiary">Email cannot be changed</p>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+              <label className="block text-sm font-medium text-text-secondary mb-1">Phone</label>
               <input
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-500 transition-colors"
+                className="w-full rounded-lg border border-border-subtle px-3 py-2 text-sm text-text-primary outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-500 transition-colors"
                 placeholder="+1 555-0000"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+              <label className="block text-sm font-medium text-text-secondary mb-1">Title</label>
               <input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-500 transition-colors"
+                className="w-full rounded-lg border border-border-subtle px-3 py-2 text-sm text-text-primary outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-500 transition-colors"
                 placeholder="Software Engineer"
               />
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Profile photo URL */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Profile photo URL</label>
-        <div className="flex gap-2">
-          <input
-            value={image}
-            onChange={(e) => setImage(e.target.value)}
-            placeholder="https://example.com/photo.jpg"
-            className="flex-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-500 transition-colors"
-          />
-          {image && (
+          {/* Profile photo URL */}
+          <div>
+            <label className="block text-sm font-medium text-text-secondary mb-1">Profile photo URL</label>
+            <div className="flex gap-2">
+              <input
+                value={image}
+                onChange={(e) => setImage(e.target.value)}
+                placeholder="https://example.com/photo.jpg"
+                className="flex-1 w-full rounded-lg border border-border-subtle px-3 py-2 text-sm text-text-primary outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-500 transition-colors"
+              />
+              {image && (
+                <button
+                  onClick={() => setImage('')}
+                  className="shrink-0 rounded-lg border border-border-subtle px-3 py-2 text-xs text-text-tertiary hover:bg-card transition-colors"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+            <p className="mt-0.5 text-[11px] text-text-tertiary">Paste a link to your profile picture. Overlays on top of your avatar.</p>
+          </div>
+
+          <div className="flex justify-end pt-1">
             <button
-              onClick={() => setImage('')}
-              className="shrink-0 rounded-lg border border-gray-200 px-3 py-2 text-xs text-gray-500 hover:bg-gray-50 transition-colors"
+              onClick={handleSave}
+              disabled={!changed || status?.status === 'saving'}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-accent-600 px-4 py-2 text-sm font-semibold text-white hover:bg-accent-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
-              Clear
+              {status?.status === 'saving' && <Loader2 className="h-4 w-4 animate-spin" />}
+              Save changes
             </button>
-          )}
+          </div>
         </div>
-        <p className="mt-0.5 text-[11px] text-gray-400">Paste a link to your profile picture. Overlays on top of your avatar.</p>
-      </div>
 
-      {/* Avatar builder */}
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <label className="text-sm font-medium text-gray-700">Avatar customization</label>
-          {!avatar && storedAvatar && (
-            <button
-              onClick={() => setAvatar(null)}
-              className="text-xs text-accent-600 hover:text-accent-700 transition-colors"
-            >
-              Reset
-            </button>
-          )}
+        {/* Right column: avatar preview + picker */}
+        <div className="shrink-0 lg:border-l lg:border-border-subtle lg:pl-8">
+          <div className="flex flex-col items-center gap-4">
+            <div className="relative">
+              <OpenPeepsAvatar
+                userId={profile?.id}
+                avatarJson={storedAvatar ? JSON.stringify(storedAvatar) : undefined}
+                config={avatar ?? undefined}
+                size={100}
+              />
+              {image && (
+                <img
+                  src={image}
+                  alt=""
+                  className="absolute inset-0 h-full w-full rounded-full object-cover"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                />
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              {!avatar && storedAvatar && (
+                <button
+                  onClick={() => setAvatar(null)}
+                  className="text-xs text-accent-600 hover:text-accent-700 transition-colors"
+                >
+                  Reset avatar
+                </button>
+              )}
+            </div>
+            <div className="min-w-[320px]">
+              <OpenPeepsPicker
+                currentAvatar={avatar ?? storedAvatar ?? undefined}
+                onChange={setAvatar}
+              />
+            </div>
+          </div>
         </div>
-        <OpenPeepsPicker
-          currentAvatar={avatar ?? storedAvatar ?? undefined}
-          onChange={setAvatar}
-        />
-      </div>
-
-      <div className="flex justify-end pt-1">
-        <button
-          onClick={handleSave}
-          disabled={!changed || status?.status === 'saving'}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-accent-600 px-4 py-2 text-sm font-semibold text-white hover:bg-accent-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-        >
-          {status?.status === 'saving' && <Loader2 className="h-4 w-4 animate-spin" />}
-          Save changes
-        </button>
       </div>
     </SectionCard>
   )
@@ -298,35 +305,35 @@ function PasswordForm() {
 
       <form onSubmit={handleSubmit} className="space-y-3 max-w-md">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Current password</label>
+          <label className="block text-sm font-medium text-text-secondary mb-1">Current password</label>
           <input
             type="password"
             value={current}
             onChange={(e) => setCurrent(e.target.value)}
             required
-            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-500 transition-colors"
+            className="w-full rounded-lg border border-border-subtle px-3 py-2 text-sm text-text-primary outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-500 transition-colors"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">New password</label>
+          <label className="block text-sm font-medium text-text-secondary mb-1">New password</label>
           <input
             type="password"
             value={newPw}
             onChange={(e) => setNewPw(e.target.value)}
             required
             minLength={8}
-            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-500 transition-colors"
+            className="w-full rounded-lg border border-border-subtle px-3 py-2 text-sm text-text-primary outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-500 transition-colors"
           />
-          <p className="mt-0.5 text-[11px] text-gray-400">Minimum 8 characters</p>
+          <p className="mt-0.5 text-[11px] text-text-tertiary">Minimum 8 characters</p>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Confirm new password</label>
+          <label className="block text-sm font-medium text-text-secondary mb-1">Confirm new password</label>
           <input
             type="password"
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
             required
-            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-500 transition-colors"
+            className="w-full rounded-lg border border-border-subtle px-3 py-2 text-sm text-text-primary outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-500 transition-colors"
           />
         </div>
 
@@ -357,7 +364,7 @@ function PasswordForm() {
 function NotificationsForm() {
   return (
     <SectionCard title="Notifications" description="Configure how and when you receive alerts.">
-      <p className="text-sm text-gray-400 italic">Notification preferences coming soon</p>
+      <p className="text-sm text-text-tertiary italic">Notification preferences coming soon</p>
     </SectionCard>
   )
 }
@@ -366,15 +373,17 @@ function NotificationsForm() {
 
 export default function SettingsPage() {
   return (
-    <div className="max-w-2xl mx-auto space-y-6 py-4">
+    <div className="space-y-6 py-4">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Settings</h1>
-        <p className="text-sm text-gray-500 mt-1">Manage your account and workspace settings</p>
+        <h1 className="text-2xl font-bold text-text-primary tracking-tight">Settings</h1>
+        <p className="text-sm text-text-tertiary mt-1">Manage your account and workspace settings</p>
       </div>
 
       <ProfileForm />
-      <NotificationsForm />
-      <PasswordForm />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <NotificationsForm />
+        <PasswordForm />
+      </div>
     </div>
   )
 }

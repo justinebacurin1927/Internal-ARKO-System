@@ -105,15 +105,20 @@ export default function NotesPage() {
         </Button>
       </div>
 
-      {notes?.length === 0 && (
-        <div className="text-center py-12 shrink-0">
-          <div className="h-12 w-12 mx-auto mb-3 rounded-full bg-black/[0.04] flex items-center justify-center">
-            <FileText className="h-5 w-5 text-text-tertiary" />
+      {notes?.length === 0 ? (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="h-14 w-14 mx-auto mb-4 rounded-full bg-card flex items-center justify-center">
+              <FileText className="h-6 w-6 text-text-tertiary" />
+            </div>
+            <p className="text-sm text-text-tertiary mb-4">No notes yet</p>
+            <Button onClick={() => createNote.mutate({ title: 'Untitled', content: '' })}>
+              <Plus className="h-4 w-4" />
+              Create your first note
+            </Button>
           </div>
-          <p className="text-sm text-text-tertiary">No notes yet</p>
         </div>
-      )}
-
+      ) : (
       <div className="flex gap-4 flex-1 min-h-0">
         {/* Notes list */}
         <Card className={`w-64 shrink-0 overflow-hidden flex-col ${selectedId ? 'hidden md:flex' : 'flex w-full md:w-64'}`}>
@@ -154,13 +159,11 @@ export default function NotesPage() {
 
         {/* Editor */}
         <Card className={`flex-1 overflow-hidden flex-col ${!selectedId ? 'hidden md:flex' : 'flex w-full md:flex'}`}>
-          {!selectedId ? (
+          {!selectedId && notes && notes.length > 0 ? (
             <div className="flex-1 flex items-center justify-center text-text-tertiary">
               <div className="text-center">
-                <div className="h-12 w-12 mx-auto mb-3 rounded-full bg-black/[0.04] flex items-center justify-center">
-                  <FileText className="h-5 w-5 text-text-tertiary" />
-                </div>
-                <p className="text-sm">Select or create a note</p>
+                <FileText className="h-8 w-8 mx-auto mb-2 text-text-muted" />
+                <p className="text-sm">Select a note to edit</p>
               </div>
             </div>
           ) : (
@@ -196,7 +199,7 @@ export default function NotesPage() {
                   <div className="flex items-center gap-2 text-sm">
                     <span className="text-text-secondary">Delete note?</span>
                     <button
-                      onClick={() => deleteNote.mutate({ id: selectedId })}
+                      onClick={() => deleteNote.mutate({ id: selectedId! })}
                       disabled={deleteNote.isPending}
                       className="rounded-md bg-neg px-2.5 py-1 font-medium text-white hover:opacity-90 disabled:opacity-60"
                     >
@@ -207,7 +210,7 @@ export default function NotesPage() {
                     </button>
                   </div>
                 ) : (
-                  <Button onClick={() => updateNote.mutate({ id: selectedId, title, content })} disabled={updateNote.isPending}>
+                  <Button onClick={() => updateNote.mutate({ id: selectedId!, title, content })} disabled={updateNote.isPending}>
                     {updateNote.isPending ? 'Saving...' : 'Save'}
                   </Button>
                 )}
@@ -221,6 +224,7 @@ export default function NotesPage() {
           )}
         </Card>
       </div>
+      )}
     </div>
   )
 }

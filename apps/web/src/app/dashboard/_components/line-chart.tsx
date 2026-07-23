@@ -34,7 +34,7 @@ const LineChart = memo(function LineChart({
 }) {
   if (labels.length === 0)
     return (
-      <div className="flex items-center justify-center h-full text-[11px] text-gray-300">
+      <div className="flex items-center justify-center h-full text-[11px] text-text-tertiary">
         No data
       </div>
     )
@@ -121,7 +121,7 @@ const LineChart = memo(function LineChart({
               x={pad + idx * xStep}
               y={h - 2}
               textAnchor="middle"
-              className="fill-gray-400 text-[8px]"
+              className="fill-text-tertiary text-[8px]"
             >
               {l}
             </text>

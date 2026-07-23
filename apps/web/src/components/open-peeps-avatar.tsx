@@ -2,7 +2,7 @@
 
 import { Effigy } from '@opeepsfun/open-peeps'
 import type { CSSProperties } from 'react'
-import { generateAvatarSeed, avatarConfigFromJson, type AvatarConfigJson } from '@/lib/avatar'
+import { generateAvatarSeed, avatarConfigFromJson, type AvatarConfigJson } from '../lib/avatar'
 
 interface OpenPeepsAvatarProps {
   /** User ID — used to seed a deterministic avatar when no config is stored */
@@ -82,16 +82,26 @@ export function OpenPeepsAvatar({
           width: size,
           height: size,
           borderRadius: '50%',
-          background: '#e5e7eb',
+          background: 'linear-gradient(135deg, #2D6A4F, #40916C)',
           display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: Math.round(size * 0.4),
-          color: '#9ca3af',
+          fontSize: Math.round(size * 0.38),
+          fontWeight: 600,
+          color: '#fff',
+          fontFamily: "'DM Sans', sans-serif",
+          userSelect: 'none',
           ...style,
         }}
       >
-        ?
+        {userName
+          ? (() => {
+              const parts = userName.trim().split(/\s+/)
+              return parts.length >= 2
+                ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+                : parts[0][0].toUpperCase()
+            })()
+          : '?'}
       </div>
     )
   }

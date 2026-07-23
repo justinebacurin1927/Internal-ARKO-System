@@ -103,14 +103,14 @@ export function AddTransactionDialog({ open, onOpenChange }: AddTransactionDialo
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl bg-card p-6 shadow-2xl data-[state=open]:animate-in data-[state=closed]:animate-out max-h-[90vh] overflow-y-auto">
+        <Dialog.Content className="fixed left-1/2 top-1/2 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-xl bg-card p-5 shadow-2xl data-[state=open]:animate-in data-[state=closed]:animate-out max-h-[90vh] overflow-y-auto">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
-            <Dialog.Title className="text-lg font-bold tracking-tight text-gray-900">
+            <Dialog.Title className="text-lg font-bold tracking-tight text-text-primary">
               Add Transaction
             </Dialog.Title>
             <Dialog.Close asChild>
-              <button className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
+              <button className="rounded-lg p-1.5 text-text-tertiary hover:bg-card hover:text-text-secondary transition-colors">
                 <X className="h-4 w-4" />
               </button>
             </Dialog.Close>
@@ -119,7 +119,7 @@ export function AddTransactionDialog({ open, onOpenChange }: AddTransactionDialo
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Scope toggle */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Scope</label>
+              <label className="block text-sm font-medium text-text-secondary mb-2">Scope</label>
               <div className="grid grid-cols-2 gap-2">
                 {(['PERSONAL', 'COMPANY'] as const).map((s) => (
                   <button
@@ -131,7 +131,7 @@ export function AddTransactionDialog({ open, onOpenChange }: AddTransactionDialo
                         ? s === 'PERSONAL'
                           ? 'bg-primary-50 text-primary-700 ring-2 ring-primary-500'
                           : 'bg-blue-50 text-blue-700 ring-2 ring-blue-500'
-                        : 'bg-gray-50 text-gray-600 hover:bg-gray-100 ring-1 ring-inset ring-gray-200'
+                        : 'bg-card text-text-secondary hover:bg-card ring-1 ring-inset ring-border-subtle'
                     }`}
                   >
                     {s === 'PERSONAL' ? '🏠 Personal' : '🏢 Company'}
@@ -142,7 +142,7 @@ export function AddTransactionDialog({ open, onOpenChange }: AddTransactionDialo
 
             {/* Type selector */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
+              <label className="block text-sm font-medium text-text-secondary mb-2">Type</label>
               <div className="grid grid-cols-3 gap-2">
                 {(['INCOME', 'EXPENSE', 'TRANSFER'] as const).map((t) => (
                   <button
@@ -160,7 +160,7 @@ export function AddTransactionDialog({ open, onOpenChange }: AddTransactionDialo
                           : t === 'EXPENSE'
                             ? 'bg-red-50 text-red-700 ring-2 ring-red-500'
                             : 'bg-blue-50 text-blue-700 ring-2 ring-blue-500'
-                        : 'bg-gray-50 text-gray-600 hover:bg-gray-100 ring-1 ring-inset ring-gray-200'
+                        : 'bg-card text-text-secondary hover:bg-card ring-1 ring-inset ring-border-subtle'
                     }`}
                   >
                     {t.charAt(0) + t.slice(1).toLowerCase()}
@@ -171,11 +171,11 @@ export function AddTransactionDialog({ open, onOpenChange }: AddTransactionDialo
 
             {/* Amount */}
             <div>
-              <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label htmlFor="amount" className="block text-sm font-medium text-text-secondary mb-1.5">
                 Amount
               </label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary text-sm font-medium">
                   ₱
                 </span>
                 <input
@@ -186,7 +186,7 @@ export function AddTransactionDialog({ open, onOpenChange }: AddTransactionDialo
                   placeholder="0.00"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 py-2.5 pl-8 pr-3 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
+                  className="w-full rounded-lg border border-border-subtle py-2.5 pl-8 pr-3 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
                   required
                 />
               </div>
@@ -194,8 +194,8 @@ export function AddTransactionDialog({ open, onOpenChange }: AddTransactionDialo
 
             {/* Description */}
             <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1.5">
-                Description <span className="text-gray-400 font-normal">(optional)</span>
+              <label htmlFor="description" className="block text-sm font-medium text-text-secondary mb-1.5">
+                Description <span className="text-text-tertiary font-normal">(optional)</span>
               </label>
               <input
                 id="description"
@@ -203,20 +203,20 @@ export function AddTransactionDialog({ open, onOpenChange }: AddTransactionDialo
                 placeholder="e.g. Grocery run"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all placeholder:text-gray-400"
+                className="w-full rounded-lg border border-border-subtle px-3 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all placeholder:text-text-tertiary"
               />
             </div>
 
             {/* Category */}
             <div>
-              <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label htmlFor="category" className="block text-sm font-medium text-text-secondary mb-1.5">
                 Category
               </label>
               <select
                 id="category"
                 value={categoryId}
                 onChange={(e) => setCategoryId(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
+                className="w-full rounded-lg border border-border-subtle px-3 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
                 required
               >
                 <option value="">Select a category</option>
@@ -227,7 +227,7 @@ export function AddTransactionDialog({ open, onOpenChange }: AddTransactionDialo
                 ))}
               </select>
               {(!filteredCategories || filteredCategories.length === 0) && (
-                <p className="text-xs text-gray-400 mt-1.5">No categories available for this transaction type.</p>
+                <p className="text-xs text-text-tertiary mt-1.5">No categories available for this transaction type.</p>
               )}
             </div>
 
@@ -242,20 +242,20 @@ export function AddTransactionDialog({ open, onOpenChange }: AddTransactionDialo
                       setIsSplit(e.target.checked)
                       if (!e.target.checked) setSplits([])
                     }}
-                    className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                    className="rounded border-border-subtle text-primary-600 focus:ring-primary-500"
                   />
-                  <span className="text-sm font-medium text-gray-700">Split with someone?</span>
-                  <Users className="h-3.5 w-3.5 text-gray-400" />
+                  <span className="text-sm font-medium text-text-secondary">Split with someone?</span>
+                  <Users className="h-3.5 w-3.5 text-text-tertiary" />
                 </label>
 
                 {isSplit && (
-                  <div className="mt-3 space-y-2 border border-gray-200 rounded-lg p-3 bg-gray-50">
+                  <div className="mt-3 space-y-2 border border-border-subtle rounded-lg p-3 bg-card">
                     {splits.map((split, i) => (
                       <div key={i} className="flex items-center gap-2">
                         <select
                           value={split.userId}
                           onChange={(e) => updateSplit(i, 'userId', e.target.value)}
-                          className="flex-1 rounded-lg border border-gray-300 px-2 py-1.5 text-xs focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                          className="flex-1 rounded-lg border border-border-subtle px-2 py-1.5 text-xs focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
                         >
                           <option value="">Select person</option>
                           {availableUsers.map((u) => (
@@ -265,7 +265,7 @@ export function AddTransactionDialog({ open, onOpenChange }: AddTransactionDialo
                           ))}
                         </select>
                         <div className="relative w-24">
-                          <span className="absolute left-1.5 top-1/2 -translate-y-1/2 text-gray-400 text-[10px]">₱</span>
+                          <span className="absolute left-1.5 top-1/2 -translate-y-1/2 text-text-tertiary text-[10px]">₱</span>
                           <input
                             type="number"
                             step="0.01"
@@ -273,13 +273,13 @@ export function AddTransactionDialog({ open, onOpenChange }: AddTransactionDialo
                             placeholder="0.00"
                             value={split.amount}
                             onChange={(e) => updateSplit(i, 'amount', e.target.value)}
-                            className="w-full rounded-lg border border-gray-300 py-1.5 pl-4 pr-2 text-xs focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                            className="w-full rounded-lg border border-border-subtle py-1.5 pl-4 pr-2 text-xs focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
                           />
                         </div>
                         <button
                           type="button"
                           onClick={() => removeSplit(i)}
-                          className="text-gray-400 hover:text-red-500 transition-colors shrink-0"
+                          className="text-text-tertiary hover:text-red-500 transition-colors shrink-0"
                         >
                           <X className="h-3.5 w-3.5" />
                         </button>
@@ -287,7 +287,7 @@ export function AddTransactionDialog({ open, onOpenChange }: AddTransactionDialo
                     ))}
 
                     {splits.length > 0 && (
-                      <div className="flex justify-between text-[10px] text-gray-500 pt-1 border-t border-gray-200">
+                      <div className="flex justify-between text-[10px] text-text-tertiary pt-1 border-t border-border-subtle">
                         <span>Total split: ₱{totalSplitAmount.toFixed(2)}</span>
                         <span className={Math.abs(totalSplitAmount - parsedAmount) < 0.01 ? 'text-green-600' : 'text-red-500'}>
                           {Math.abs(totalSplitAmount - parsedAmount) < 0.01
@@ -300,7 +300,7 @@ export function AddTransactionDialog({ open, onOpenChange }: AddTransactionDialo
                     <button
                       type="button"
                       onClick={addSplitRow}
-                      className="w-full rounded-lg border border-dashed border-gray-300 py-1.5 text-xs text-gray-500 hover:border-gray-400 hover:text-gray-700 transition-colors"
+                      className="w-full rounded-lg border border-dashed border-border-subtle py-1.5 text-xs text-text-tertiary hover:border-border-subtle hover:text-text-secondary transition-colors"
                     >
                       + Add person
                     </button>

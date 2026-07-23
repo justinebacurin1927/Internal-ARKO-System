@@ -20,9 +20,9 @@ const SAMPLE_DEFINITION = JSON.stringify(
 const statusColor: Record<string, string> = {
   COMPLETED: 'bg-green-50 text-green-700',
   RUNNING: 'bg-blue-50 text-blue-700',
-  PENDING: 'bg-gray-50 text-gray-600',
+  PENDING: 'bg-card text-text-secondary',
   FAILED: 'bg-red-50 text-red-700',
-  CANCELLED: 'bg-gray-50 text-gray-500',
+  CANCELLED: 'bg-card text-text-tertiary',
 }
 
 export default function WorkflowsPage() {
@@ -56,8 +56,8 @@ export default function WorkflowsPage() {
     <div className="space-y-6">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Workflows</h1>
-          <p className="text-sm text-gray-500 mt-1">Automate your business processes</p>
+          <h1 className="text-2xl font-bold text-text-primary tracking-tight">Workflows</h1>
+          <p className="text-sm text-text-tertiary mt-1">Automate your business processes</p>
         </div>
         <Button onClick={() => setShowNew(!showNew)}>
           <Plus className="h-4 w-4" />
@@ -84,27 +84,27 @@ export default function WorkflowsPage() {
           <CardContent className="p-5">
             <form onSubmit={handleCreate} className="space-y-4">
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-700">Name</label>
+                <label className="mb-1.5 block text-sm font-medium text-text-secondary">Name</label>
                 <input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Workflow name"
                   required
                   autoFocus
-                  className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                  className="block w-full rounded-lg border border-border-subtle px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-700">Description</label>
+                <label className="mb-1.5 block text-sm font-medium text-text-secondary">Description</label>
                 <input
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="What does this workflow do?"
-                  className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                  className="block w-full rounded-lg border border-border-subtle px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                <label className="mb-1.5 block text-sm font-medium text-text-secondary">
                   Definition (JSON — steps of action <code>log</code> or <code>noop</code>)
                 </label>
                 <textarea
@@ -112,7 +112,7 @@ export default function WorkflowsPage() {
                   onChange={(e) => setDefinition(e.target.value)}
                   rows={8}
                   spellCheck={false}
-                  className="block w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-xs focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                  className="block w-full rounded-lg border border-border-subtle px-3 py-2 font-mono text-xs focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
                 />
               </div>
               <Button type="submit" disabled={createWf.isPending}>
@@ -142,11 +142,11 @@ export default function WorkflowsPage() {
           {[...Array(3)].map((_, i) => (
             <Card key={i}>
               <CardHeader>
-                <div className="h-10 w-10 rounded-lg bg-gray-100 animate-pulse" />
-                <div className="h-5 w-32 rounded bg-gray-100 animate-pulse mt-3" />
+                <div className="h-10 w-10 rounded-lg bg-card animate-pulse" />
+                <div className="h-5 w-32 rounded bg-card animate-pulse mt-3" />
               </CardHeader>
               <CardContent>
-                <div className="h-4 w-full rounded bg-gray-100 animate-pulse" />
+                <div className="h-4 w-full rounded bg-card animate-pulse" />
               </CardContent>
             </Card>
           ))}
@@ -158,9 +158,9 @@ export default function WorkflowsPage() {
           ))}
         </div>
       ) : (
-        <Card className="border-dashed border-gray-200">
+        <Card className="border-dashed border-border-subtle">
           <CardContent>
-            <div className="flex flex-col items-center py-12 text-gray-400">
+            <div className="flex flex-col items-center py-12 text-text-tertiary">
               <Workflow className="mb-2 h-8 w-8" />
               <p className="text-sm">No workflows yet</p>
               <button
@@ -212,20 +212,20 @@ function WorkflowCard({ wf, onError }: { wf: any; onError: (m: string) => void }
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none"
+            className="block w-full rounded-lg border border-border-subtle px-3 py-2 text-sm focus:border-primary-500 focus:outline-none"
           />
           <input
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Description"
-            className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none"
+            className="block w-full rounded-lg border border-border-subtle px-3 py-2 text-sm focus:border-primary-500 focus:outline-none"
           />
           <textarea
             value={definition}
             onChange={(e) => setDefinition(e.target.value)}
             rows={6}
             spellCheck={false}
-            className="block w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-xs focus:border-primary-500 focus:outline-none"
+            className="block w-full rounded-lg border border-border-subtle px-3 py-2 font-mono text-xs focus:border-primary-500 focus:outline-none"
           />
           <div className="flex gap-2">
             <Button
@@ -236,7 +236,7 @@ function WorkflowCard({ wf, onError }: { wf: any; onError: (m: string) => void }
             >
               {updateWf.isPending ? 'Saving...' : 'Save'}
             </Button>
-            <button onClick={() => setEditing(false)} className="text-sm text-gray-500 hover:text-gray-700">
+            <button onClick={() => setEditing(false)} className="text-sm text-text-tertiary hover:text-text-secondary">
               Cancel
             </button>
           </div>
@@ -255,14 +255,14 @@ function WorkflowCard({ wf, onError }: { wf: any; onError: (m: string) => void }
           <div className="flex gap-1">
             <button
               onClick={() => setEditing(true)}
-              className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+              className="rounded p-1 text-text-tertiary hover:bg-card hover:text-text-secondary"
               aria-label="Edit workflow"
             >
               <Pencil className="h-4 w-4" />
             </button>
             <button
               onClick={() => setConfirmDelete(true)}
-              className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-red-600"
+              className="rounded p-1 text-text-tertiary hover:bg-card hover:text-red-600"
               aria-label="Delete workflow"
             >
               <Trash2 className="h-4 w-4" />
@@ -272,14 +272,14 @@ function WorkflowCard({ wf, onError }: { wf: any; onError: (m: string) => void }
         <CardTitle className="text-base mt-2">{wf.name}</CardTitle>
       </CardHeader>
       <CardContent>
-        {wf.description && <p className="text-sm text-gray-500">{wf.description}</p>}
+        {wf.description && <p className="text-sm text-text-tertiary">{wf.description}</p>}
         <span
           className={`mt-3 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
             wf.status === 'ACTIVE'
               ? 'bg-green-50 text-green-700'
               : wf.status === 'PAUSED'
                 ? 'bg-workflow-50 text-workflow-700'
-                : 'bg-gray-50 text-gray-600'
+                : 'bg-card text-text-secondary'
           }`}
         >
           {wf.status}
@@ -287,7 +287,7 @@ function WorkflowCard({ wf, onError }: { wf: any; onError: (m: string) => void }
 
         {confirmDelete ? (
           <div className="mt-4 flex items-center gap-2 text-sm">
-            <span className="text-gray-600">Delete this workflow?</span>
+            <span className="text-text-secondary">Delete this workflow?</span>
             <button
               onClick={() => deleteWf.mutate({ id: wf.id })}
               disabled={deleteWf.isPending}
@@ -295,7 +295,7 @@ function WorkflowCard({ wf, onError }: { wf: any; onError: (m: string) => void }
             >
               {deleteWf.isPending ? 'Deleting...' : 'Confirm'}
             </button>
-            <button onClick={() => setConfirmDelete(false)} className="text-gray-500 hover:text-gray-700">
+            <button onClick={() => setConfirmDelete(false)} className="text-text-tertiary hover:text-text-secondary">
               Cancel
             </button>
           </div>
@@ -311,7 +311,7 @@ function WorkflowCard({ wf, onError }: { wf: any; onError: (m: string) => void }
             </Button>
             <button
               onClick={() => setShowHistory((s) => !s)}
-              className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm text-gray-500 hover:bg-gray-50"
+              className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm text-text-tertiary hover:bg-card/[0.04]"
             >
               <History className="h-4 w-4" />
               Runs
@@ -330,26 +330,26 @@ function ExecutionHistory({ workflowId }: { workflowId: string }) {
   const [openId, setOpenId] = useState<string | null>(null)
 
   if (isLoading) {
-    return <p className="mt-3 text-xs text-gray-400">Loading runs…</p>
+    return <p className="mt-3 text-xs text-text-tertiary">Loading runs…</p>
   }
   if (!runs || runs.length === 0) {
-    return <p className="mt-3 text-xs text-gray-400">No runs yet</p>
+    return <p className="mt-3 text-xs text-text-tertiary">No runs yet</p>
   }
 
   return (
-    <div className="mt-3 space-y-1.5 border-t border-gray-100 pt-3">
+    <div className="mt-3 space-y-1.5 border-t border-border-subtle pt-3">
       {runs.map((run: any) => (
         <div key={run.id}>
           <button
             onClick={() => setOpenId(openId === run.id ? null : run.id)}
-            className="flex w-full items-center justify-between rounded-md px-2 py-1 text-left text-xs hover:bg-gray-50"
+            className="flex w-full items-center justify-between rounded-md px-2 py-1 text-left text-xs hover:bg-card/[0.04]"
           >
-            <span className="text-gray-500">
+            <span className="text-text-tertiary">
               {new Date(run.createdAt).toLocaleString()}
             </span>
             <span
               className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                statusColor[run.status] ?? 'bg-gray-50 text-gray-600'
+                statusColor[run.status] ?? 'bg-card text-text-secondary'
               }`}
             >
               {run.status}
@@ -364,16 +364,16 @@ function ExecutionHistory({ workflowId }: { workflowId: string }) {
 
 function ExecutionLogs({ id }: { id: string }) {
   const { data, isLoading } = api.workflows.getExecution.useQuery({ id })
-  if (isLoading) return <p className="px-2 py-1 text-[11px] text-gray-400">Loading logs…</p>
+  if (isLoading) return <p className="px-2 py-1 text-[11px] text-text-tertiary">Loading logs…</p>
   const logs = data?.logs ?? []
-  if (logs.length === 0) return <p className="px-2 py-1 text-[11px] text-gray-400">No logs</p>
+  if (logs.length === 0) return <p className="px-2 py-1 text-[11px] text-text-tertiary">No logs</p>
   return (
-    <div className="ml-2 space-y-0.5 border-l border-gray-100 py-1 pl-2">
+    <div className="ml-2 space-y-0.5 border-l border-border-subtle py-1 pl-2">
       {logs.map((log: any) => (
-        <p key={log.id} className="text-[11px] text-gray-600">
+        <p key={log.id} className="text-[11px] text-text-secondary">
           <span
             className={`mr-1.5 font-semibold ${
-              log.level === 'ERROR' ? 'text-red-600' : 'text-gray-400'
+              log.level === 'ERROR' ? 'text-red-600' : 'text-text-tertiary'
             }`}
           >
             {log.step}

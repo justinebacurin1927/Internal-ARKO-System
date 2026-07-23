@@ -9,6 +9,14 @@
  * gets a unique, recognizable avatar without needing explicit
  * configuration.
  *
+ * Options are named to match what @opeepsfun/open-peeps Effigy
+ * components actually expect:
+ *   Body   → skinColor, topColor/blazerColor, outlineColor
+ *   Head   → outlineColor (= hair), skinColor
+ *   Face   → outlineColor only
+ *   Beard  → outlineColor only
+ *   Accessory → outlineColor only
+ *
  * @see /mnt/storage/tools/open-peeps-mono.sketch — Sketch source
  * @see @opeepsfun/open-peeps — npm package (Effigy component)
  */
@@ -125,6 +133,13 @@ function pick<T>(arr: readonly T[], seed: number, offset: number): T {
  *
  * The same ID always produces the same avatar. The seed spreads
  * across all part categories so no two IDs clash on every dimension.
+ *
+ * Options match @opeepsfun/open-peeps Effigy component expectations:
+ *   body   → skinColor, topColor + blazerColor (dual-key), outlineColor
+ *   head   → outlineColor (=hair), skinColor
+ *   face   → outlineColor
+ *   beard  → outlineColor
+ *   accessory → outlineColor
  */
 export function generateAvatarSeed(userId: string): AvatarConfig {
   const seed = hashUserId(userId)
@@ -142,28 +157,28 @@ export function generateAvatarSeed(userId: string): AvatarConfig {
   return {
     body: {
       type: bodyType,
-      options: { skinColor, blazerColor: clothingColor, outlineColor: '#000' },
+      options: { skinColor, topColor: clothingColor, blazerColor: clothingColor, outlineColor: '#000' },
     },
     head: {
       type: headType,
-      options: { color: hairColor },
+      options: { outlineColor: hairColor, skinColor },
     },
     face: {
       type: faceType,
-      options: { skinColor },
+      options: { outlineColor: '#000' },
     },
     ...(hasBeard
-      ? { beard: { type: pick(BEARDS, seed, 6), options: { color: hairColor } } }
+      ? { beard: { type: pick(BEARDS, seed, 6), options: { outlineColor: hairColor } } }
       : {}),
     ...(hasAccessory
-      ? { accessory: { type: pick(ACCESSORIES, seed, 7), options: { color: clothingColor } } }
+      ? { accessory: { type: pick(ACCESSORIES, seed, 7), options: { outlineColor: clothingColor } } }
       : {}),
   }
 }
 
 /**
  * Serialise an AvatarConfig to the compact JSON string stored in
- * the User record (either `image` or dedicated `avatar` field).
+ * the User record.
  */
 export function avatarConfigToJson(config: AvatarConfig): AvatarConfigJson {
   return {
@@ -173,8 +188,8 @@ export function avatarConfigToJson(config: AvatarConfig): AvatarConfigJson {
     beard: config.beard?.type,
     accessory: config.accessory?.type,
     skinColor: config.body.options.skinColor,
-    hairColor: config.head.options.color,
-    clothingColor: config.body.options.blazerColor,
+    hairColor: config.head.options.outlineColor,
+    clothingColor: config.body.options.topColor ?? config.body.options.blazerColor,
   }
 }
 
@@ -188,17 +203,22 @@ export function avatarConfigFromJson(json: AvatarConfigJson): AvatarConfig {
   return {
     body: {
       type: body,
-      options: { skinColor: skinColor ?? '#D08B5B', blazerColor: clothingColor ?? '#8FA7DF', outlineColor: '#000' },
+      options: {
+        skinColor: skinColor ?? '#D08B5B',
+        topColor: clothingColor ?? '#8FA7DF',
+        blazerColor: clothingColor ?? '#8FA7DF',
+        outlineColor: '#000',
+      },
     },
     head: {
       type: head,
-      options: { color: hairColor ?? '#1C1C1C' },
+      options: { outlineColor: hairColor ?? '#1C1C1C', skinColor: skinColor ?? '#D08B5B' },
     },
     face: {
       type: face,
-      options: { skinColor: skinColor ?? '#D08B5B' },
+      options: { outlineColor: '#000' },
     },
-    ...(beard ? { beard: { type: beard, options: { color: hairColor ?? '#1C1C1C' } } } : {}),
-    ...(accessory ? { accessory: { type: accessory, options: { color: clothingColor ?? '#8FA7DF' } } } : {}),
+    ...(beard ? { beard: { type: beard, options: { outlineColor: hairColor ?? '#1C1C1C' } } } : {}),
+    ...(accessory ? { accessory: { type: accessory, options: { outlineColor: clothingColor ?? '#8FA7DF' } } } : {}),
   }
 }

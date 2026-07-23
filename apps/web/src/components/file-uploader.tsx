@@ -128,14 +128,14 @@ export function FileUploader({
           className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed px-4 py-6 text-center transition-colors ${
             dragOver
               ? 'border-accent-400 bg-accent-50/50'
-              : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50/50'
+              : 'border-border-subtle hover:border-border-subtle hover:bg-card/50'
           }`}
         >
-          <Upload className="mb-2 h-6 w-6 text-gray-300" />
-          <p className="text-xs text-gray-500">
-            <span className="font-medium text-gray-700">Click to upload</span> or drag and drop a file
+          <Upload className="mb-2 h-6 w-6 text-text-muted" />
+          <p className="text-xs text-text-tertiary">
+            <span className="font-medium text-text-secondary">Click to upload</span> or drag and drop a file
           </p>
-          <p className="mt-0.5 text-[10px] text-gray-400">
+          <p className="mt-0.5 text-[10px] text-text-tertiary">
             Up to {maxSize / 1024 / 1024} MB
           </p>
           <input
@@ -149,13 +149,13 @@ export function FileUploader({
 
       {/* Progress bar */}
       {active && (
-        <div className="rounded-lg bg-gray-50 p-3">
-          <div className="mb-1.5 flex items-center gap-2 text-xs text-gray-600">
+        <div className="rounded-lg bg-card p-3">
+          <div className="mb-1.5 flex items-center gap-2 text-xs text-text-secondary">
             <Loader2 className="h-3 w-3 animate-spin" />
             <span className="truncate flex-1">{fileName}</span>
             <span>{progress}%</span>
           </div>
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-200">
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-card/[0.05]">
             <div
               className="h-full rounded-full bg-accent-500 transition-all duration-300"
               style={{ width: `${progress}%` }}

@@ -100,11 +100,11 @@ function PartSelect({
 }) {
   return (
     <div className="min-w-0">
-      <label className="block text-[11px] font-medium text-gray-500 mb-0.5">{label}</label>
+      <label className="block text-[11px] font-medium text-text-tertiary mb-0.5">{label}</label>
       <select
         value={value ?? ''}
         onChange={(e) => onChange(e.target.value || undefined)}
-        className="w-full rounded-lg border border-gray-200 bg-card px-2 py-1.5 text-xs text-gray-800 outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-500 transition-colors"
+        className="w-full rounded-lg border border-border-subtle bg-card px-2 py-1.5 text-xs text-text-primary outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-500 transition-colors"
       >
         {noneOption && <option value="">{noneOption}</option>}
         {parts.map((p) => (
@@ -185,28 +185,28 @@ export function OpenPeepsPicker({ currentAvatar, onChange }: OpenPeepsPickerProp
   const accessoryNames = useMemo(() => Object.keys(Accessories), [])
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Live preview */}
       <div className="flex justify-center">
-        <div className="rounded-xl bg-gray-50 border border-gray-100 p-3">
+        <div className="rounded-xl bg-card border border-border-subtle p-3">
           <Effigy
-            body={{ type: body, options: { skinColor, blazerColor: clothingColor, outlineColor: '#000' } }}
-            head={{ type: head, options: { color: hairColor } }}
-            face={{ type: face, options: { skinColor } }}
-            beard={beard ? { type: beard, options: { color: hairColor } } : undefined}
-            accessory={accessory ? { type: accessory, options: { color: clothingColor } } : undefined}
+            body={{ type: body, options: { skinColor, topColor: clothingColor, blazerColor: clothingColor, outlineColor: '#000' } }}
+            head={{ type: head, options: { outlineColor: hairColor, skinColor } }}
+            face={{ type: face, options: { outlineColor: '#000' } }}
+            beard={beard ? { type: beard, options: { outlineColor: hairColor } } : undefined}
+            accessory={accessory ? { type: accessory, options: { outlineColor: clothingColor } } : undefined}
             style={{ width: 120, height: 144 }}
           />
         </div>
       </div>
 
-      {/* Part selectors — 2 columns on wider screens */}
-      <div className="grid grid-cols-2 gap-2">
+      {/* Part selectors — 3 columns on wider screens */}
+      <div className="grid grid-cols-3 gap-2">
         <PartSelect label="Body" parts={bodyNames} value={body} onChange={(v) => v && setBody(v)} />
         <PartSelect label="Head" parts={headNames} value={head} onChange={(v) => v && setHead(v)} />
+        <PartSelect label="Face" parts={faceNames} value={face} onChange={(v) => v && setFace(v)} />
       </div>
       <div className="grid grid-cols-2 gap-2">
-        <PartSelect label="Face" parts={faceNames} value={face} onChange={(v) => v && setFace(v)} />
         <PartSelect
           label="Beard"
           parts={beardNames}
@@ -214,8 +214,6 @@ export function OpenPeepsPicker({ currentAvatar, onChange }: OpenPeepsPickerProp
           onChange={setBeard}
           noneOption="None"
         />
-      </div>
-      <div>
         <PartSelect
           label="Accessory"
           parts={accessoryNames}
@@ -225,17 +223,19 @@ export function OpenPeepsPicker({ currentAvatar, onChange }: OpenPeepsPickerProp
         />
       </div>
 
-      {/* Color pickers */}
-      <div>
-        <p className="text-[11px] font-medium text-gray-500 mb-1.5">Skin colour</p>
-        <ColorList colors={SKIN_TONES} value={skinColor} onChange={setSkinColor} />
+      {/* Color pickers in a 2-column grid */}
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <p className="text-[11px] font-medium text-text-tertiary mb-1.5">Skin colour</p>
+          <ColorList colors={SKIN_TONES} value={skinColor} onChange={setSkinColor} />
+        </div>
+        <div>
+          <p className="text-[11px] font-medium text-text-tertiary mb-1.5">Hair colour</p>
+          <ColorList colors={HAIR_COLORS} value={hairColor} onChange={setHairColor} />
+        </div>
       </div>
       <div>
-        <p className="text-[11px] font-medium text-gray-500 mb-1.5">Hair colour</p>
-        <ColorList colors={HAIR_COLORS} value={hairColor} onChange={setHairColor} />
-      </div>
-      <div>
-        <p className="text-[11px] font-medium text-gray-500 mb-1.5">Clothing colour</p>
+        <p className="text-[11px] font-medium text-text-tertiary mb-1.5">Clothing colour</p>
         <ColorList colors={CLOTHING_COLORS} value={clothingColor} onChange={setClothingColor} />
       </div>
     </div>

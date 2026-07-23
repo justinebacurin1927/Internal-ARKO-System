@@ -90,7 +90,7 @@ export default function DashboardContent() {
       {/* ── Header row — action buttons ──────────────── */}
       <div className="flex items-center justify-end shrink-0 mb-3">
         <div className="flex items-center gap-2">
-          <button className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-card px-3 py-1.5 text-[11px] font-medium text-gray-600 shadow-sm hover:border-gray-300 active:scale-[0.97]">
+          <button className="inline-flex items-center gap-1 rounded-full border border-border-subtle bg-card px-3 py-1.5 text-[11px] font-medium text-text-secondary shadow-sm hover:border-border-subtle active:scale-[0.97]">
             <Plus className="h-3 w-3" />
             Task
           </button>
@@ -111,10 +111,10 @@ export default function DashboardContent() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">
+                  <p className="text-[10px] font-medium text-text-tertiary uppercase tracking-wider">
                     Cash Balance
                   </p>
-                  <p className="text-xl font-black text-gray-900 mt-0.5">
+                  <p className="text-xl font-black text-text-primary mt-0.5">
                     {formatCurrency(balance?.balance ?? 0)}
                   </p>
                 </div>
@@ -125,17 +125,17 @@ export default function DashboardContent() {
               <div className="flex gap-4 mt-2">
                 <div className="flex items-center gap-1.5">
                   <ArrowUpRight className="h-3 w-3 text-finance-600 shrink-0" />
-                  <span className="text-[10px] font-semibold text-gray-900">
+                  <span className="text-[10px] font-semibold text-text-primary">
                     {formatCurrency(balance?.income ?? 0)}
                   </span>
-                  <span className="text-[9px] text-gray-400">in</span>
+                  <span className="text-[9px] text-text-tertiary">in</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <ArrowDownRight className="h-3 w-3 text-red-500 shrink-0" />
-                  <span className="text-[10px] font-semibold text-gray-900">
+                  <span className="text-[10px] font-semibold text-text-primary">
                     {formatCurrency(balance?.expenses ?? 0)}
                   </span>
-                  <span className="text-[9px] text-gray-400">out</span>
+                  <span className="text-[9px] text-text-tertiary">out</span>
                 </div>
               </div>
             </CardContent>
@@ -145,13 +145,13 @@ export default function DashboardContent() {
           <div className="grid grid-cols-2 gap-3 shrink-0">
             <Card className="overflow-hidden">
               <CardHeader className="px-2.5 pt-2 pb-0">
-                <CardTitle className="text-[10px] font-bold text-gray-800">Team</CardTitle>
+                <CardTitle className="text-[10px] font-bold text-text-primary">Team</CardTitle>
               </CardHeader>
               <CardContent className="px-2.5 pb-2.5 pt-2 flex items-center justify-between">
                 <div className="flex -space-x-2">
                   {teamAvatars.length === 0 ? (
-                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-100">
-                      <Users className="h-3 w-3 text-gray-400" />
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-card">
+                      <Users className="h-3 w-3 text-text-tertiary" />
                     </div>
                   ) : (
                     teamAvatars.map((u) => (
@@ -166,7 +166,7 @@ export default function DashboardContent() {
                   )}
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
-                  <span className="text-[9px] text-gray-400">{teamAvatars.length}</span>
+                  <span className="text-[9px] text-text-tertiary">{teamAvatars.length}</span>
                   <span className="text-[9px] font-medium text-primary-600">View</span>
                 </div>
               </CardContent>
@@ -174,15 +174,15 @@ export default function DashboardContent() {
 
             <Card className="overflow-hidden">
               <CardHeader className="px-2.5 pt-2 pb-0">
-                <CardTitle className="text-[10px] font-bold text-gray-800">Priority</CardTitle>
+                <CardTitle className="text-[10px] font-bold text-text-primary">Priority</CardTitle>
               </CardHeader>
               <CardContent className="px-2.5 pb-2.5 pt-2 flex flex-col gap-1">
                 {priorityBars.map((i) => (
                   <div key={i.label} className="flex items-center gap-1.5">
-                    <span className="w-8 text-[8px] font-medium text-gray-500 text-right shrink-0">
+                    <span className="w-8 text-[8px] font-medium text-text-tertiary text-right shrink-0">
                       {i.label}
                     </span>
-                    <div className="flex-1 h-2 rounded-full bg-gray-100 overflow-hidden">
+                    <div className="flex-1 h-2 rounded-full bg-card overflow-hidden">
                       <div
                         className="h-full rounded-full transition-all duration-500"
                         style={{
@@ -191,7 +191,7 @@ export default function DashboardContent() {
                         }}
                       />
                     </div>
-                    <span className="w-4 text-[8px] font-semibold text-gray-600 text-right">
+                    <span className="w-4 text-[8px] font-semibold text-text-secondary text-right">
                       {i.value}
                     </span>
                   </div>
@@ -203,7 +203,7 @@ export default function DashboardContent() {
           {/* ── Task Progress ──────────────────────── */}
           <Card className="shrink-0 h-32 overflow-hidden flex flex-col">
             <CardHeader className="p-4 pb-1">
-              <CardTitle className="text-[11px] font-bold text-gray-800">
+              <CardTitle className="text-[11px] font-bold text-text-primary">
                 Task Progress
               </CardTitle>
             </CardHeader>
@@ -222,7 +222,7 @@ export default function DashboardContent() {
                         className="flex flex-col items-center w-full"
                         style={{ flex: `${barWeight}` }}
                       >
-                        <span className="text-[9px] font-semibold text-gray-500">
+                        <span className="text-[9px] font-semibold text-text-tertiary">
                           {Math.round(s.pct)}%
                         </span>
                         <div
@@ -230,7 +230,7 @@ export default function DashboardContent() {
                           style={{ flex: 1, backgroundColor: s.color }}
                         />
                       </div>
-                      <span className="text-[8px] text-gray-400 truncate pt-0.5">
+                      <span className="text-[8px] text-text-tertiary truncate pt-0.5">
                         {s.label}
                       </span>
                     </div>
@@ -243,7 +243,7 @@ export default function DashboardContent() {
           {/* ── Recent Transactions ────────────────── */}
           <Card className="shrink-0 overflow-hidden">
             <CardHeader className="p-4 pb-1 flex flex-row items-center justify-between">
-              <CardTitle className="text-[11px] font-bold text-gray-800">
+              <CardTitle className="text-[11px] font-bold text-text-primary">
                 Transactions
               </CardTitle>
               <span className="text-[9px] font-medium text-primary-600">View all</span>
@@ -251,15 +251,15 @@ export default function DashboardContent() {
             <CardContent className="p-0">
               {recentTx.length === 0 ? (
                 <div className="flex flex-col items-center py-4">
-                  <Wallet className="h-5 w-5 text-gray-200 mb-1" />
-                  <p className="text-[10px] text-gray-400">No transactions yet</p>
+                  <Wallet className="h-5 w-5 text-text-muted mb-1" />
+                  <p className="text-[10px] text-text-tertiary">No transactions yet</p>
                 </div>
               ) : (
                 <div>
                   {recentTx.map((tx, i) => (
                     <div
                       key={tx.id}
-                      className={`flex items-center justify-between px-4 py-2.5 ${i === 0 ? 'border-b border-gray-100' : ''}`}
+                      className={`flex items-center justify-between px-4 py-2.5 ${i === 0 ? 'border-b border-border-subtle' : ''}`}
                     >
                       <div className="flex items-center gap-2 min-w-0">
                         <div
@@ -276,10 +276,10 @@ export default function DashboardContent() {
                           )}
                         </div>
                         <div className="min-w-0">
-                          <p className="text-[11px] font-medium text-gray-900 truncate">
+                          <p className="text-[11px] font-medium text-text-primary truncate">
                             {tx.description || tx.category?.name || 'Transaction'}
                           </p>
-                          <p className="text-[9px] text-gray-400">
+                          <p className="text-[9px] text-text-tertiary">
                             {new Date(tx.date).toLocaleDateString('en-US', {
                               month: 'short',
                               day: 'numeric',
@@ -309,7 +309,7 @@ export default function DashboardContent() {
           <Card className="shrink-0 h-[200px] overflow-hidden flex flex-col">
             <CardHeader className="p-4 pb-1 flex flex-row items-center justify-between shrink-0">
               <div className="flex items-center gap-3">
-                <CardTitle className="text-[11px] font-bold text-gray-800">
+                <CardTitle className="text-[11px] font-bold text-text-primary">
                   Income & Expenses
                 </CardTitle>
               </div>
@@ -326,25 +326,25 @@ export default function DashboardContent() {
           {/* ── Recent Updates ─────────────────────── */}
           <Card className="flex-1 min-h-0 overflow-hidden flex flex-col">
             <CardHeader className="p-4 pb-1 flex flex-row items-center justify-between shrink-0">
-              <CardTitle className="text-[11px] font-bold text-gray-800">
+              <CardTitle className="text-[11px] font-bold text-text-primary">
                 Recent Updates
               </CardTitle>
-              <GitCommit className="h-3 w-3 text-gray-400" />
+              <GitCommit className="h-3 w-3 text-text-tertiary" />
             </CardHeader>
             <CardContent className="p-0 flex-1 overflow-y-auto min-h-0">
               {ghLoading ? (
                 <div className="flex flex-col gap-2 p-4">
                   {[...Array(5)].map((_, i) => (
                     <div key={i} className="flex items-center gap-2.5">
-                      <div className="h-5 w-5 shrink-0 rounded-full bg-gray-100 animate-pulse" />
-                      <div className="h-3 flex-1 rounded bg-gray-100 animate-pulse" />
-                      <div className="h-3 w-8 rounded bg-gray-100 animate-pulse" />
+                      <div className="h-5 w-5 shrink-0 rounded-full bg-card animate-pulse" />
+                      <div className="h-3 flex-1 rounded bg-card animate-pulse" />
+                      <div className="h-3 w-8 rounded bg-card animate-pulse" />
                     </div>
                   ))}
                 </div>
               ) : commits.length === 0 ? (
                 <div className="flex items-center justify-center h-full py-6">
-                  <p className="text-[10px] text-gray-400">No recent commits</p>
+                  <p className="text-[10px] text-text-tertiary">No recent commits</p>
                 </div>
               ) : (
                 commits.map((commit) => {
@@ -358,12 +358,12 @@ export default function DashboardContent() {
                       href={commit.html_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-2.5 px-4 py-2 transition-colors hover:bg-gray-50 border-b border-gray-50 last:border-0 group"
+                      className="flex items-center gap-2.5 px-4 py-2 transition-colors hover:bg-card/[0.04] border-b border-border-subtle last:border-0 group"
                     >
-                      <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gray-100 group-hover:bg-gray-200 transition-colors">
-                        <GitCommit className="h-2.5 w-2.5 text-gray-400" />
+                      <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-card group-hover:bg-bg-subtle transition-colors">
+                        <GitCommit className="h-2.5 w-2.5 text-text-tertiary" />
                       </div>
-                      <p className="flex-1 text-[10px] text-gray-700 truncate min-w-0">
+                      <p className="flex-1 text-[10px] text-text-secondary truncate min-w-0">
                         {msg}
                       </p>
                       {isFeature && (
@@ -376,10 +376,10 @@ export default function DashboardContent() {
                           fix
                         </span>
                       )}
-                      <span className="shrink-0 text-[9px] tabular-nums text-gray-400">
+                      <span className="shrink-0 text-[9px] tabular-nums text-text-tertiary">
                         {timeAgo(commit.commit.author.date)}
                       </span>
-                      <ExternalLink className="h-2.5 w-2.5 shrink-0 text-gray-300 group-hover:text-gray-500 transition-colors" />
+                      <ExternalLink className="h-2.5 w-2.5 shrink-0 text-text-muted group-hover:text-text-tertiary transition-colors" />
                     </a>
                   )
                 })

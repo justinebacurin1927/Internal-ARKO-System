@@ -129,8 +129,8 @@ export default function TasksPage() {
     <div className="space-y-6">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Tasks</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage your tasks and projects</p>
+          <h1 className="text-2xl font-bold text-text-primary tracking-tight">Tasks</h1>
+          <p className="text-sm text-text-tertiary mt-1">Manage your tasks and projects</p>
         </div>
         <Button onClick={() => setShowNew(!showNew)}>
           <Plus className="h-4 w-4" />
@@ -144,7 +144,7 @@ export default function TasksPage() {
           <CardContent className="p-5">
             <form onSubmit={handleCreate} className="space-y-4">
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-700">Title</label>
+                <label className="mb-1.5 block text-sm font-medium text-text-secondary">Title</label>
                 <input
                   type="text"
                   value={newTitle}
@@ -152,26 +152,26 @@ export default function TasksPage() {
                   placeholder="What needs to be done?"
                   required
                   autoFocus
-                  className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                  className="block w-full rounded-lg border border-border-subtle px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-700">Description</label>
+                <label className="mb-1.5 block text-sm font-medium text-text-secondary">Description</label>
                 <textarea
                   value={newDesc}
                   onChange={(e) => setNewDesc(e.target.value)}
                   placeholder="Add details..."
                   rows={2}
-                  className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                  className="block w-full rounded-lg border border-border-subtle px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
                 />
               </div>
               <div className="flex gap-4">
                 <div className="flex-1">
-                  <label className="mb-1.5 block text-sm font-medium text-gray-700">Priority</label>
+                  <label className="mb-1.5 block text-sm font-medium text-text-secondary">Priority</label>
                   <select
                     value={newPriority}
                     onChange={(e) => setNewPriority(e.target.value)}
-                    className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                    className="block w-full rounded-lg border border-border-subtle px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
                   >
                     <option value="LOW">Low</option>
                     <option value="MEDIUM">Medium</option>
@@ -180,27 +180,27 @@ export default function TasksPage() {
                   </select>
                 </div>
                 <div className="flex-1">
-                  <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                  <label className="mb-1.5 block text-sm font-medium text-text-secondary">
                     Assign to
                   </label>
                   <div className="relative">
                     <div
                       onClick={() => setShowAssigneeSearch(true)}
-                      className="flex h-[38px] cursor-pointer items-center rounded-lg border border-gray-300 px-3 text-sm text-gray-700 hover:border-gray-400"
+                      className="flex h-[38px] cursor-pointer items-center rounded-lg border border-border-subtle px-3 text-sm text-text-secondary hover:border-border-subtle"
                     >
                       {newAssignee
                         ? users?.find((u) => u.id === newAssignee)?.name ?? 'Unknown'
                         : 'Myself'}
                     </div>
                     {showAssigneeSearch && (
-                      <div className="absolute left-0 top-full z-10 mt-1 w-full rounded-lg border border-gray-200 bg-card p-2 shadow-lg">
+                      <div className="absolute left-0 top-full z-10 mt-1 w-full rounded-lg border border-border-subtle bg-card p-2 shadow-lg">
                         <input
                           type="text"
                           value={assigneeSearch}
                           onChange={(e) => setAssigneeSearch(e.target.value)}
                           placeholder="Search users..."
                           autoFocus
-                          className="mb-2 w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs focus:border-primary-500 focus:outline-none"
+                          className="mb-2 w-full rounded-md border border-border-subtle px-2 py-1.5 text-xs focus:border-primary-500 focus:outline-none"
                         />
                         <div className="max-h-32 space-y-0.5 overflow-y-auto">
                           <button
@@ -209,7 +209,7 @@ export default function TasksPage() {
                               setNewAssignee('')
                               setShowAssigneeSearch(false)
                             }}
-                            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs text-gray-700 hover:bg-gray-50"
+                            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs text-text-secondary hover:bg-card/[0.04]"
                           >
                             <User className="h-3 w-3" />
                             Myself
@@ -229,7 +229,7 @@ export default function TasksPage() {
                                   setNewAssignee(u.id)
                                   setShowAssigneeSearch(false)
                                 }}
-                                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs text-gray-700 hover:bg-gray-50"
+                                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs text-text-secondary hover:bg-card/[0.04]"
                               >
                                 <User className="h-3 w-3" />
                                 {u.name ?? u.email}
@@ -297,11 +297,11 @@ export default function TasksPage() {
                 }}
               >
                 <div className="flex items-center justify-between px-1">
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">
                     {columnLabels[column]}
                   </h3>
                   {!isLoading && (
-                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-400">
+                    <span className="rounded-full bg-card px-2 py-0.5 text-xs text-text-tertiary">
                       {colTasks.length}
                     </span>
                   )}
@@ -312,16 +312,16 @@ export default function TasksPage() {
                     <CardContent className="space-y-3 py-6">
                       {[...Array(3)].map((_, i) => (
                         <div key={i} className="space-y-1.5">
-                          <div className="h-4 w-full animate-pulse rounded bg-gray-100" />
-                          <div className="h-3 w-3/4 animate-pulse rounded bg-gray-100" />
+                          <div className="h-4 w-full animate-pulse rounded bg-card" />
+                          <div className="h-3 w-3/4 animate-pulse rounded bg-card" />
                         </div>
                       ))}
                     </CardContent>
                   </Card>
                 ) : isEmpty ? (
-                  <Card className="border-dashed border-gray-200">
+                  <Card className="border-dashed border-border-subtle">
                     <CardContent>
-                      <div className="flex flex-col items-center py-8 text-gray-300">
+                      <div className="flex flex-col items-center py-8 text-text-muted">
                         <ListTodo className="mb-2 h-7 w-7" />
                         <p className="text-xs">No tasks</p>
                       </div>
@@ -342,9 +342,9 @@ export default function TasksPage() {
                           onClick={() => setSelectedId(task.id)}
                         >
                           <CardContent className="p-4">
-                            <p className="text-sm font-medium text-gray-900">{task.title}</p>
+                            <p className="text-sm font-medium text-text-primary">{task.title}</p>
                             {task.description && (
-                              <p className="mt-1.5 text-xs text-gray-500 line-clamp-2">
+                              <p className="mt-1.5 text-xs text-text-tertiary line-clamp-2">
                                 {task.description}
                               </p>
                             )}
@@ -358,20 +358,20 @@ export default function TasksPage() {
                                         ? 'bg-orange-50 text-orange-700'
                                         : task.priority === 'MEDIUM'
                                           ? 'bg-primary-50 text-primary-700'
-                                          : 'bg-gray-50 text-gray-600'
+                                          : 'bg-card text-text-secondary'
                                   }`}
                                 >
                                   {task.priority}
                                 </span>
                               )}
                               {task.assignee && (
-                                <span className="inline-flex items-center gap-1 rounded-full bg-gray-50 px-2 py-0.5 text-[10px] text-gray-500">
+                                <span className="inline-flex items-center gap-1 rounded-full bg-card px-2 py-0.5 text-[10px] text-text-tertiary">
                                   <User className="h-2.5 w-2.5" />
                                   {task.assignee.name ?? task.assignee.email}
                                 </span>
                               )}
                               {subs.length > 0 && (
-                                <span className="inline-flex items-center gap-1 rounded-full bg-gray-50 px-2 py-0.5 text-[10px] text-gray-500">
+                                <span className="inline-flex items-center gap-1 rounded-full bg-card px-2 py-0.5 text-[10px] text-text-tertiary">
                                   <CornerDownRight className="h-2.5 w-2.5" />
                                   {doneSubs}/{subs.length}
                                 </span>
@@ -465,41 +465,41 @@ function TaskDetail({
       onClick={onClose}
     >
       <div
-        className="h-full w-full max-w-md overflow-y-auto bg-card p-6 shadow-xl"
+        className="h-full w-full max-w-sm overflow-y-auto bg-card p-6 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">Task details</h2>
-          <button onClick={onClose} className="rounded p-1 text-gray-400 hover:bg-gray-100">
+          <h2 className="text-lg font-semibold text-text-primary">Task details</h2>
+          <button onClick={onClose} className="rounded p-1 text-text-tertiary hover:bg-card">
             <X className="h-5 w-5" />
           </button>
         </div>
 
         <div className="space-y-4">
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">Title</label>
+            <label className="mb-1.5 block text-sm font-medium text-text-secondary">Title</label>
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+              className="block w-full rounded-lg border border-border-subtle px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
             />
           </div>
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">Description</label>
+            <label className="mb-1.5 block text-sm font-medium text-text-secondary">Description</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+              className="block w-full rounded-lg border border-border-subtle px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
             />
           </div>
           <div className="flex gap-4">
             <div className="flex-1">
-              <label className="mb-1.5 block text-sm font-medium text-gray-700">Priority</label>
+              <label className="mb-1.5 block text-sm font-medium text-text-secondary">Priority</label>
               <select
                 value={priority}
                 onChange={(e) => setPriority(e.target.value)}
-                className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none"
+                className="block w-full rounded-lg border border-border-subtle px-3 py-2 text-sm focus:border-primary-500 focus:outline-none"
               >
                 {priorities.map((p) => (
                   <option key={p} value={p}>
@@ -509,11 +509,11 @@ function TaskDetail({
               </select>
             </div>
             <div className="flex-1">
-              <label className="mb-1.5 block text-sm font-medium text-gray-700">Status</label>
+              <label className="mb-1.5 block text-sm font-medium text-text-secondary">Status</label>
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
-                className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none"
+                className="block w-full rounded-lg border border-border-subtle px-3 py-2 text-sm focus:border-primary-500 focus:outline-none"
               >
                 {columns.map((s) => (
                   <option key={s} value={s}>
@@ -528,15 +528,15 @@ function TaskDetail({
           </Button>
 
           {/* Subtasks */}
-          <div className="border-t border-gray-100 pt-4">
-            <h3 className="mb-2 text-sm font-semibold text-gray-700">
+          <div className="border-t border-border-subtle pt-4">
+            <h3 className="mb-2 text-sm font-semibold text-text-secondary">
               Subtasks ({subs.filter((s: any) => s.status === 'DONE').length}/{subs.length})
             </h3>
             <div className="space-y-1.5">
               {subs.map((s: any) => (
                 <label
                   key={s.id}
-                  className="flex cursor-pointer items-center gap-2 rounded-md bg-gray-50 px-2.5 py-1.5 text-xs text-gray-700"
+                  className="flex cursor-pointer items-center gap-2 rounded-md bg-card px-2.5 py-1.5 text-xs text-text-secondary"
                 >
                   <input
                     type="checkbox"
@@ -548,9 +548,9 @@ function TaskDetail({
                         status: s.status === 'DONE' ? 'TODO' : 'DONE',
                       })
                     }
-                    className="h-3.5 w-3.5 rounded border-gray-300"
+                    className="h-3.5 w-3.5 rounded border-border-subtle"
                   />
-                  <span className={s.status === 'DONE' ? 'line-through text-gray-400' : ''}>
+                  <span className={s.status === 'DONE' ? 'line-through text-text-tertiary' : ''}>
                     {s.title}
                   </span>
                 </label>
@@ -561,7 +561,7 @@ function TaskDetail({
                 value={subtaskTitle}
                 onChange={(e) => setSubtaskTitle(e.target.value)}
                 placeholder="Add a subtask..."
-                className="flex-1 rounded-md border border-gray-200 px-2 py-1.5 text-xs focus:border-primary-500 focus:outline-none"
+                className="flex-1 rounded-md border border-border-subtle px-2 py-1.5 text-xs focus:border-primary-500 focus:outline-none"
               />
               <Button
                 onClick={() => {
@@ -577,24 +577,24 @@ function TaskDetail({
           </div>
 
           {/* Dependencies */}
-          <div className="border-t border-gray-100 pt-4">
-            <h3 className="mb-2 text-sm font-semibold text-gray-700">Blocked by</h3>
+          <div className="border-t border-border-subtle pt-4">
+            <h3 className="mb-2 text-sm font-semibold text-text-secondary">Blocked by</h3>
             <div className="space-y-1.5">
-              {deps.length === 0 && <p className="text-xs text-gray-400">No dependencies</p>}
+              {deps.length === 0 && <p className="text-xs text-text-tertiary">No dependencies</p>}
               {deps.map((d: any) => (
                 <div
                   key={d.id}
-                  className="flex items-center justify-between rounded-md bg-gray-50 px-2.5 py-1.5 text-xs"
+                  className="flex items-center justify-between rounded-md bg-card px-2.5 py-1.5 text-xs"
                 >
-                  <span className="flex items-center gap-1.5 text-gray-700">
+                  <span className="flex items-center gap-1.5 text-text-secondary">
                     <Ban
-                      className={`h-3 w-3 ${d.status === 'DONE' ? 'text-gray-300' : 'text-red-500'}`}
+                      className={`h-3 w-3 ${d.status === 'DONE' ? 'text-text-muted' : 'text-red-500'}`}
                     />
                     {d.title}
                   </span>
                   <button
                     onClick={() => removeDependency.mutate({ taskId: task.id, blockerId: d.id })}
-                    className="rounded p-0.5 text-gray-400 hover:bg-gray-200 hover:text-red-600"
+                    className="rounded p-0.5 text-text-tertiary hover:bg-card/[0.06] hover:text-red-600"
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -605,10 +605,10 @@ function TaskDetail({
               value={depSearch}
               onChange={(e) => setDepSearch(e.target.value)}
               placeholder="Add a blocker..."
-              className="mt-2 w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs focus:border-primary-500 focus:outline-none"
+              className="mt-2 w-full rounded-md border border-border-subtle px-2 py-1.5 text-xs focus:border-primary-500 focus:outline-none"
             />
             {depSearch && (
-              <div className="mt-1 max-h-32 space-y-0.5 overflow-y-auto rounded-md border border-gray-100 p-1">
+              <div className="mt-1 max-h-32 space-y-0.5 overflow-y-auto rounded-md border border-border-subtle p-1">
                 {candidates.slice(0, 6).map((t: any) => (
                   <button
                     key={t.id}
@@ -616,13 +616,13 @@ function TaskDetail({
                       addDependency.mutate({ taskId: task.id, blockerId: t.id })
                       setDepSearch('')
                     }}
-                    className="block w-full rounded px-2 py-1 text-left text-xs text-gray-700 hover:bg-gray-50"
+                    className="block w-full rounded px-2 py-1 text-left text-xs text-text-secondary hover:bg-card/[0.04]"
                   >
                     {t.title}
                   </button>
                 ))}
                 {candidates.length === 0 && (
-                  <p className="px-2 py-1 text-xs text-gray-400">No matching tasks</p>
+                  <p className="px-2 py-1 text-xs text-text-tertiary">No matching tasks</p>
                 )}
               </div>
             )}
@@ -632,7 +632,7 @@ function TaskDetail({
           <CommentThread resourceType={TASK_RESOURCE} resourceId={task.id} onError={onError} />
 
           {/* Attachments */}
-          <div className="border-t border-gray-100 pt-4">
+          <div className="border-t border-border-subtle pt-4">
             <AttachmentList key={attachRefresh} resourceType={TASK_RESOURCE} resourceId={task.id} />
             <div className="mt-2">
               <FileUploader
@@ -644,10 +644,10 @@ function TaskDetail({
           </div>
 
           {/* Delete — two-step inline confirm (no native dialog) */}
-          <div className="border-t border-gray-100 pt-4">
+          <div className="border-t border-border-subtle pt-4">
             {confirmDelete ? (
               <div className="flex items-center gap-3">
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-text-secondary">
                   Delete this task? Subtasks are promoted to top-level.
                 </span>
                 <button
@@ -660,7 +660,7 @@ function TaskDetail({
                 </button>
                 <button
                   onClick={() => setConfirmDelete(false)}
-                  className="text-sm text-gray-500 hover:text-gray-700"
+                  className="text-sm text-text-tertiary hover:text-text-secondary"
                 >
                   Cancel
                 </button>

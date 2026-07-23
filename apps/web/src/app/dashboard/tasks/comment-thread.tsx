@@ -2,9 +2,14 @@
 
 import { useState } from 'react'
 import { useSession } from 'next-auth/react'
+import dynamic from 'next/dynamic'
 import { Button } from '@arko/ui'
-import { OpenPeepsAvatar } from '../../../components/open-peeps-avatar'
 import { Loader2, Pencil, Trash2, X, Check } from 'lucide-react'
+
+const OpenPeepsAvatar = dynamic(() =>
+  import('../../../components/open-peeps-avatar').then((m) => ({ default: m.OpenPeepsAvatar })),
+  { ssr: false },
+)
 import { api } from '../../../lib/trpc/client'
 
 function relTime(d: string | Date): string {
@@ -62,15 +67,15 @@ export function CommentThread({
   })
 
   return (
-    <div className="border-t border-gray-100 pt-4">
-      <h3 className="mb-2 text-sm font-semibold text-gray-700">
+    <div className="border-t border-border-subtle pt-4">
+      <h3 className="mb-2 text-sm font-semibold text-text-secondary">
         Comments{comments ? ` (${comments.length})` : ''}
       </h3>
 
       {isLoading ? (
-        <p className="text-xs text-gray-400">Loading comments…</p>
+        <p className="text-xs text-text-tertiary">Loading comments…</p>
       ) : !comments || comments.length === 0 ? (
-        <p className="text-xs text-gray-400">No comments yet</p>
+        <p className="text-xs text-text-tertiary">No comments yet</p>
       ) : (
         <div className="space-y-3">
           {comments.map((c: any) => {
@@ -84,9 +89,9 @@ export function CommentThread({
                 />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-medium text-gray-800">{c.user?.name ?? 'Unknown'}</span>
-                    <span className="text-[10px] text-gray-400">{relTime(c.createdAt)}</span>
-                    {c.edited && <span className="text-[10px] text-gray-400">(edited)</span>}
+                    <span className="text-xs font-medium text-text-primary">{c.user?.name ?? 'Unknown'}</span>
+                    <span className="text-[10px] text-text-tertiary">{relTime(c.createdAt)}</span>
+                    {c.edited && <span className="text-[10px] text-text-tertiary">(edited)</span>}
                   </div>
 
                   {editingId === c.id ? (
@@ -102,7 +107,7 @@ export function CommentThread({
                         }}
                         rows={2}
                         maxLength={2000}
-                        className="flex-1 resize-none rounded-md border border-gray-200 px-2 py-1 text-xs focus:border-primary-500 focus:outline-none"
+                        className="flex-1 resize-none rounded-md border border-border-subtle px-2 py-1 text-xs focus:border-primary-500 focus:outline-none"
                         autoFocus
                       />
                       <button
@@ -115,21 +120,21 @@ export function CommentThread({
                       </button>
                       <button
                         onClick={() => setEditingId(null)}
-                        className="rounded p-1 text-gray-400 hover:bg-gray-100"
+                        className="rounded p-1 text-text-tertiary hover:bg-card/[0.04]"
                         aria-label="Cancel"
                       >
                         <X className="h-3.5 w-3.5" />
                       </button>
                     </div>
                   ) : (
-                    <p className="text-xs text-gray-700 whitespace-pre-wrap">{c.content}</p>
+                    <p className="text-xs text-text-secondary whitespace-pre-wrap">{c.content}</p>
                   )}
 
                   {mine && editingId !== c.id && (
                     <div className="mt-1 flex items-center gap-2">
                       {confirmDeleteId === c.id ? (
                         <>
-                          <span className="text-[10px] text-gray-500">Delete?</span>
+                          <span className="text-[10px] text-text-tertiary">Delete?</span>
                           <button
                             onClick={() => deleteC.mutate({ id: c.id })}
                             className="text-[10px] font-medium text-red-600 hover:text-red-700"
@@ -138,7 +143,7 @@ export function CommentThread({
                           </button>
                           <button
                             onClick={() => setConfirmDeleteId(null)}
-                            className="text-[10px] text-gray-500 hover:text-gray-700"
+                            className="text-[10px] text-text-tertiary hover:text-text-secondary"
                           >
                             Cancel
                           </button>
@@ -150,14 +155,14 @@ export function CommentThread({
                               setEditingId(c.id)
                               setEditText(c.content)
                             }}
-                            className="inline-flex items-center gap-1 text-[10px] text-gray-400 hover:text-gray-600"
+                            className="inline-flex items-center gap-1 text-[10px] text-text-tertiary hover:text-text-secondary"
                           >
                             <Pencil className="h-3 w-3" />
                             Edit
                           </button>
                           <button
                             onClick={() => setConfirmDeleteId(c.id)}
-                            className="inline-flex items-center gap-1 text-[10px] text-gray-400 hover:text-red-600"
+                            className="inline-flex items-center gap-1 text-[10px] text-text-tertiary hover:text-red-600"
                           >
                             <Trash2 className="h-3 w-3" />
                             Delete
@@ -186,7 +191,7 @@ export function CommentThread({
           rows={2}
           maxLength={2000}
           placeholder="Write a comment… (Enter to post, Shift+Enter for newline)"
-          className="flex-1 resize-none rounded-md border border-gray-200 px-2 py-1.5 text-xs focus:border-primary-500 focus:outline-none"
+          className="flex-1 resize-none rounded-md border border-border-subtle px-2 py-1.5 text-xs focus:border-primary-500 focus:outline-none"
         />
         <Button
           onClick={() => content.trim() && createC.mutate({ resourceType, resourceId, content: content.trim() })}

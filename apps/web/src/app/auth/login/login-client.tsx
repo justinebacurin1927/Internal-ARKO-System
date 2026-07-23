@@ -166,6 +166,7 @@ function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [remember, setRemember] = useState(false)
   const [touchError, setTouchError] = useState(false)
+  const [redirecting, setRedirecting] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -173,18 +174,44 @@ function LoginForm() {
     setTouchError(false)
     setError('')
 
-    const result = await signIn('credentials', { email, password, redirect: false })
+    try {
+      const result = await signIn('credentials', { email, password, redirect: false })
 
-    if (result?.error) {
-      setError('Invalid email or password')
+      if (result?.error) {
+        setError('Invalid email or password')
+        setTouchError(true)
+        setTimeout(() => setTouchError(false), 500)
+        setSubmitting(false)
+        return
+      }
+
+      sessionStorage.removeItem(CACHE_KEY)
+      setRedirecting(true)
+      router.push('/dashboard')
+    } catch (err: any) {
+      console.error('signIn error:', err)
+      setError(err?.message || 'Sign in failed. Check console for details.')
       setTouchError(true)
       setTimeout(() => setTouchError(false), 500)
       setSubmitting(false)
-      return
     }
+  }
 
-    sessionStorage.removeItem(CACHE_KEY)
-    router.push('/dashboard')
+  if (redirecting) {
+    return (
+      <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-6 bg-[#09090B]">
+        <div className="relative flex h-16 w-16 items-center justify-center">
+          <span className="absolute inset-0 animate-ping rounded-2xl bg-primary-500/30" />
+          <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-500 shadow-[0_0_40px_rgba(34,197,94,0.45)]">
+            <span className="text-2xl font-black text-white">A</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 text-sm text-zinc-400">
+          <Loader2 className="h-4 w-4 animate-spin text-primary-400" />
+          Loading your dashboard…
+        </div>
+      </div>
+    )
   }
 
   return (
