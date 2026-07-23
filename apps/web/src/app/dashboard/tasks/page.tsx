@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardContent, Button } from '@arko/ui'
+import { Card, CardContent, Button, DetailPanel } from '@arko/ui'
 import {
   Plus,
   ListTodo,
@@ -273,6 +273,8 @@ export default function TasksPage() {
         </Card>
       )}
 
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+        <div className="min-w-0 flex-1">
       {error ? (
         <Card className="border-red-200 bg-red-50">
           <CardContent className="flex items-center gap-3 py-6">
@@ -397,21 +399,23 @@ export default function TasksPage() {
           })}
         </div>
       )}
+        </div>
 
-      {selected && (
-        <TaskDetail
-          task={selected}
-          allTasks={tasks ?? []}
-          onClose={() => setSelectedId(null)}
-          onError={setNotice}
-          updateTask={updateTask}
-          updateStatus={updateStatus}
-          deleteTask={deleteTask}
-          createSubtask={createSubtask}
-          addDependency={addDependency}
-          removeDependency={removeDependency}
-        />
-      )}
+        {selected && (
+          <TaskDetail
+            task={selected}
+            allTasks={tasks ?? []}
+            onClose={() => setSelectedId(null)}
+            onError={setNotice}
+            updateTask={updateTask}
+            updateStatus={updateStatus}
+            deleteTask={deleteTask}
+            createSubtask={createSubtask}
+            addDependency={addDependency}
+            removeDependency={removeDependency}
+          />
+        )}
+      </div>
     </div>
   )
 }
@@ -460,22 +464,8 @@ function TaskDetail({
   )
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex justify-end bg-black/30"
-      onClick={onClose}
-    >
-      <div
-        className="h-full w-full max-w-sm overflow-y-auto bg-card p-6 shadow-xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-text-primary">Task details</h2>
-          <button onClick={onClose} className="rounded p-1 text-text-tertiary hover:bg-card">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        <div className="space-y-4">
+    <DetailPanel open onClose={onClose} title="Task details">
+      <div className="space-y-4">
           <div>
             <label className="mb-1.5 block text-sm font-medium text-text-secondary">Title</label>
             <input
@@ -675,8 +665,7 @@ function TaskDetail({
               </button>
             )}
           </div>
-        </div>
       </div>
-    </div>
+    </DetailPanel>
   )
 }

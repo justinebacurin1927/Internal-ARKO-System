@@ -40,7 +40,7 @@ export default function JournalPage() {
   const isSaving = create.isPending || update.isPending
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-text-primary">Journal</h1>

@@ -19,7 +19,7 @@ export default function NotificationsPage() {
   const del = api.notifications.delete.useMutation({ onSuccess: invalidate })
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-text-primary">Notifications</h1>

@@ -144,7 +144,7 @@ export default function RemindersPage() {
   }
 
   return (
-    <div className="max-w-2xl space-y-6">
+    <div className="space-y-6">
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold text-text-primary tracking-tight">Reminders</h1>
