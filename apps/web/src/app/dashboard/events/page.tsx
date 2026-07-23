@@ -17,9 +17,14 @@ import {
   X,
   CalendarClock,
 } from 'lucide-react'
+import dynamic from 'next/dynamic'
 import { api } from '../../../lib/trpc/client'
-import { OpenPeepsAvatar } from '../../../components/open-peeps-avatar'
 import { SprintDialog } from './sprint-dialog'
+
+const OpenPeepsAvatar = dynamic(() =>
+  import('../../../components/open-peeps-avatar').then((m) => ({ default: m.OpenPeepsAvatar })),
+  { ssr: false },
+)
 
 const WEEKDAY = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
