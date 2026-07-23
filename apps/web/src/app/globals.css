@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=DM+Sans:wght@400;500;600;700&family=Oswald:wght@500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;1,400&display=swap');
 @import 'tailwindcss';
 @source "../ui-components/**/*.{ts,tsx}";
 
@@ -14,6 +15,16 @@
   --color-primary-800: #166534;
   --color-primary-900: #14532d;
   --color-primary-950: #052e16;
+
+  /* Accent — forest green (ported from the production login design) */
+  --color-accent-50: #eaf5ef;
+  --color-accent-100: #d1e8da;
+  --color-accent-200: #a8d1b9;
+  --color-accent-300: #72b08c;
+  --color-accent-400: #40916c;
+  --color-accent-500: #2d6a4f;
+  --color-accent-600: #1b4332;
+  --color-accent-700: #143828;
 
   /* Domain colors */
   --color-finance-50: #f0fdf4;
@@ -67,4 +78,28 @@
 @keyframes fade-in-up {
   from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade-in-left {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes float-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(30px, -40px) scale(1.05); }
+  50% { transform: translate(-20px, -20px) scale(0.97); }
+  75% { transform: translate(40px, 30px) scale(1.02); }
+}
+@keyframes float-drift-slow {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(-40px, 30px) scale(1.03); }
+  66% { transform: translate(20px, -30px) scale(0.96); }
+}
+@keyframes shimmer-shift {
+  0% { transform: translateX(-100%) skewX(-15deg); }
+  100% { transform: translateX(200%) skewX(-15deg); }
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+  20%, 40%, 60%, 80% { transform: translateX(4px); }
 }
