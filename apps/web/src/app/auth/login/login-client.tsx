@@ -3,7 +3,109 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { signIn } from 'next-auth/react'
-import { Loader2, Eye, EyeOff, Lock, ShieldCheck } from 'lucide-react'
+import dynamic from 'next/dynamic'
+import { Loader2, Eye, EyeOff, Lock, ShieldCheck, Sparkles } from 'lucide-react'
+
+// Avatar renders client-side only (Effigy isn't SSR-safe); splash mounts post-login anyway.
+const OpenPeepsAvatar = dynamic(
+  () => import('../../../components/open-peeps-avatar').then((m) => ({ default: m.OpenPeepsAvatar })),
+  { ssr: false },
+)
+
+/* ─── Post-login splash: avatar + rotating fact + load bar ─── */
+
+const LOADING_FACTS = [
+  'Honey never spoils — archaeologists found 3,000-year-old honey still edible.',
+  'Octopuses have three hearts and blue blood.',
+  'A day on Venus is longer than its year.',
+  'The first computer bug was a real moth, found in 1947.',
+  'Bananas are berries, but strawberries are not.',
+  'Sharks existed before trees did.',
+  'There are more possible chess games than atoms in the observable universe.',
+  'Wombats produce cube-shaped poop.',
+  'The Eiffel Tower can grow taller by up to 15 cm in summer heat.',
+  'A group of flamingos is called a “flamboyance.”',
+]
+
+function RedirectSplash({ email, name }: { email: string; name?: string }) {
+  const [factIndex, setFactIndex] = useState(() => Math.floor(Math.random() * LOADING_FACTS.length))
+  const [progress, setProgress] = useState(6)
+
+  useEffect(() => {
+    const facts = setInterval(() => setFactIndex((i) => (i + 1) % LOADING_FACTS.length), 2800)
+    // Ease toward ~92% so it feels like real loading without ever "finishing" early.
+    const bar = setInterval(
+      () => setProgress((p) => (p < 92 ? p + Math.max(0.6, (92 - p) * 0.05) : p)),
+      110,
+    )
+    return () => {
+      clearInterval(facts)
+      clearInterval(bar)
+    }
+  }, [])
+
+  return (
+    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-6 bg-[#09090B] px-6">
+      {/* ambient green glow */}
+      <div
+        className="pointer-events-none absolute left-1/2 top-1/3 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full opacity-30 blur-3xl"
+        style={{ background: 'radial-gradient(circle, #22c55e 0%, transparent 70%)' }}
+      />
+
+      {/* avatar */}
+      <div className="relative z-10">
+        <span className="absolute -inset-1.5 animate-ping rounded-full bg-primary-500/20" />
+        <div className="relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-[#101214] ring-2 ring-primary-500/40 shadow-[0_0_50px_rgba(34,197,94,0.35)]">
+          <OpenPeepsAvatar userId={email || 'guest'} userName={name} size={96} />
+        </div>
+      </div>
+
+      <div className="z-10 text-center">
+        <p className="text-lg font-semibold text-white">Welcome back{name ? `, ${name.split(' ')[0]}` : ''}</p>
+        <p className="mt-0.5 flex items-center justify-center gap-1.5 text-xs text-zinc-500">
+          <Loader2 className="h-3.5 w-3.5 animate-spin text-primary-400" />
+          Loading your dashboard…
+        </p>
+      </div>
+
+      {/* load bar */}
+      <div className="z-10 w-full max-w-xs">
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-800">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-primary-500 to-primary-400 transition-[width] duration-200 ease-out"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      </div>
+
+      {/* rotating fact */}
+      <div className="z-10 flex min-h-[3.5rem] max-w-sm items-start gap-2 text-center">
+        <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary-400" />
+        <p key={factIndex} className="animate-[fade-in_0.5s_ease-out] text-xs leading-relaxed text-zinc-400">
+          <span className="font-semibold text-zinc-300">Did you know? </span>
+          {LOADING_FACTS[factIndex]}
+        </p>
+      </div>
+    </div>
+  )
+}
+
+/* ─── Warm-up: prefetch main dashboard pages after login ─── */
+
+const PREFETCH_PATHS = [
+  '/dashboard',
+  '/dashboard/tasks',
+  '/dashboard/finance',
+  '/dashboard/events',
+  '/dashboard/notes',
+  '/dashboard/messages',
+]
+
+function prefetchDashboard(router: ReturnType<typeof useRouter>) {
+  for (const path of PREFETCH_PATHS) {
+    router.prefetch(path)
+  }
+}
 
 /* ─── Fallback quotes ─── */
 
@@ -186,6 +288,7 @@ function LoginForm() {
       }
 
       sessionStorage.removeItem(CACHE_KEY)
+      prefetchDashboard(router)
       setRedirecting(true)
       router.push('/dashboard')
     } catch (err: any) {
@@ -198,20 +301,7 @@ function LoginForm() {
   }
 
   if (redirecting) {
-    return (
-      <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-6 bg-[#09090B]">
-        <div className="relative flex h-16 w-16 items-center justify-center">
-          <span className="absolute inset-0 animate-ping rounded-2xl bg-primary-500/30" />
-          <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-500 shadow-[0_0_40px_rgba(34,197,94,0.45)]">
-            <span className="text-2xl font-black text-white">A</span>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 text-sm text-zinc-400">
-          <Loader2 className="h-4 w-4 animate-spin text-primary-400" />
-          Loading your dashboard…
-        </div>
-      </div>
-    )
+    return <RedirectSplash email={email} />
   }
 
   return (
