@@ -1,8 +1,9 @@
 import { z } from 'zod'
 import { TRPCError } from '@trpc/server'
-import { hash } from 'bcryptjs'
-import { createHash } from 'crypto'
+import { hash, compare } from 'bcryptjs'
 import { router, protectedProcedure, requireRole } from '../trpc'
+import type { AvatarConfigJson } from '../../../lib/avatar'
+import { generateAvatarSeed, avatarConfigToJson } from '../../../lib/avatar'
 
 // ── Helpers ─────────────────────────────────────────────
 
@@ -41,11 +42,6 @@ function generatePassword(): string {
   }
 
   return parts.join('')
-}
-
-function gravatarUrl(email: string): string {
-  const hash = createHash('md5').update(email.toLowerCase().trim()).digest('hex')
-  return `https://www.gravatar.com/avatar/${hash}?d=identicon&s=256`
 }
 
 async function findAvailableEmail(
@@ -96,11 +92,30 @@ export const usersRouter = router({
 
       return ctx.prisma.user.findMany({
         where,
-        select: { id: true, name: true, email: true, phone: true, image: true, title: true },
+        select: { id: true, name: true, email: true, phone: true, image: true, title: true, avatar: true },
         take: input?.limit ?? 20,
         orderBy: { name: 'asc' },
       })
     }),
+
+  /** Get the current user's full profile (for settings page) */
+  getProfile: protectedProcedure.query(async ({ ctx }) => {
+    return ctx.prisma.user.findUnique({
+      where: { id: ctx.user.id },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        title: true,
+        image: true,
+        role: true,
+        status: true,
+        createdAt: true,
+        avatar: true,
+      },
+    })
+  }),
 
   /** List all users — admin only */
   list: protectedProcedure
@@ -133,6 +148,7 @@ export const usersRouter = router({
           role: true,
           status: true,
           createdAt: true,
+          avatar: true,
           _count: { select: { tasks: true, transactions: true } },
         },
         orderBy: { createdAt: 'desc' },
@@ -176,9 +192,6 @@ export const usersRouter = router({
         })
       }
 
-      // Auto-generate Gravatar profile picture
-      const image = gravatarUrl(email)
-
       const user = await ctx.prisma.user.create({
         data: {
           name: input.name,
@@ -186,7 +199,6 @@ export const usersRouter = router({
           phone: input.phone || null,
           title: input.title || null,
           password: hashedPassword,
-          image,
           role: input.role,
         },
         select: {
@@ -199,42 +211,84 @@ export const usersRouter = router({
           role: true,
           status: true,
           createdAt: true,
+          avatar: true,
         },
       })
 
+      // Generate deterministic Open Peeps avatar and store it
+      const avatarConfig = generateAvatarSeed(user.id)
+      const avatarJson = avatarConfigToJson(avatarConfig)
+      await ctx.prisma.user.update({
+        where: { id: user.id },
+        data: { avatar: avatarJson as any },
+      })
+
       // Return the plaintext password so the admin can share it (only on create)
-      return { ...user, generatedPassword: plainPassword }
+      return { ...user, avatar: avatarJson, generatedPassword: plainPassword }
     }),
 
-  /** Update a user's profile (name, phone) — admin only */
+  /** Update a user's profile (name, phone, title, avatar) — self-service or admin. */
   updateProfile: protectedProcedure
-    .use(requireRole(['ADMIN']))
     .input(
       z.object({
-        userId: z.string(),
+        userId: z.string().optional(),
         name: z.string().min(1).optional(),
         phone: z.string().optional(),
         title: z.string().optional(),
+        avatar: z
+          .object({
+            body: z.string(),
+            head: z.string(),
+            face: z.string(),
+            beard: z.string().optional(),
+            accessory: z.string().optional(),
+            skinColor: z.string().optional(),
+            hairColor: z.string().optional(),
+            clothingColor: z.string().optional(),
+          })
+          .optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      // Determine target user — if userId is provided, admin override; otherwise self-service
+      const targetId = input.userId ?? ctx.user.id
+
+      // If editing another user, must be ADMIN
+      if (targetId !== ctx.user.id && ctx.userRole !== 'ADMIN') {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'You can only edit your own profile',
+        })
+      }
+
       const user = await ctx.prisma.user.findUnique({
-        where: { id: input.userId },
+        where: { id: targetId },
         select: { id: true },
       })
       if (!user) {
         throw new TRPCError({ code: 'NOT_FOUND', message: 'User not found' })
       }
 
-      const data: Record<string, string> = {}
+      const data: Record<string, unknown> = {}
       if (input.name !== undefined) data.name = input.name
       if (input.phone !== undefined) data.phone = input.phone
       if (input.title !== undefined) data.title = input.title
+      if (input.avatar !== undefined) data.avatar = input.avatar as any
 
       return ctx.prisma.user.update({
-        where: { id: input.userId },
+        where: { id: targetId },
         data,
-        select: { id: true, name: true, phone: true, title: true, email: true, role: true, status: true, image: true },
+        select: {
+          id: true,
+          name: true,
+          phone: true,
+          title: true,
+          email: true,
+          role: true,
+          status: true,
+          image: true,
+          avatar: true,
+        },
       })
     }),
 
@@ -302,7 +356,31 @@ export const usersRouter = router({
       })
     }),
 
-  /** Delete a user — admin only */
+  /** Reset a user's password — admin only. Generates a new password, returns the plaintext once. */
+  resetPassword: protectedProcedure
+    .use(requireRole(['ADMIN']))
+    .input(z.object({ userId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const user = await ctx.prisma.user.findUnique({
+        where: { id: input.userId },
+        select: { id: true, email: true },
+      })
+      if (!user) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'User not found' })
+      }
+
+      const plainPassword = generatePassword()
+      const hashedPassword = await hash(plainPassword, 12)
+
+      await ctx.prisma.user.update({
+        where: { id: input.userId },
+        data: { password: hashedPassword },
+      })
+
+      return { email: user.email, generatedPassword: plainPassword }
+    }),
+
+  /** Delete a user — admin only. Blocks if the user has transactions. */
   delete: protectedProcedure
     .use(requireRole(['ADMIN']))
     .input(z.object({ userId: z.string() }))
@@ -322,7 +400,58 @@ export const usersRouter = router({
         throw new TRPCError({ code: 'NOT_FOUND', message: 'User not found' })
       }
 
+      // Safe-delete: check for required relations before deleting
+      const txCount = await ctx.prisma.transaction.count({
+        where: { userId: input.userId },
+      })
+      if (txCount > 0) {
+        throw new TRPCError({
+          code: 'CONFLICT',
+          message: `Cannot delete user: they have ${txCount} transaction${txCount > 1 ? 's' : ''}. Reassign or delete the transactions first.`,
+        })
+      }
+
       await ctx.prisma.user.delete({ where: { id: input.userId } })
+      return { success: true }
+    }),
+
+  /** Change password — self-service only. Verifies current password before updating. */
+  changePassword: protectedProcedure
+    .input(
+      z.object({
+        currentPassword: z.string().min(1),
+        newPassword: z.string().min(8, 'Password must be at least 8 characters'),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const user = await ctx.prisma.user.findUnique({
+        where: { id: ctx.user.id },
+        select: { id: true, password: true },
+      })
+      if (!user) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'User not found' })
+      }
+      if (!user.password) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Cannot change password for account without a password (OAuth)',
+        })
+      }
+
+      const valid = await compare(input.currentPassword, user.password)
+      if (!valid) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Current password is incorrect',
+        })
+      }
+
+      const hashedPassword = await hash(input.newPassword, 12)
+      await ctx.prisma.user.update({
+        where: { id: ctx.user.id },
+        data: { password: hashedPassword },
+      })
+
       return { success: true }
     }),
 })

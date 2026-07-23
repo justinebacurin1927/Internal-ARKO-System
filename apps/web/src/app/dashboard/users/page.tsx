@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import { useSession } from 'next-auth/react'
 import { Card, CardContent } from '@arko/ui'
+import { OpenPeepsAvatar } from '../../../components/open-peeps-avatar'
 import {
   Users as UsersIcon,
   Search,
@@ -23,8 +24,11 @@ import {
   Phone,
   Mail,
   Pencil,
+  KeyRound,
+  RefreshCw,
 } from 'lucide-react'
 import { api } from '../../../lib/trpc/client'
+import { generateAvatarSeed, avatarConfigToJson } from '../../../lib/avatar'
 
 const roleConfig = {
   ADMIN: { label: 'Admin', color: 'bg-red-50 text-red-700', icon: ShieldAlert },
@@ -68,34 +72,22 @@ function generatePassword(): string {
   return parts.join('')
 }
 
-function UserAvatar({ name, email, image, size = 'md' }: { name: string | null; email: string; image: string | null; size?: 'sm' | 'md' | 'lg' }) {
-  const sizeClass = size === 'sm' ? 'h-7 w-7 text-[10px]' : size === 'lg' ? 'h-12 w-12 text-sm' : 'h-9 w-9 text-[12px]'
-  const initials = (name ?? email)
-    .split(' ')
-    .map((s) => s.charAt(0))
-    .filter(Boolean)
-    .slice(0, 2)
-    .join('')
-    .toUpperCase()
-
-  if (image) {
-    return (
-      <img
-        src={image}
-        alt={name ?? email}
-        className={`${sizeClass} shrink-0 rounded-full bg-gray-100 object-cover`}
-        onError={(e) => {
-          (e.target as HTMLImageElement).style.display = 'none'
-          ;(e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden')
-        }}
-      />
-    )
-  }
+function UserAvatar({ name, email, image, id, avatar, size = 'md' }: {
+  name: string | null
+  email: string
+  image: string | null
+  id?: string
+  avatar?: unknown
+  size?: 'sm' | 'md' | 'lg'
+}) {
+  const px = size === 'sm' ? 28 : size === 'lg' ? 48 : 36
 
   return (
-    <div className={`${sizeClass} shrink-0 flex items-center justify-center rounded-full bg-gradient-to-br from-primary-400 to-primary-500 font-bold text-white`}>
-      {initials || '?'}
-    </div>
+    <OpenPeepsAvatar
+      userId={id}
+      avatarJson={avatar ? JSON.stringify(avatar) : undefined}
+      size={px}
+    />
   )
 }
 
@@ -111,6 +103,10 @@ export default function UsersPage() {
   const utils = api.useUtils()
 
   const { data: users, isLoading, error } = api.users.list.useQuery({ query: search || undefined })
+  const [resetPasswordData, setResetPasswordData] = useState<{ id: string; name: string; email: string } | null>(null)
+  const [resetPasswordResult, setResetPasswordResult] = useState<{ email: string; password: string } | null>(null)
+  const [copiedPass, setCopiedPass] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
   const updateRole = api.users.updateRole.useMutation({
     onSuccess: () => utils.users.list.invalidate(),
   })
@@ -120,8 +116,21 @@ export default function UsersPage() {
   const deleteUser = api.users.delete.useMutation({
     onSuccess: () => {
       setConfirmDelete(null)
+      setDeleteError(null)
       utils.users.list.invalidate()
     },
+    onError: (err) => {
+      setDeleteError(err.message)
+    },
+  })
+  const resetPasswordMut = api.users.resetPassword.useMutation({
+    onSuccess: (data) => {
+      setResetPasswordResult({ email: data.email, password: data.generatedPassword })
+      setResetPasswordData(null)
+    },
+  })
+  const updateProfile = api.users.updateProfile.useMutation({
+    onSuccess: () => utils.users.list.invalidate(),
   })
 
   const filteredUsers = users ?? []
@@ -204,7 +213,7 @@ export default function UsersPage() {
               <Card key={user.id} className="overflow-hidden">
                 <CardContent className="flex items-center gap-3 p-3">
                   {/* Avatar with profile pic */}
-                  <UserAvatar name={user.name} email={user.email} image={user.image} />
+                  <UserAvatar name={user.name} email={user.email} image={user.image} id={user.id} avatar={user.avatar} />
 
                   {/* Info */}
                   <div className="min-w-0 flex-1">
@@ -278,6 +287,30 @@ export default function UsersPage() {
                                   Edit profile
                                 </button>
                               </div>
+                              <div className="mb-1 px-1 flex flex-col gap-0.5">
+                                <button
+                                  onClick={() => {
+                                    setResetPasswordData({ id: user.id, name: user.name ?? '', email: user.email })
+                                    setOpenDropdown(null)
+                                  }}
+                                  className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[11px] text-gray-600 hover:bg-gray-50 transition-colors"
+                                >
+                                  <KeyRound className="h-3 w-3" />
+                                  Reset password
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    const newConfig = avatarConfigToJson(generateAvatarSeed(user.id))
+                                    updateProfile.mutate({ userId: user.id, avatar: newConfig })
+                                    setOpenDropdown(null)
+                                  }}
+                                  disabled={updateProfile.isPending}
+                                  className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[11px] text-gray-600 hover:bg-gray-50 transition-colors"
+                                >
+                                  {updateProfile.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+                                  Reset avatar
+                                </button>
+                              </div>
 
                               {/* Role */}
                               <div className="mb-1 px-1">
@@ -347,8 +380,14 @@ export default function UsersPage() {
                               {/* Delete */}
                               {confirmDelete !== user.id ? (
                                 <div className="border-t border-gray-100 pt-1 px-1">
+                                  {deleteError && (
+                                    <div className="mb-1.5 flex items-center gap-1.5 rounded-lg bg-red-50 px-2 py-1.5">
+                                      <AlertCircle className="h-3 w-3 shrink-0 text-red-500" />
+                                      <p className="text-[9px] text-red-600">{deleteError}</p>
+                                    </div>
+                                  )}
                                   <button
-                                    onClick={() => setConfirmDelete(user.id)}
+                                    onClick={() => { setDeleteError(null); setConfirmDelete(user.id) }}
                                     className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[11px] text-red-600 hover:bg-red-50 transition-colors"
                                   >
                                     <Trash2 className="h-3 w-3" />
@@ -401,6 +440,80 @@ export default function UsersPage() {
           initialTitle={showEditModal.title}
           onClose={() => setShowEditModal(null)}
         />
+      )}
+      {resetPasswordData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-bold text-gray-900">Reset Password</h2>
+              <button onClick={() => setResetPasswordData(null)} className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 transition-colors">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <p className="text-[12px] text-gray-600 mb-4">
+              Generate a new password for <strong>{resetPasswordData.name}</strong> ({resetPasswordData.email})?
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setResetPasswordData(null)}
+                className="flex-1 rounded-xl border border-gray-200 px-3 py-2.5 text-[12px] font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => resetPasswordMut.mutate({ userId: resetPasswordData.id })}
+                disabled={resetPasswordMut.isPending}
+                className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-primary-600 px-3 py-2.5 text-[12px] font-semibold text-white disabled:opacity-50 hover:bg-primary-700 transition-colors"
+              >
+                {resetPasswordMut.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <KeyRound className="h-3.5 w-3.5" />}
+                Generate New Password
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {resetPasswordResult && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-sm font-bold text-gray-900">Password Reset</h2>
+                <p className="text-[11px] text-gray-400 mt-0.5">Share this password with the user</p>
+              </div>
+              <button onClick={() => setResetPasswordResult(null)} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 transition-colors">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="space-y-3">
+              <div className="rounded-xl bg-gray-50 p-3">
+                <p className="text-[9px] font-semibold uppercase tracking-wider text-gray-400 mb-1">Email</p>
+                <code className="text-[12px] text-gray-700 font-mono">{resetPasswordResult.email}</code>
+              </div>
+              <div className="rounded-xl bg-gray-50 p-3">
+                <p className="text-[9px] font-semibold uppercase tracking-wider text-gray-400 mb-1">New Password</p>
+                <div className="flex items-center justify-between">
+                  <code className="text-[12px] text-gray-700 font-mono">{resetPasswordResult.password}</code>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(resetPasswordResult.password)
+                      setCopiedPass(true)
+                      setTimeout(() => setCopiedPass(false), 2000)
+                    }}
+                    className="shrink-0 rounded-lg p-1.5 text-gray-400 hover:bg-gray-200 transition-colors"
+                  >
+                    {copiedPass ? <CheckCheck className="h-3.5 w-3.5 text-finance-600" /> : <Copy className="h-3.5 w-3.5" />}
+                  </button>
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={() => setResetPasswordResult(null)}
+              className="mt-4 w-full rounded-xl bg-gray-900 px-3 py-2.5 text-[12px] font-semibold text-white hover:bg-gray-800 transition-colors"
+            >
+              Done
+            </button>
+          </div>
+        </div>
       )}
     </div>
   )

@@ -11,6 +11,28 @@ import { router, protectedProcedure } from '../trpc'
 import { s3, S3_BUCKET } from '../../../lib/s3'
 
 const EXPIRES = 900 // 15 minutes
+const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50 MB
+
+const ALLOWED_MIME_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'image/svg+xml',
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'text/plain',
+  'text/csv',
+  'application/zip',
+  'application/json',
+  'application/octet-stream', // fallback for unknown types
+])
+
+// Resource types that support file attachments
+const ALLOWED_RESOURCE_TYPES = new Set(['TASK', 'RESOURCE'])
 
 export const storageRouter = router({
   createUploadUrl: protectedProcedure
@@ -23,6 +45,19 @@ export const storageRouter = router({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      if (!ALLOWED_RESOURCE_TYPES.has(input.resourceType)) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: `File attachments are not supported for resource type "${input.resourceType}"`,
+        })
+      }
+      if (!ALLOWED_MIME_TYPES.has(input.mimeType)) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: `File type "${input.mimeType}" is not supported`,
+        })
+      }
+
       const fileKey = `${ctx.user.id}/${randomUUID()}-${input.fileName}`
       const uploadUrl = await getSignedUrl(
         s3,
@@ -47,11 +82,29 @@ export const storageRouter = router({
         resourceId: z.string().optional(),
       }),
     )
-    .mutation(({ ctx, input }) =>
-      ctx.prisma.fileAttachment.create({
+    .mutation(async ({ ctx, input }) => {
+      if (!ALLOWED_RESOURCE_TYPES.has(input.resourceType)) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: `File attachments are not supported for resource type "${input.resourceType}"`,
+        })
+      }
+      if (!ALLOWED_MIME_TYPES.has(input.mimeType)) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: `File type "${input.mimeType}" is not supported`,
+        })
+      }
+      if (input.fileSize > MAX_FILE_SIZE) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: `File exceeds the maximum size of ${MAX_FILE_SIZE / 1024 / 1024} MB`,
+        })
+      }
+      return ctx.prisma.fileAttachment.create({
         data: { ...input, userId: ctx.user.id! },
-      }),
-    ),
+      })
+    }),
 
   listFor: protectedProcedure
     .input(z.object({ resourceType: z.string(), resourceId: z.string() }))

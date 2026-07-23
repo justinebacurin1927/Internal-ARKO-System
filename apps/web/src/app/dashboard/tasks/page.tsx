@@ -15,6 +15,8 @@ import {
 } from 'lucide-react'
 import { api } from '../../../lib/trpc/client'
 import { CommentThread } from './comment-thread'
+import { FileUploader } from '../../../components/file-uploader'
+import { AttachmentList } from '../../../components/attachment-list'
 
 // resourceType key for the generic comments system (see comments router)
 const TASK_RESOURCE = 'TASK'
@@ -433,6 +435,7 @@ function TaskDetail({
   const [subtaskTitle, setSubtaskTitle] = useState('')
   const [depSearch, setDepSearch] = useState('')
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [attachRefresh, setAttachRefresh] = useState(0)
 
   const subs = task.subtasks ?? []
   const deps = (task.blockedBy ?? []).map((d: any) => d.blocking).filter(Boolean)
@@ -627,6 +630,18 @@ function TaskDetail({
 
           {/* Comments */}
           <CommentThread resourceType={TASK_RESOURCE} resourceId={task.id} onError={onError} />
+
+          {/* Attachments */}
+          <div className="border-t border-gray-100 pt-4">
+            <AttachmentList key={attachRefresh} resourceType={TASK_RESOURCE} resourceId={task.id} />
+            <div className="mt-2">
+              <FileUploader
+                resourceType={TASK_RESOURCE}
+                resourceId={task.id}
+                onUploadComplete={() => setAttachRefresh((n) => n + 1)}
+              />
+            </div>
+          </div>
 
           {/* Delete — two-step inline confirm (no native dialog) */}
           <div className="border-t border-gray-100 pt-4">

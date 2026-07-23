@@ -2,10 +2,12 @@
 
 import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, Button } from '@arko/ui'
-import { Plus, ArrowUpRight, ArrowDownRight, AlertCircle, Wallet, Users, CheckCircle2 } from 'lucide-react'
+import { Plus, ArrowUpRight, ArrowDownRight, AlertCircle, Wallet, Users, CheckCircle2, RefreshCw, Calendar, Trash2, Pencil, TrendingUp } from 'lucide-react'
 import { api } from '../../../lib/trpc/client'
 import { formatCurrency } from '@arko/finance'
 import { AddTransactionDialog } from './add-transaction-dialog'
+import { RecurringTransactionDialog } from './recurring-transaction-dialog'
+import { MetricsPanel } from './metrics-panel'
 
 function StatsSkeleton() {
   return (
@@ -27,6 +29,10 @@ function StatsSkeleton() {
 export default function FinancePage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [scopeFilter, setScopeFilter] = useState<'ALL' | 'PERSONAL' | 'COMPANY'>('ALL')
+  const [recurringOpen, setRecurringOpen] = useState(false)
+  const [editRecurringId, setEditRecurringId] = useState<string | undefined>()
+  const [showRecurring, setShowRecurring] = useState(false)
+  const [showMetrics, setShowMetrics] = useState(0) // 0 = collapsed, 1 = show
 
   const query = api.finance.getBalance.useQuery(
     scopeFilter !== 'ALL' ? { scope: scopeFilter } : undefined,
@@ -35,7 +41,15 @@ export default function FinancePage() {
     scopeFilter !== 'ALL' ? { scope: scopeFilter } : undefined,
   )
   const { data: pendingSplits } = api.finance.getPendingSplits.useQuery()
+  const { data: recurringList } = api.finance.listRecurring.useQuery()
   const utils = api.useUtils()
+
+  const deleteRecurringMut = api.finance.deleteRecurring.useMutation({
+    onSuccess: () => utils.finance.listRecurring.invalidate(),
+  })
+  const settleSplitMut = api.finance.settleSplit.useMutation({
+    onSuccess: () => utils.finance.getPendingSplits.invalidate(),
+  })
 
   const balance = query.data
   const transactions = txQuery.data ?? []
@@ -267,8 +281,7 @@ export default function FinancePage() {
                         </span>
                         <button
                           onClick={async () => {
-                            await api.finance.settleSplit.useMutation().mutateAsync({ splitId: split.id })
-                            utils.finance.getPendingSplits.invalidate()
+                            await settleSplitMut.mutateAsync({ splitId: split.id })
                           }}
                           className="flex items-center gap-1 rounded-lg bg-green-50 px-2.5 py-1.5 text-[11px] font-medium text-green-700 hover:bg-green-100 transition-colors"
                         >
@@ -282,10 +295,129 @@ export default function FinancePage() {
               </CardContent>
             </Card>
           )}
+
+          {/* Recurring Transactions */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between cursor-pointer" onClick={() => setShowRecurring(!showRecurring)}>
+              <div className="flex items-center gap-2">
+                <CardTitle>Recurring Transactions</CardTitle>
+                {recurringList && recurringList.length > 0 && (
+                  <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+                    {recurringList.length}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  onClick={(e) => { e.stopPropagation(); setEditRecurringId(undefined); setRecurringOpen(true) }}
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Add
+                </Button>
+              </div>
+            </CardHeader>
+            {showRecurring && (
+              <CardContent>
+                {!recurringList || recurringList.length === 0 ? (
+                  <div className="flex flex-col items-center py-10 text-center">
+                    <RefreshCw className="h-10 w-10 text-gray-200 mb-3" />
+                    <p className="text-sm text-gray-400">No recurring transactions</p>
+                    <Button size="sm" className="mt-3" onClick={() => { setEditRecurringId(undefined); setRecurringOpen(true) }}>
+                      <Plus className="h-3.5 w-3.5" />
+                      Add Recurring
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-gray-100">
+                    {recurringList.map((r) => {
+                      const freqLabel = r.frequency === 'DAILY' ? 'Daily' : r.frequency === 'WEEKLY' ? 'Weekly' : r.frequency === 'MONTHLY' ? 'Monthly' : 'Yearly'
+                      const nextDue = new Date(r.nextDate).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })
+                      return (
+                        <div key={r.id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className={`flex h-8 w-8 items-center justify-center rounded-full shrink-0 ${
+                              r.type === 'INCOME' ? 'bg-finance-50' : 'bg-red-50'
+                            }`}>
+                              <Calendar className={`h-3.5 w-3.5 ${
+                                r.type === 'INCOME' ? 'text-finance-600' : 'text-red-600'
+                              }`} />
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <p className="text-sm font-medium text-gray-900 truncate">{r.description}</p>
+                                {!r.isActive && (
+                                  <span className="rounded px-1.5 py-0.5 text-[9px] font-medium bg-gray-100 text-gray-500">Paused</span>
+                                )}
+                              </div>
+                              <p className="text-xs text-gray-400">
+                                {freqLabel} · Next: {nextDue}
+                                {r.category && <span> · {r.category.name}</span>}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0 ml-3">
+                            <span className={`text-sm font-semibold ${
+                              r.type === 'INCOME' ? 'text-finance-600' : 'text-red-600'
+                            }`}>
+                              {r.type === 'INCOME' ? '+' : '-'}{formatCurrency(r.amount)}
+                            </span>
+                            <button
+                              onClick={() => { setEditRecurringId(r.id); setRecurringOpen(true) }}
+                              className="rounded p-1 text-gray-300 hover:text-gray-600 transition-colors"
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              onClick={async () => {
+                                if (confirm('Delete this recurring transaction?')) {
+                                  await deleteRecurringMut.mutateAsync({ id: r.id })
+                                }
+                              }}
+                              className="rounded p-1 text-gray-300 hover:text-red-500 transition-colors"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            )}
+          </Card>
+
+          {/* Business Metrics */}
+          {showMetrics > 0 ? (
+            <div>
+              <button
+                onClick={() => setShowMetrics(0)}
+                className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors mb-4"
+              >
+                <TrendingUp className="h-4 w-4" />
+                Hide Metrics
+              </button>
+              <MetricsPanel />
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowMetrics(1)}
+              className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors"
+            >
+              <TrendingUp className="h-4 w-4" />
+              Show Business Metrics
+            </button>
+          )}
         </>
       )}
 
       <AddTransactionDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+      <RecurringTransactionDialog
+        open={recurringOpen}
+        onOpenChange={setRecurringOpen}
+        editId={editRecurringId}
+      />
     </div>
   )
 }

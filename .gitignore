@@ -3,7 +3,6 @@ node_modules/
 __pycache__/
 *.pyc
 *.pyo
-backend/db.sqlite3
 dist/
 .env
 .env.local
@@ -32,7 +31,6 @@ yarn-error.log*
 !.yarn/releases
 !.yarn/versions
 supabase/
-backend/supabase/
 
 # Committed-by-mistake local Postgres data dir
 packages/db/pgdata/

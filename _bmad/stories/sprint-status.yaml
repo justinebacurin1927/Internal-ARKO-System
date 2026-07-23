@@ -1,5 +1,5 @@
 # generated: 2026-07-04
-# last_updated: 2026-07-23
+# last_updated: 2026-07-31
 # project: ARKO
 # project_key: NOKEY
 # tracking_system: file-system
@@ -12,7 +12,7 @@
 # Retrospective: optional ↔ done
 
 generated: 2026-07-04
-last_updated: 2026-07-23
+last_updated: 2026-07-31
 project: ARKO
 project_key: NOKEY
 tracking_system: file-system
@@ -40,10 +40,10 @@ development_status:
   5-1-tasks-crud-subtasks-dependencies: done   # P0
   5-2-workflow-execution-engine: done      # P0
   5-3-task-comments-ui: done               # P1
-  5-4-file-attachments-ui: backlog                  # P1
-  5-5-settings-functional: backlog                  # P1
-  5-6-finance-recurring-metrics: backlog            # P2
-  5-7-events-sprints-ui: backlog                    # P2
-  5-8-journal-resources-editing: backlog            # P2
-  5-9-user-management-hardening: backlog            # P2
+  5-4-file-attachments-ui: done                         # P1 — full presigned-URL flow, uploader + attachment list wired to tasks & resources
+  5-5-settings-functional: done                     # P1 — implemented with Open Peeps avatar system
+  5-6-finance-recurring-metrics: done                # P2 — recurring transactions manager + business metrics UI
+  5-7-events-sprints-ui: done                       # P2 — sprint CRUD UI on events page
+  5-8-journal-resources-editing: done                  # P2 — edit buttons + pre-populated forms on journal & resources pages
+  5-9-user-management-hardening: ready-for-dev          # P2 — updated with Open Peeps avatars
   epic-5-retrospective: optional

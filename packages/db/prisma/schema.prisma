@@ -16,6 +16,7 @@ model User {
   email     String     @unique
   password  String?
   image     String?
+  avatar    Json?     @default("{}")
   phone     String?
   title     String?
   role      Role       @default(USER)

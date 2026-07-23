@@ -9,7 +9,7 @@ export const commentsRouter = router({
       ctx.prisma.comment.findMany({
         where: { resourceType: input.resourceType, resourceId: input.resourceId },
         orderBy: { createdAt: 'asc' },
-        include: { user: { select: { id: true, name: true, image: true } } },
+        include: { user: { select: { id: true, name: true, image: true, avatar: true } } },
       }),
     ),
 

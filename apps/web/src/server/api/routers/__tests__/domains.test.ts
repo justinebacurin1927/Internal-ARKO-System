@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, jest } from '@jest/globals'
 import { journalRouter } from '../journal'
 import { resourcesRouter } from '../resources'
 import { commentsRouter } from '../comments'
@@ -9,7 +9,7 @@ describe('journal router', () => {
       user: { id: 'u1' },
       session: { user: { id: 'u1' } },
       userRole: 'USER',
-      prisma: { journalEntry: { findMany: vi.fn().mockResolvedValue([{ id: 'j1' }]) } },
+      prisma: { journalEntry: { findMany: jest.fn().mockResolvedValue([{ id: 'j1' }]) } },
     } as any
     expect(await journalRouter.createCaller(ctx).list()).toHaveLength(1)
   })
@@ -21,7 +21,7 @@ describe('resources router', () => {
       user: { id: 'u1' },
       session: { user: { id: 'u1' } },
       userRole: 'USER',
-      prisma: { resource: { findMany: vi.fn().mockResolvedValue([{ id: 'r1' }]) } },
+      prisma: { resource: { findMany: jest.fn().mockResolvedValue([{ id: 'r1' }]) } },
     } as any
     expect(await resourcesRouter.createCaller(ctx).list()).toHaveLength(1)
   })
@@ -29,7 +29,7 @@ describe('resources router', () => {
 
 describe('comments router (polymorphic)', () => {
   it('create writes with the current userId and resource pointer', async () => {
-    const create = vi.fn().mockResolvedValue({ id: 'c1' })
+    const create = jest.fn().mockResolvedValue({ id: 'c1' })
     const ctx = {
       user: { id: 'u1' },
       session: { user: { id: 'u1' } },
@@ -47,7 +47,7 @@ describe('comments router (polymorphic)', () => {
   })
 
   it('list filters by resource', async () => {
-    const findMany = vi.fn().mockResolvedValue([{ id: 'c1' }])
+    const findMany = jest.fn().mockResolvedValue([{ id: 'c1' }])
     const ctx = {
       user: { id: 'u1' },
       session: { user: { id: 'u1' } },

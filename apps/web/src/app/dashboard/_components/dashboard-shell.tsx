@@ -24,6 +24,7 @@ import {
   ChevronRight,
 } from 'lucide-react'
 import { api } from '../../../lib/trpc/client'
+import { OpenPeepsAvatar } from '../../../components/open-peeps-avatar'
 
 const today = new Date()
 const dateStr = today.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
@@ -176,9 +177,7 @@ function MobileDrawer({
 
         <div className="absolute bottom-0 left-0 right-0 border-t border-border-subtle p-3 bg-white">
           <div className="flex items-center gap-3 px-1 mb-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-50 text-accent-600 text-xs font-bold">
-              {initial}
-            </div>
+            <OpenPeepsAvatar userId={user?.id} size={32} />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-text-primary truncate">{user?.name ?? 'User'}</p>
               <p className="text-[11px] text-text-tertiary truncate">{user?.email ?? ''}</p>
@@ -287,10 +286,10 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           <div className="relative mb-3" ref={menuRef}>
             <button
               onClick={() => setShowMenu(!showMenu)}
-              className="flex h-9 w-9 items-center justify-center rounded-full ring-1 ring-black/[0.06] text-text-tertiary text-xs font-bold hover:ring-accent-300 hover:text-accent-500 transition-all cursor-pointer"
+              className="flex h-9 w-9 items-center justify-center rounded-full ring-1 ring-black/[0.06] text-text-tertiary hover:ring-accent-300 hover:text-accent-500 transition-all cursor-pointer overflow-hidden"
               title="User menu"
             >
-              {initial}
+              <OpenPeepsAvatar userId={user?.id} size={36} />
             </button>
             {showMenu && (
               <div className="absolute left-full z-30 ml-3 bottom-0 w-56 rounded-xl border border-border-subtle bg-white p-1.5 shadow-lg">

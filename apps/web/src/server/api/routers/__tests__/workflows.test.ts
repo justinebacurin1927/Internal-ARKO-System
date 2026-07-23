@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, jest } from '@jest/globals'
 import { workflowsRouter } from '../workflows'
 
 const goodDef = JSON.stringify({
@@ -11,25 +11,25 @@ const goodDef = JSON.stringify({
 const ctx = (over: any = {}) => {
   const prisma = {
     workflow: {
-      findFirst: vi.fn().mockResolvedValue({ id: 'w1', userId: 'u1', definition: goodDef }),
-      create: vi.fn().mockImplementation(({ data }: any) => Promise.resolve({ id: 'w1', ...data })),
-      update: vi.fn().mockImplementation(({ data }: any) => Promise.resolve({ id: 'w1', ...data })),
-      delete: vi.fn().mockResolvedValue({ id: 'w1' }),
+      findFirst: jest.fn().mockResolvedValue({ id: 'w1', userId: 'u1', definition: goodDef }),
+      create: jest.fn().mockImplementation(({ data }: any) => Promise.resolve({ id: 'w1', ...data })),
+      update: jest.fn().mockImplementation(({ data }: any) => Promise.resolve({ id: 'w1', ...data })),
+      delete: jest.fn().mockResolvedValue({ id: 'w1' }),
       ...(over.workflow ?? {}),
     },
     workflowExecution: {
-      create: vi.fn().mockResolvedValue({ id: 'e1', status: 'PENDING' }),
-      update: vi.fn().mockImplementation(({ data }: any) => Promise.resolve({ id: 'e1', ...data })),
-      findUnique: vi.fn().mockResolvedValue({
+      create: jest.fn().mockResolvedValue({ id: 'e1', status: 'PENDING' }),
+      update: jest.fn().mockImplementation(({ data }: any) => Promise.resolve({ id: 'e1', ...data })),
+      findUnique: jest.fn().mockResolvedValue({
         id: 'e1',
         workflow: { userId: 'u1' },
         logs: [],
       }),
-      findMany: vi.fn().mockResolvedValue([]),
+      findMany: jest.fn().mockResolvedValue([]),
       ...(over.workflowExecution ?? {}),
     },
     executionLog: {
-      create: vi.fn().mockResolvedValue({ id: 'l1' }),
+      create: jest.fn().mockResolvedValue({ id: 'l1' }),
       ...(over.executionLog ?? {}),
     },
   }
@@ -97,7 +97,7 @@ describe('workflows.execute', () => {
   it('marks execution FAILED and writes an ERROR log when a step throws', async () => {
     const c = ctx({
       executionLog: {
-        create: vi
+        create: jest
           .fn()
           .mockRejectedValueOnce(new Error('db blew up'))
           .mockResolvedValue({ id: 'lerr' }),
@@ -114,7 +114,7 @@ describe('workflows.execute', () => {
   })
 
   it('rejects executing a workflow the caller does not own', async () => {
-    const c = ctx({ workflow: { findFirst: vi.fn().mockResolvedValue(null) } })
+    const c = ctx({ workflow: { findFirst: jest.fn().mockResolvedValue(null) } })
     const caller = workflowsRouter.createCaller(c)
     await expect(caller.execute({ workflowId: 'w1' })).rejects.toMatchObject({ code: 'NOT_FOUND' })
   })
@@ -131,7 +131,7 @@ describe('workflows.getExecution', () => {
   it('rejects reading an execution the caller does not own', async () => {
     const c = ctx({
       workflowExecution: {
-        findUnique: vi.fn().mockResolvedValue({ id: 'e1', workflow: { userId: 'other' }, logs: [] }),
+        findUnique: jest.fn().mockResolvedValue({ id: 'e1', workflow: { userId: 'other' }, logs: [] }),
       },
     })
     const caller = workflowsRouter.createCaller(c)
@@ -168,7 +168,7 @@ describe('workflows.update', () => {
   })
 
   it('rejects updating a workflow the caller does not own', async () => {
-    const c = ctx({ workflow: { findFirst: vi.fn().mockResolvedValue(null) } })
+    const c = ctx({ workflow: { findFirst: jest.fn().mockResolvedValue(null) } })
     const caller = workflowsRouter.createCaller(c)
     await expect(caller.update({ id: 'w1', name: 'x' })).rejects.toMatchObject({ code: 'NOT_FOUND' })
   })
@@ -183,7 +183,7 @@ describe('workflows.delete', () => {
   })
 
   it('rejects deleting a workflow the caller does not own', async () => {
-    const c = ctx({ workflow: { findFirst: vi.fn().mockResolvedValue(null) } })
+    const c = ctx({ workflow: { findFirst: jest.fn().mockResolvedValue(null) } })
     const caller = workflowsRouter.createCaller(c)
     await expect(caller.delete({ id: 'w1' })).rejects.toMatchObject({ code: 'NOT_FOUND' })
   })

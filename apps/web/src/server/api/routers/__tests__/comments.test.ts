@@ -1,14 +1,14 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, jest } from '@jest/globals'
 import { commentsRouter } from '../comments'
 
 const ctx = (over: any = {}) => {
   const prisma = {
     comment: {
-      findMany: vi.fn().mockResolvedValue([{ id: 'c1', content: 'hi' }]),
-      create: vi.fn().mockImplementation(({ data }: any) => Promise.resolve({ id: 'c1', ...data })),
-      findUnique: vi.fn().mockResolvedValue({ id: 'c1', userId: 'u1' }),
-      update: vi.fn().mockImplementation(({ data }: any) => Promise.resolve({ id: 'c1', ...data })),
-      delete: vi.fn().mockResolvedValue({ id: 'c1' }),
+      findMany: jest.fn().mockResolvedValue([{ id: 'c1', content: 'hi' }]),
+      create: jest.fn().mockImplementation(({ data }: any) => Promise.resolve({ id: 'c1', ...data })),
+      findUnique: jest.fn().mockResolvedValue({ id: 'c1', userId: 'u1' }),
+      update: jest.fn().mockImplementation(({ data }: any) => Promise.resolve({ id: 'c1', ...data })),
+      delete: jest.fn().mockResolvedValue({ id: 'c1' }),
       ...(over.comment ?? {}),
     },
   }
@@ -54,7 +54,7 @@ describe('comments.update', () => {
   })
 
   it('rejects a non-author', async () => {
-    const c = ctx({ comment: { findUnique: vi.fn().mockResolvedValue({ id: 'c1', userId: 'other' }) } })
+    const c = ctx({ comment: { findUnique: jest.fn().mockResolvedValue({ id: 'c1', userId: 'other' }) } })
     const caller = commentsRouter.createCaller(c)
     await expect(caller.update({ id: 'c1', content: 'x' })).rejects.toMatchObject({ code: 'FORBIDDEN' })
   })
@@ -69,7 +69,7 @@ describe('comments.delete', () => {
   })
 
   it('rejects a non-author', async () => {
-    const c = ctx({ comment: { findUnique: vi.fn().mockResolvedValue({ id: 'c1', userId: 'other' }) } })
+    const c = ctx({ comment: { findUnique: jest.fn().mockResolvedValue({ id: 'c1', userId: 'other' }) } })
     const caller = commentsRouter.createCaller(c)
     await expect(caller.delete({ id: 'c1' })).rejects.toMatchObject({ code: 'FORBIDDEN' })
   })

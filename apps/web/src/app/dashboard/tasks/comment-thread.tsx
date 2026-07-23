@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { useSession } from 'next-auth/react'
-import { Avatar, AvatarImage, AvatarFallback, Button } from '@arko/ui'
+import { Button } from '@arko/ui'
+import { OpenPeepsAvatar } from '../../../components/open-peeps-avatar'
 import { Loader2, Pencil, Trash2, X, Check } from 'lucide-react'
 import { api } from '../../../lib/trpc/client'
 
@@ -76,10 +77,11 @@ export function CommentThread({
             const mine = c.user?.id === currentUserId
             return (
               <div key={c.id} className="flex gap-2">
-                <Avatar className="h-6 w-6 shrink-0">
-                  {c.user?.image && <AvatarImage src={c.user.image} alt={c.user?.name ?? ''} />}
-                  <AvatarFallback>{(c.user?.name ?? '?').charAt(0)}</AvatarFallback>
-                </Avatar>
+                <OpenPeepsAvatar
+                  userId={c.user?.id}
+                  avatarJson={c.user?.avatar ? JSON.stringify(c.user.avatar) : undefined}
+                  size={24}
+                />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs font-medium text-gray-800">{c.user?.name ?? 'Unknown'}</span>

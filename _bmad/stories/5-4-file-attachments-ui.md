@@ -1,7 +1,7 @@
 # Story 5.4: File Attachments — Surface the Uploader
 
 **Epic:** Sprint 5 — Migration Gap Closure
-**Status:** backlog
+**Status:** done
 **Effort:** 3 days
 **Priority:** P1 — backend complete, no UI
 
