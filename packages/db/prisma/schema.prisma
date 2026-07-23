@@ -113,15 +113,15 @@ model WorkspaceMember {
 // ===== FINANCE MODELS =====
 
 model AccountCategory {
-  id       String       @id @default(cuid())
+  id       String      @id @default(cuid())
   name     String
   type     AccountType
-  color    String?      @default("#6b7280")
+  color    String?     @default("#6b7280")
   icon     String?
   budgetId String?
 
   transactions Transaction[]
-  budget       Budget?       @relation(fields: [budgetId], references: [id])
+  budget       Budget?                @relation(fields: [budgetId], references: [id])
   recurring    RecurringTransaction[]
 }
 
@@ -164,23 +164,23 @@ enum TransactionScope {
 }
 
 model SplitShare {
-  id            String      @id @default(cuid())
+  id            String  @id @default(cuid())
   transactionId String
   userId        String
   amount        Float
-  settled       Boolean     @default(false)
+  settled       Boolean @default(false)
 
-  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
-  user          User        @relation(fields: [userId], references: [id])
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id])
 
   @@unique([transactionId, userId])
 }
 
 model Budget {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   name        String
   amount      Float
-  periodStart DateTime @default(now())
+  periodStart DateTime  @default(now())
   periodEnd   DateTime?
   workspaceId String?
 
@@ -190,17 +190,17 @@ model Budget {
 // ===== WORKFLOW MODELS =====
 
 model Workflow {
-  id          String   @id @default(cuid())
+  id          String         @id @default(cuid())
   name        String
   description String?
-  definition  String   // JSON/YAML workflow definition
+  definition  String // JSON/YAML workflow definition
   status      WorkflowStatus @default(ACTIVE)
   userId      String
   workspaceId String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 
-  user       User               @relation(fields: [userId], references: [id])
+  user       User                @relation(fields: [userId], references: [id])
   executions WorkflowExecution[]
 }
 
@@ -211,16 +211,16 @@ enum WorkflowStatus {
 }
 
 model WorkflowExecution {
-  id         String         @id @default(cuid())
-  workflowId String
-  status     ExecutionStatus @default(PENDING)
-  input      String?
-  output     String?
-  startedAt  DateTime?
+  id          String          @id @default(cuid())
+  workflowId  String
+  status      ExecutionStatus @default(PENDING)
+  input       String?
+  output      String?
+  startedAt   DateTime?
   completedAt DateTime?
-  createdAt  DateTime       @default(now())
+  createdAt   DateTime        @default(now())
 
-  workflow Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  workflow Workflow       @relation(fields: [workflowId], references: [id], onDelete: Cascade)
   logs     ExecutionLog[]
 }
 
@@ -233,12 +233,12 @@ enum ExecutionStatus {
 }
 
 model ExecutionLog {
-  id        String   @id @default(cuid())
+  id          String   @id @default(cuid())
   executionId String
-  step      String?
-  message   String
-  level     LogLevel @default(INFO)
-  createdAt DateTime @default(now())
+  step        String?
+  message     String
+  level       LogLevel @default(INFO)
+  createdAt   DateTime @default(now())
 
   execution WorkflowExecution @relation(fields: [executionId], references: [id], onDelete: Cascade)
 }
@@ -253,22 +253,44 @@ enum LogLevel {
 // ===== TASK MODELS =====
 
 model Task {
-  id          String       @id @default(cuid())
+  id          String     @id @default(cuid())
   title       String
   description String?
-  status      TaskStatus   @default(TODO)
-  priority    Priority     @default(MEDIUM)
+  status      TaskStatus @default(TODO)
+  priority    Priority   @default(MEDIUM)
   assigneeId  String?
   workspaceId String?
   dueDate     DateTime?
-  position    Int          @default(0)
+  position    Int        @default(0)
   parentId    String?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 
-  assignee   User?    @relation(fields: [assigneeId], references: [id])
-  parent     Task?    @relation("TaskDependencies", fields: [parentId], references: [id])
-  subtasks   Task[]   @relation("TaskDependencies")
+  assignee User?  @relation(fields: [assigneeId], references: [id])
+  parent   Task?  @relation("TaskDependencies", fields: [parentId], references: [id])
+  subtasks Task[] @relation("TaskDependencies")
+
+  // Blocking dependencies (distinct from the parent/subtask hierarchy above).
+  // `blocking`  = edges where this task blocks another (this task is the blocker).
+  // `blockedBy` = edges where this task is blocked by another.
+  blocking  TaskDependency[] @relation("BlockingTask")
+  blockedBy TaskDependency[] @relation("BlockedTask")
+}
+
+// A directed "A blocks B" edge between two tasks. `blockedId` cannot be marked
+// DONE while its blocker is incomplete. Kept separate from the Task self-relation
+// so hierarchy (parent/subtasks) and blocking stay independent concepts.
+model TaskDependency {
+  id         String   @id @default(cuid())
+  blockingId String
+  blockedId  String
+  createdAt  DateTime @default(now())
+
+  blocking Task @relation("BlockingTask", fields: [blockingId], references: [id], onDelete: Cascade)
+  blocked  Task @relation("BlockedTask", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@unique([blockingId, blockedId])
+  @@index([blockedId])
 }
 
 enum TaskStatus {

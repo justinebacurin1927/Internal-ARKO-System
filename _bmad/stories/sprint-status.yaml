@@ -1,5 +1,5 @@
 # generated: 2026-07-04
-# last_updated: 2026-07-04
+# last_updated: 2026-07-23
 # project: ARKO
 # project_key: NOKEY
 # tracking_system: file-system
@@ -12,7 +12,7 @@
 # Retrospective: optional ↔ done
 
 generated: 2026-07-04
-last_updated: 2026-07-04
+last_updated: 2026-07-23
 project: ARKO
 project_key: NOKEY
 tracking_system: file-system
@@ -34,3 +34,15 @@ development_status:
   4-3-ideas-board: backlog
   4-4-resource-library: backlog
   epic-4-retrospective: optional
+
+  # --- Sprint 5: Migration Gap Closure (Next.js + tRPC/Prisma) (in progress) ---
+  epic-5: in-progress
+  5-1-tasks-crud-subtasks-dependencies: done   # P0
+  5-2-workflow-execution-engine: backlog            # P0
+  5-3-task-comments-ui: backlog                     # P1
+  5-4-file-attachments-ui: backlog                  # P1
+  5-5-settings-functional: backlog                  # P1
+  5-6-finance-recurring-metrics: backlog            # P2
+  5-7-events-sprints-ui: backlog                    # P2
+  5-8-journal-resources-editing: backlog            # P2
+  epic-5-retrospective: optional
