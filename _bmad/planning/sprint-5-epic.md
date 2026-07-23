@@ -229,6 +229,32 @@ page calls — entries/resources can be created and deleted but not edited. Wire
 
 ---
 
+## Story 5.9: User Management — Hardening & Completion
+
+**Status:** backlog
+**Effort:** 2 days
+**Priority:** P2 — backend CRUD exists; close robustness + coverage gaps
+
+### Description
+
+Unlike the other Epic 5 items, user management is **not** a missing backend — the `users`
+router already has admin-gated `list`, `create` (auto email/password/gravatar), `updateProfile`,
+`updateRole`, `updateStatus`, and `delete`, with self-protection guards, and the users page is
+wired to them. What's missing is robustness and safety:
+
+- **No tests** for a router with real logic (password generation, email-uniqueness loop, self-role/self-delete guards).
+- **No password reset** for an existing user — `create` returns a generated password once, but an admin can't regenerate it later.
+- **Unsafe delete**: `Transaction.userId` is a required relation, so deleting a user who has transactions will throw a raw FK error (poor UX / potential 500).
+
+### Acceptance Criteria
+
+- [ ] Backend: `users.resetPassword({ userId })` (admin only) — regenerates + hashes a password, returns the plaintext once (mirror `create`'s pattern).
+- [ ] Backend: `delete` handles related records gracefully — either block with a clear message when the user owns transactions/records, or reassign/soft-delete; document the choice.
+- [ ] Backend: confirm `updateRole`/`updateStatus`/`delete` self-protection guards stay intact.
+- [ ] Frontend: admin can trigger a password reset and see/copy the new password; safe-delete surfaces the friendly error.
+- [ ] Frontend: verify create-time generated password is shown/copyable and role/status controls work end-to-end.
+- [ ] Tests: `users.test.ts` covering create (email uniqueness + generated password), self-role/self-delete/self-status guards, resetPassword, and safe-delete behavior.
+
 ## Notes / Follow-ups (not stories)
 
 - **Docs are stale:** `docs/ROADMAP.md` and `docs/ARCHITECTURE.md` describe the Django/Vite
