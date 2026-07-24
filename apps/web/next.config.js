@@ -1,10 +1,14 @@
+const path = require('path')
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
   turbopack: {
     root: process.cwd(),
   },
-  outputFileTracingRoot: process.cwd(),
+  outputFileTracingRoot: path.join(__dirname, '../../'),
+  outputFileTracingIncludes: {
+    '/*': ['../../node_modules/next/dist/compiled/source-map/**'],
+  },
   transpilePackages: [
     '@arko/ui',
     '@arko/db',
