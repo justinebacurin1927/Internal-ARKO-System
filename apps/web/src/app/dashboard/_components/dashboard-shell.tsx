@@ -28,14 +28,7 @@ import dynamic from 'next/dynamic'
 
 const OpenPeepsAvatar = dynamic(
   () => import('../../../components/open-peeps-avatar').then((m) => ({ default: m.OpenPeepsAvatar })),
-  {
-    ssr: false,
-    loading: () => null,
-    onError: () => {
-      // Silently ignore — avatar is decorative, not critical
-      return () => null
-    },
-  },
+  { ssr: false, loading: () => null },
 )
 
 type NavCategory = {
