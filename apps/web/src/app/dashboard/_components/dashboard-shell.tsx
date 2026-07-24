@@ -26,9 +26,16 @@ import {
 import { api } from '../../../lib/trpc/client'
 import dynamic from 'next/dynamic'
 
-const OpenPeepsAvatar = dynamic(() =>
-  import('../../../components/open-peeps-avatar').then((m) => ({ default: m.OpenPeepsAvatar })),
-  { ssr: false },
+const OpenPeepsAvatar = dynamic(
+  () => import('../../../components/open-peeps-avatar').then((m) => ({ default: m.OpenPeepsAvatar })),
+  {
+    ssr: false,
+    loading: () => null,
+    onError: () => {
+      // Silently ignore — avatar is decorative, not critical
+      return () => null
+    },
+  },
 )
 
 type NavCategory = {
