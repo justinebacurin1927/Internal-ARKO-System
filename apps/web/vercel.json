@@ -1,6 +1,6 @@
 {
   "framework": "nextjs",
-  "buildCommand": "cd ../.. && pnpm turbo run build --filter=@arko/web",
+  "buildCommand": "cd ../.. && pnpm install && pnpm --filter @arko/web build",
   "outputDirectory": ".next",
   "installCommand": "cd ../.. && pnpm install",
   "ignoreCommand": "git diff --quiet HEAD^ HEAD -- ../.."
