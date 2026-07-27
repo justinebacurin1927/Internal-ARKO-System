@@ -285,7 +285,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           <div className="border-t border-border-subtle p-3">
             <div className="flex items-center gap-3 rounded-xl bg-card p-3">
               <div className="relative shrink-0">
-                <OpenPeepsAvatar userId={user?.id} avatarJson={profile?.avatar ? JSON.stringify(profile.avatar) : undefined} size={36} />
+                <OpenPeepsAvatar userId={user?.id} avatarJson={profile?.avatar && typeof profile.avatar === 'object' && Object.keys(profile.avatar).length > 0 ? JSON.stringify(profile.avatar) : undefined} size={36} />
                 {profile?.image && (
                   <img
                     src={profile.image}
