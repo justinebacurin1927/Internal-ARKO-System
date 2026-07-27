@@ -202,7 +202,9 @@ export function avatarConfigFromJson(json: AvatarConfigJson): AvatarConfig {
 
   return {
     body: {
-      type: body,
+      // Use a fallback body type if none provided — prevents Effigy crashing
+      // with require("./body/effigy/undefined") when the DB stores a bare {}.
+      type: body || 'Tee',
       options: {
         skinColor: skinColor ?? '#D08B5B',
         topColor: clothingColor ?? '#8FA7DF',
@@ -211,11 +213,11 @@ export function avatarConfigFromJson(json: AvatarConfigJson): AvatarConfig {
       },
     },
     head: {
-      type: head,
+      type: head || 'NoHairTwo',
       options: { outlineColor: hairColor ?? '#1C1C1C', skinColor: skinColor ?? '#D08B5B' },
     },
     face: {
-      type: face,
+      type: face || 'Smile',
       options: { outlineColor: '#000' },
     },
     ...(beard ? { beard: { type: beard, options: { outlineColor: hairColor ?? '#1C1C1C' } } } : {}),

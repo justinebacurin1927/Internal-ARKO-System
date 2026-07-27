@@ -48,7 +48,12 @@ export function OpenPeepsAvatar({
     if (avatarJson) {
       try {
         const parsed = typeof avatarJson === 'string' ? JSON.parse(avatarJson) : avatarJson
-        return parsed as AvatarConfigJson
+        // Guard against empty/default objects {} from the DB — body, head,
+        // and face are all required; missing any crashes Effigy's
+        // require("./category/undefined") → Cannot find module './undefined'
+        if (parsed && typeof parsed.body === 'string' && typeof parsed.head === 'string' && typeof parsed.face === 'string') {
+          return parsed as AvatarConfigJson
+        }
       } catch {
         // Invalid JSON or object — fall through to seed
       }
@@ -63,7 +68,7 @@ export function OpenPeepsAvatar({
         beard: seed.beard?.type,
         accessory: seed.accessory?.type,
         skinColor: seed.body.options.skinColor,
-        hairColor: seed.head.options.color,
+        hairColor: seed.head.options.outlineColor,
         clothingColor: seed.body.options.blazerColor,
       }
     }
