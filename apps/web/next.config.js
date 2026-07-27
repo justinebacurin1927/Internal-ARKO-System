@@ -33,6 +33,7 @@ const nextConfig = {
         destination: '/auth/login',
         permanent: false,
       },
+      { source: '/dashboard/calendar', destination: '/dashboard/events', permanent: true },
     ]
   },
 }
