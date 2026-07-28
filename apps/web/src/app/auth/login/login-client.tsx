@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { signIn } from 'next-auth/react'
+import { useQueryClient } from '@tanstack/react-query'
 import dynamic from 'next/dynamic'
 import { Loader2, Eye, EyeOff, Lock, ShieldCheck, Sparkles } from 'lucide-react'
 
@@ -241,6 +242,7 @@ function QuotePanel({ quote, loading }: { quote: Quote | null; loading: boolean 
 
 function LoginForm() {
   const router = useRouter()
+  const queryClient = useQueryClient()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -268,6 +270,8 @@ function LoginForm() {
       }
 
       sessionStorage.removeItem(CACHE_KEY)
+      // Start this session with an empty cache so no prior user's data shows.
+      queryClient.clear()
       prefetchDashboard(router)
       setRedirecting(true)
       router.push('/dashboard')
