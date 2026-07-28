@@ -54,6 +54,7 @@ export default function EventsPage() {
   const [viewMenu, setViewMenu] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
   const [date, setDate] = useState('')
   const [startTime, setStartTime] = useState('09:00')
   const [endTime, setEndTime] = useState('10:00')
@@ -74,6 +75,7 @@ export default function EventsPage() {
     onSuccess: () => {
       setError('')
       setTitle('')
+      setDescription('')
       setDate('')
       setShowForm(false)
       utils.events.list.invalidate()
@@ -241,7 +243,13 @@ export default function EventsPage() {
               onSubmit={(e) => {
                 e.preventDefault()
                 if (title.trim() && date)
-                  create.mutate({ title: title.trim(), date: new Date(date), startTime, endTime })
+                  create.mutate({
+                    title: title.trim(),
+                    description: description.trim() || undefined,
+                    date: new Date(date),
+                    startTime,
+                    endTime,
+                  })
               }}
               className="space-y-3"
             >
@@ -252,6 +260,13 @@ export default function EventsPage() {
                 autoFocus
                 required
                 className="block w-full rounded-lg border border-border-subtle bg-card px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+              />
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Description (optional)…"
+                rows={2}
+                className="block w-full resize-none rounded-lg border border-border-subtle bg-card px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
               />
               <div className="flex gap-2">
                 <input
