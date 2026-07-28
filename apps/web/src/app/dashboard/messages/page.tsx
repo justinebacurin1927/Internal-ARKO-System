@@ -11,6 +11,7 @@ import {
   AlertCircle,
   Search,
   Plus,
+  Trash2,
 } from 'lucide-react'
 import { api } from '../../../lib/trpc/client'
 import { formatPresence } from '../../../lib/presence'
@@ -50,8 +51,13 @@ export default function MessagesPage() {
     },
   })
 
+  const utils = api.useUtils()
+
   const createConv = api.messages.createConversation.useMutation({
     onSuccess: (conv) => {
+      // Refetch the list so the new conversation resolves and opens immediately.
+      utils.messages.listConversations.invalidate()
+      utils.messages.suggestions.invalidate()
       setSelectedConv(conv.id)
       setShowNewConv(false)
       setSelectedUserId(null)
@@ -59,7 +65,13 @@ export default function MessagesPage() {
     },
   })
 
-  const utils = api.useUtils()
+  const deleteConv = api.messages.deleteConversation.useMutation({
+    onSuccess: () => {
+      setSelectedConv(null)
+      utils.messages.listConversations.invalidate()
+      utils.messages.suggestions.invalidate()
+    },
+  })
 
   const selectedConversation = conversations?.find((c) => c.id === selectedConv)
 
@@ -188,21 +200,39 @@ export default function MessagesPage() {
 
       {/* Right — messages view */}
       <div className="flex flex-1 flex-col rounded-2xl border border-border-subtle bg-card">
-        {selectedConv && selectedConversation ? (
+        {selectedConv ? (
           <>
             {/* Header */}
             <div className="flex items-center gap-3 border-b border-border-subtle px-6 py-4">
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-card">
                 <User className="h-4 w-4 text-text-tertiary" />
               </div>
-              <div>
-                <p className="text-sm font-semibold text-text-primary">
-                  {selectedConversation.participants
-                    .map((p) => p.user.name ?? p.user.email)
-                    .filter(Boolean)
-                    .join(', ')}
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-text-primary">
+                  {selectedConversation
+                    ? selectedConversation.participants
+                        .map((p) => p.user.name ?? p.user.email)
+                        .filter(Boolean)
+                        .join(', ')
+                    : 'Conversation'}
                 </p>
               </div>
+              <button
+                onClick={() => {
+                  if (window.confirm('Delete this conversation? This removes it and its messages for everyone.')) {
+                    deleteConv.mutate({ conversationId: selectedConv })
+                  }
+                }}
+                disabled={deleteConv.isPending}
+                title="Delete conversation"
+                className="shrink-0 rounded-lg p-2 text-text-tertiary transition-colors hover:bg-neg-bg hover:text-red-600 disabled:opacity-60"
+              >
+                {deleteConv.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4" />
+                )}
+              </button>
             </div>
 
             {/* Messages */}

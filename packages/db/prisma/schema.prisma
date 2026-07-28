@@ -328,6 +328,9 @@ model Comment {
 
 model Conversation {
   id        String   @id @default(cuid())
+  // Idempotency key for 1:1 DMs: the two participant ids sorted and joined,
+  // e.g. "userA:userB". Unique so the same pair can't create duplicate DMs.
+  dmKey     String?  @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

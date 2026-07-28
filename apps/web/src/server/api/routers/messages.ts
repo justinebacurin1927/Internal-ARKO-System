@@ -170,33 +170,40 @@ export const messagesRouter = router({
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Cannot start a conversation with yourself' })
       }
 
-      // Check if a DM conversation already exists between these two users
+      const include = {
+        participants: {
+          include: { user: { select: { id: true, name: true, email: true, image: true } } },
+        },
+        messages: {
+          orderBy: { createdAt: 'desc' as const },
+          take: 1,
+          include: { sender: { select: { id: true, name: true } } },
+        },
+      }
+
+      // Idempotency key: the two ids sorted so a pair maps to exactly one DM.
+      const dmKey = [userId, input.participantId].sort().join(':')
+
+      // Return an existing DM if there already is one (covers legacy rows too).
       const existing = await ctx.prisma.conversation.findFirst({
         where: {
           AND: [
             { participants: { some: { userId } } },
             { participants: { some: { userId: input.participantId } } },
+            // exactly these two participants — a 1:1 conversation
+            { participants: { none: { userId: { notIn: [userId, input.participantId] } } } },
           ],
-          // Only match 1-on-1 conversations (exactly 2 participants)
-          ...({ participants: { none: { userId: { notIn: [userId, input.participantId] } } } } as any),
         },
-        include: {
-          participants: {
-            include: {
-              user: { select: { id: true, name: true, email: true, image: true } },
-            },
-          },
-          messages: {
-            orderBy: { createdAt: 'desc' },
-            take: 1,
-            include: {
-              sender: { select: { id: true, name: true } },
-            },
-          },
-        },
+        include,
       })
-
-      if (existing) return existing
+      if (existing) {
+        if (!existing.dmKey) {
+          await ctx.prisma.conversation
+            .update({ where: { id: existing.id }, data: { dmKey } })
+            .catch(() => {})
+        }
+        return existing
+      }
 
       // Verify the other user exists
       const otherUser = await ctx.prisma.user.findUnique({
@@ -206,30 +213,43 @@ export const messagesRouter = router({
         throw new TRPCError({ code: 'NOT_FOUND', message: 'User not found' })
       }
 
-      const conversation = await ctx.prisma.conversation.create({
-        data: {
-          participants: {
-            createMany: {
-              data: [{ userId }, { userId: input.participantId }],
+      try {
+        return await ctx.prisma.conversation.create({
+          data: {
+            dmKey,
+            participants: {
+              createMany: { data: [{ userId }, { userId: input.participantId }] },
             },
           },
-        },
-        include: {
-          participants: {
-            include: {
-              user: { select: { id: true, name: true, email: true, image: true } },
-            },
-          },
-          messages: {
-            orderBy: { createdAt: 'desc' },
-            take: 1,
-            include: {
-              sender: { select: { id: true, name: true } },
-            },
-          },
+          include,
+        })
+      } catch (err) {
+        // Two requests raced: the unique dmKey rejected the second create.
+        if ((err as { code?: string })?.code === 'P2002') {
+          const conv = await ctx.prisma.conversation.findUnique({ where: { dmKey }, include })
+          if (conv) return conv
+        }
+        throw err
+      }
+    }),
+
+  deleteConversation: protectedProcedure
+    .input(z.object({ conversationId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.user.id!
+
+      // Only a participant may delete the conversation.
+      const participant = await ctx.prisma.conversationParticipant.findUnique({
+        where: {
+          conversationId_userId: { conversationId: input.conversationId, userId },
         },
       })
+      if (!participant) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Not a participant in this conversation' })
+      }
 
-      return conversation
+      // Cascades to participants + messages (onDelete: Cascade).
+      await ctx.prisma.conversation.delete({ where: { id: input.conversationId } })
+      return { success: true }
     }),
 })
