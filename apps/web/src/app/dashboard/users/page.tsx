@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import { useSession } from 'next-auth/react'
 import { Card, CardContent } from '@arko/ui'
 import dynamic from 'next/dynamic'
@@ -105,6 +106,7 @@ export default function UsersPage() {
   const [showEditModal, setShowEditModal] = useState<{ id: string; name: string; phone: string | null; title: string | null } | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null)
   const utils = api.useUtils()
 
   const { data: users, isLoading, error } = api.users.list.useQuery({ query: search || undefined })
@@ -269,16 +271,32 @@ export default function UsersPage() {
                     {!isCurrentUser && (
                       <div className="relative">
                         <button
-                          onClick={() => setOpenDropdown(openDropdown === user.id ? null : user.id)}
+                          onClick={(e) => {
+                            if (openDropdown === user.id) {
+                              setOpenDropdown(null)
+                              return
+                            }
+                            const r = e.currentTarget.getBoundingClientRect()
+                            const menuHeight = 330
+                            let top = r.bottom + 4
+                            if (top + menuHeight > window.innerHeight) {
+                              top = Math.max(8, r.top - menuHeight - 4)
+                            }
+                            setMenuPos({ top, left: Math.max(8, r.right - 208) })
+                            setOpenDropdown(user.id)
+                          }}
                           className="rounded-lg p-1.5 text-text-tertiary hover:bg-card hover:text-text-secondary transition-colors"
                         >
                           <UserCog className="h-3.5 w-3.5" />
                         </button>
 
-                        {openDropdown === user.id && (
+                        {openDropdown === user.id && menuPos && createPortal(
                           <>
-                            <div className="fixed inset-0 z-10" onClick={() => setOpenDropdown(null)} />
-                            <div className="absolute right-0 top-full z-20 mt-1 w-52 rounded-xl border border-border-subtle bg-card p-2 shadow-xl">
+                            <div className="fixed inset-0 z-40" onClick={() => setOpenDropdown(null)} />
+                            <div
+                              className="fixed z-50 w-52 rounded-xl border border-border-subtle bg-card p-2 shadow-xl"
+                              style={{ top: menuPos.top, left: menuPos.left }}
+                            >
                               {/* Edit profile */}
                               <div className="px-1 mb-1">
                                 <button
@@ -424,7 +442,8 @@ export default function UsersPage() {
                                 </div>
                               )}
                             </div>
-                          </>
+                          </>,
+                          document.body,
                         )}
                       </div>
                     )}
