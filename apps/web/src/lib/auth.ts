@@ -16,12 +16,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null
 
+        // Normalize so a capitalized (mobile auto-cap) or space-padded email
+        // still matches the stored address.
+        const email = (credentials.email as string).trim().toLowerCase()
+
         // Rate limit: 10 login attempts per minute per email
-        const rateCheck = authLimiter.check(credentials.email as string)
+        const rateCheck = authLimiter.check(email)
         if (!rateCheck.success) return null
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email as string },
+        const user = await prisma.user.findFirst({
+          where: { email: { equals: email, mode: 'insensitive' } },
         })
 
         if (!user || !user.password) return null

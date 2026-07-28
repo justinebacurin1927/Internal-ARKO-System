@@ -174,7 +174,9 @@ export const usersRouter = router({
       const firstName = nameParts[0]
       const lastName = nameParts.slice(1).join('.') || firstName
       const slug = slugifyName(firstName, lastName)
-      const email = input.email || (await findAvailableEmail(ctx.prisma, slug, 'arko.app'))
+      const email =
+        input.email?.trim().toLowerCase() ||
+        (await findAvailableEmail(ctx.prisma, slug, 'arko.app'))
 
       // Auto-generate password if not provided
       const plainPassword = input.password || generatePassword()

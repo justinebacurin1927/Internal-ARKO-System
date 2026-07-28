@@ -337,6 +337,9 @@ function LoginForm() {
                 placeholder="you@example.com"
                 required
                 autoComplete="email"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
                 className="block w-full rounded-xl border border-white/[0.08] bg-card/[0.03] px-4 py-3 text-sm text-white placeholder:text-zinc-600 focus:border-accent-500/60 focus:outline-none focus:ring-2 focus:ring-accent-500/15 focus:bg-card/[0.05] transition-all duration-200"
                 style={{ fontFamily: "'DM Sans', sans-serif" }}
               />
