@@ -35,6 +35,7 @@ import {
 } from 'lucide-react'
 import { api } from '../../../lib/trpc/client'
 import { generateAvatarSeed, avatarConfigToJson } from '../../../lib/avatar'
+import { formatPresence } from '../../../lib/presence'
 
 const roleConfig = {
   ADMIN: { label: 'Admin', color: 'bg-red-50 text-red-700', icon: ShieldAlert },
@@ -248,6 +249,15 @@ export default function UsersPage() {
                           {user.phone}
                         </span>
                       )}
+                      {(() => {
+                        const presence = formatPresence(user.lastActiveAt)
+                        return (
+                          <span className="flex items-center gap-1 text-[10px] text-text-tertiary">
+                            <span className={`h-1.5 w-1.5 rounded-full ${presence.online ? 'bg-pos' : 'bg-text-tertiary'}`} />
+                            {presence.label}
+                          </span>
+                        )
+                      })()}
                     </div>
                   </div>
 

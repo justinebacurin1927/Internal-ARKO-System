@@ -21,6 +21,7 @@ model User {
   title     String?
   role      Role       @default(USER)
   status    UserStatus @default(ACTIVE)
+  lastActiveAt DateTime? @default(now())
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 

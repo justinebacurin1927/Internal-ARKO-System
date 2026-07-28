@@ -148,12 +148,22 @@ export const usersRouter = router({
           role: true,
           status: true,
           createdAt: true,
+          lastActiveAt: true,
           avatar: true,
           _count: { select: { tasks: true, transactions: true } },
         },
         orderBy: { createdAt: 'desc' },
       })
     }),
+
+  /** Heartbeat — mark the current user active. Called periodically by the client. */
+  heartbeat: protectedProcedure.mutation(async ({ ctx }) => {
+    await ctx.prisma.user.update({
+      where: { id: ctx.user.id },
+      data: { lastActiveAt: new Date() },
+    })
+    return { ok: true }
+  }),
 
   /** Create a user — admin only. Email and password auto-generate if omitted. */
   create: protectedProcedure

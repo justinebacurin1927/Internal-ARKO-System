@@ -3,6 +3,36 @@ import { TRPCError } from '@trpc/server'
 import { router, protectedProcedure } from '../trpc'
 
 export const messagesRouter = router({
+  /**
+   * Suggest people to message: active team members the current user does not
+   * already have a conversation with, most recently active first.
+   */
+  suggestions: protectedProcedure.query(async ({ ctx }) => {
+    const userId = ctx.user.id!
+
+    const convos = await ctx.prisma.conversation.findMany({
+      where: { participants: { some: { userId } } },
+      select: { participants: { select: { userId: true } } },
+    })
+    const known = new Set<string>([userId])
+    for (const c of convos) for (const p of c.participants) known.add(p.userId)
+
+    return ctx.prisma.user.findMany({
+      where: { id: { notIn: [...known] }, status: 'ACTIVE' },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        image: true,
+        avatar: true,
+        title: true,
+        lastActiveAt: true,
+      },
+      orderBy: { lastActiveAt: { sort: 'desc', nulls: 'last' } },
+      take: 6,
+    })
+  }),
+
   listConversations: protectedProcedure.query(async ({ ctx }) => {
     const userId = ctx.user.id!
     return ctx.prisma.conversation.findMany({

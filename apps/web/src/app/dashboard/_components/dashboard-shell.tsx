@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { useRequestSignOut } from '../../../components/sign-out-provider'
+import { useHeartbeat } from '../../../lib/use-heartbeat'
 import {
   LayoutDashboard,
   TrendingUp,
@@ -206,6 +207,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
   const { data: session, status } = useSession()
+  useHeartbeat()
   const sessionUser = session?.user as any
   const { data: profile } = api.users.getProfile.useQuery(undefined, { enabled: status === 'authenticated' })
   const user = profile ?? sessionUser
@@ -303,7 +305,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                   <span
                     className={`h-1.5 w-1.5 rounded-full ${status === 'loading' ? 'bg-text-tertiary animate-pulse' : 'bg-pos'}`}
                   />
-                  {status === 'loading' ? 'Connecting…' : 'Connected'}
+                  {status === 'loading' ? 'Connecting…' : 'Active'}
                 </span>
               </div>
               <div className="flex items-center gap-0.5">

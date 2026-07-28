@@ -13,6 +13,7 @@ import {
   Plus,
 } from 'lucide-react'
 import { api } from '../../../lib/trpc/client'
+import { formatPresence } from '../../../lib/presence'
 
 export default function MessagesPage() {
   const [selectedConv, setSelectedConv] = useState<string | null>(null)
@@ -36,6 +37,9 @@ export default function MessagesPage() {
     { query: searchQuery || undefined },
     { enabled: showNewConv },
   )
+  const { data: suggestions } = api.messages.suggestions.useQuery(undefined, {
+    enabled: !selectedConv,
+  })
 
   const sendMsg = api.messages.sendMessage.useMutation({
     onSuccess: () => {
@@ -273,12 +277,57 @@ export default function MessagesPage() {
             </div>
           </>
         ) : (
-          <div className="flex h-full items-center justify-center">
-            <div className="text-center">
-              <MessageSquare className="mx-auto h-12 w-12 text-text-tertiary mb-3" />
-              <p className="text-sm text-text-tertiary">Select a conversation</p>
-              <p className="text-xs text-text-muted mt-1">or start a new one</p>
-            </div>
+          <div className="flex h-full flex-col items-center justify-center p-6">
+            {suggestions && suggestions.length > 0 ? (
+              <div className="w-full max-w-md">
+                <div className="mb-4 text-center">
+                  <MessageSquare className="mx-auto mb-2 h-10 w-10 text-text-tertiary" />
+                  <p className="text-sm font-semibold text-text-primary">Start a conversation</p>
+                  <p className="mt-1 text-xs text-text-muted">Suggested people to message</p>
+                </div>
+                <div className="space-y-1.5">
+                  {suggestions.map((s) => {
+                    const presence = formatPresence(s.lastActiveAt)
+                    const initial = (s.name ?? s.email).charAt(0).toUpperCase()
+                    return (
+                      <button
+                        key={s.id}
+                        onClick={() => createConv.mutate({ participantId: s.id })}
+                        disabled={createConv.isPending}
+                        className="flex w-full items-center gap-3 rounded-xl border border-border-subtle bg-card p-2.5 text-left transition-colors hover:bg-card/[0.04] disabled:opacity-60"
+                      >
+                        <div className="relative shrink-0">
+                          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-50 text-sm font-semibold text-primary-700">
+                            {initial}
+                          </div>
+                          {presence.online && (
+                            <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-pos ring-2 ring-card" />
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium text-text-primary">
+                            {s.name ?? s.email}
+                          </p>
+                          <p className="truncate text-[11px] text-text-tertiary">
+                            {s.title ? `${s.title} · ` : ''}
+                            {presence.label}
+                          </p>
+                        </div>
+                        <span className="shrink-0 rounded-lg bg-primary-500 px-3 py-1.5 text-[11px] font-semibold text-white">
+                          Message
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center">
+                <MessageSquare className="mx-auto mb-3 h-12 w-12 text-text-tertiary" />
+                <p className="text-sm text-text-tertiary">Select a conversation</p>
+                <p className="mt-1 text-xs text-text-muted">or start a new one</p>
+              </div>
+            )}
           </div>
         )}
       </div>
