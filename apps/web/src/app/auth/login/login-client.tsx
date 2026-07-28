@@ -143,32 +143,12 @@ function useQuote(): { quote: Quote | null; loading: boolean } {
       }
     }
 
-    const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 5000)
-
-    fetch('https://api.quotable.io/quotes/random?limit=1', { signal: controller.signal })
-      .then((r) => r.json())
-      .then((data) => {
-        if (Array.isArray(data) && data.length > 0) {
-          const q: Quote = { content: data[0].content, author: data[0].author }
-          sessionStorage.setItem(CACHE_KEY, JSON.stringify(q))
-          setQuote(q)
-        } else {
-          throw new Error('Unexpected response')
-        }
-      })
-      .catch(() => {
-        setQuote(fallbackQuotes[Math.floor(Math.random() * fallbackQuotes.length)])
-      })
-      .finally(() => {
-        clearTimeout(timeout)
-        setLoading(false)
-      })
-
-    return () => {
-      clearTimeout(timeout)
-      controller.abort()
-    }
+    // Pick a local quote for the session (the previous remote source,
+    // api.quotable.io, has been shut down and no longer resolves).
+    const q = fallbackQuotes[Math.floor(Math.random() * fallbackQuotes.length)]
+    sessionStorage.setItem(CACHE_KEY, JSON.stringify(q))
+    setQuote(q)
+    setLoading(false)
   }, [])
 
   return { quote, loading }

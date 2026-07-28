@@ -18,7 +18,7 @@ const HEADERS: Record<string, string> = {
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob:",
     "font-src 'self'",
-    "connect-src 'self' ws: https://api.quotable.io",
+    "connect-src 'self' ws:",
     "frame-ancestors 'none'",
   ].join('; '),
 }
