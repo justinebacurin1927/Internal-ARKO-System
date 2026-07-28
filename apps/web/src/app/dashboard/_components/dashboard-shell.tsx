@@ -3,7 +3,8 @@
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { useSession, signOut } from 'next-auth/react'
+import { useSession } from 'next-auth/react'
+import { useSignOut } from '../../../lib/use-sign-out'
 import {
   LayoutDashboard,
   TrendingUp,
@@ -222,7 +223,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     setShowDrawer(false)
   }, [pathname])
 
-  const handleLogout = () => signOut({ callbackUrl: '/auth/login' })
+  const signOut = useSignOut()
+  const handleLogout = () => signOut()
 
   const categories = ALL_CATEGORIES
   const filteredCategories = navSearch

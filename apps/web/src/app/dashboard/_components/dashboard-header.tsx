@@ -1,6 +1,6 @@
 'use client'
 
-import { useSession, signOut } from 'next-auth/react'
+import { useSession } from 'next-auth/react'
 import {
   LogOut,
   User,
@@ -8,9 +8,11 @@ import {
   ChevronDown,
 } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
+import { useSignOut } from '../../../lib/use-sign-out'
 
 export function DashboardHeader() {
   const { data: session, status } = useSession()
+  const signOut = useSignOut()
   const [showMenu, setShowMenu] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -86,7 +88,7 @@ export function DashboardHeader() {
             </div>
 
             <button
-              onClick={() => signOut({ callbackUrl: '/auth/login' })}
+              onClick={() => signOut()}
               className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-red-600 transition-colors hover:bg-neg-bg"
             >
               <LogOut className="h-4 w-4" />
