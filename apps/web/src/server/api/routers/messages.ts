@@ -40,7 +40,7 @@ export const messagesRouter = router({
       include: {
         participants: {
           include: {
-            user: { select: { id: true, name: true, email: true, image: true } },
+            user: { select: { id: true, name: true, email: true, image: true, avatar: true, lastActiveAt: true } },
           },
         },
         messages: {
@@ -172,7 +172,7 @@ export const messagesRouter = router({
 
       const include = {
         participants: {
-          include: { user: { select: { id: true, name: true, email: true, image: true } } },
+          include: { user: { select: { id: true, name: true, email: true, image: true, avatar: true, lastActiveAt: true } } },
         },
         messages: {
           orderBy: { createdAt: 'desc' as const },

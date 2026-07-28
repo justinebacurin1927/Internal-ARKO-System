@@ -6,15 +6,32 @@ import { Card, CardContent, Button } from '@arko/ui'
 import {
   MessageSquare,
   Send,
-  User,
   Loader2,
   AlertCircle,
   Search,
   Plus,
   Trash2,
 } from 'lucide-react'
+import dynamic from 'next/dynamic'
 import { api } from '../../../lib/trpc/client'
 import { formatPresence } from '../../../lib/presence'
+
+const OpenPeepsAvatar = dynamic(
+  () => import('../../../components/open-peeps-avatar').then((m) => ({ default: m.OpenPeepsAvatar })),
+  { ssr: false },
+)
+
+type AvatarUser = { id: string; name?: string | null; avatar?: unknown } | undefined
+
+function Avatar({ user, size = 36 }: { user: AvatarUser; size?: number }) {
+  return (
+    <OpenPeepsAvatar
+      userId={user?.id}
+      avatarJson={user?.avatar ? JSON.stringify(user.avatar) : undefined}
+      size={size}
+    />
+  )
+}
 
 export default function MessagesPage() {
   const [selectedConv, setSelectedConv] = useState<string | null>(null)
@@ -74,6 +91,9 @@ export default function MessagesPage() {
   })
 
   const selectedConversation = conversations?.find((c) => c.id === selectedConv)
+  const headerOther =
+    selectedConversation?.participants.find((p) => p.user.id !== currentUserId)?.user ??
+    selectedConversation?.participants[0]?.user
 
   const handleSend = () => {
     if (!newMsg.trim() || !selectedConv) return
@@ -96,10 +116,10 @@ export default function MessagesPage() {
         </div>
 
         {error ? (
-          <Card className="border-red-200 bg-red-50">
+          <Card className="border-red-500/20 bg-red-500/10">
             <CardContent className="flex items-center gap-3 py-6">
-              <AlertCircle className="h-5 w-5 text-red-500" />
-              <p className="text-sm font-medium text-red-800">Failed to load conversations</p>
+              <AlertCircle className="h-5 w-5 text-red-400" />
+              <p className="text-sm font-medium text-red-300">Failed to load conversations</p>
             </CardContent>
           </Card>
         ) : isLoading ? (
@@ -144,8 +164,8 @@ export default function MessagesPage() {
                   disabled={createConv.isPending}
                   className="flex w-full items-center gap-3 rounded-lg p-2 text-left hover:bg-card/[0.04] transition-colors"
                 >
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-card">
-                    <User className="h-3.5 w-3.5 text-text-tertiary" />
+                  <div className="shrink-0">
+                    <Avatar user={u} size={32} />
                   </div>
                   <div>
                     <p className="text-sm font-medium text-text-primary">{u.name ?? 'Unknown'}</p>
@@ -164,21 +184,24 @@ export default function MessagesPage() {
         ) : (
           <div className="flex-1 space-y-1 overflow-y-auto">
             {conversations?.map((conv) => {
-              const other = conv.participants[0]?.user
+              const other =
+                conv.participants.find((p) => p.user.id !== currentUserId)?.user ??
+                conv.participants[0]?.user
               const lastMsg = conv.messages[0]
+              const mine = lastMsg && lastMsg.sender.id === currentUserId
               return (
                 <button
                   key={conv.id}
                   onClick={() => setSelectedConv(conv.id)}
                   className={`w-full rounded-xl p-3 text-left transition-all duration-150 ${
                     selectedConv === conv.id
-                      ? 'bg-primary-50 ring-1 ring-primary-200'
-                      : 'hover:bg-card/[0.04]'
+                      ? 'bg-primary-500/10 ring-1 ring-primary-500/30'
+                      : 'hover:bg-card/[0.06]'
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-card">
-                      <User className="h-4 w-4 text-text-tertiary" />
+                    <div className="shrink-0">
+                      <Avatar user={other} size={36} />
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-text-primary">
@@ -186,7 +209,8 @@ export default function MessagesPage() {
                       </p>
                       {lastMsg && (
                         <p className="truncate text-xs text-text-tertiary mt-0.5">
-                          {lastMsg.sender.name}: {lastMsg.content}
+                          {mine ? 'You: ' : ''}
+                          {lastMsg.content}
                         </p>
                       )}
                     </div>
@@ -204,18 +228,18 @@ export default function MessagesPage() {
           <>
             {/* Header */}
             <div className="flex items-center gap-3 border-b border-border-subtle px-6 py-4">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-card">
-                <User className="h-4 w-4 text-text-tertiary" />
+              <div className="shrink-0">
+                <Avatar user={headerOther} size={36} />
               </div>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold text-text-primary">
-                  {selectedConversation
-                    ? selectedConversation.participants
-                        .map((p) => p.user.name ?? p.user.email)
-                        .filter(Boolean)
-                        .join(', ')
-                    : 'Conversation'}
+                  {headerOther?.name ?? headerOther?.email ?? 'Conversation'}
                 </p>
+                {headerOther && (
+                  <p className="truncate text-[11px] text-text-tertiary">
+                    {formatPresence(headerOther.lastActiveAt).label}
+                  </p>
+                )}
               </div>
               <button
                 onClick={() => {
@@ -259,7 +283,7 @@ export default function MessagesPage() {
                       className={`max-w-xs rounded-2xl px-4 py-2.5 text-sm ${
                         msg.senderId === currentUserId
                           ? 'bg-primary-500 text-white'
-                          : 'bg-card text-text-primary'
+                          : 'bg-white/[0.06] text-text-primary'
                       }`}
                     >
                       <p>{msg.content}</p>
@@ -318,18 +342,15 @@ export default function MessagesPage() {
                 <div className="space-y-1.5">
                   {suggestions.map((s) => {
                     const presence = formatPresence(s.lastActiveAt)
-                    const initial = (s.name ?? s.email).charAt(0).toUpperCase()
                     return (
                       <button
                         key={s.id}
                         onClick={() => createConv.mutate({ participantId: s.id })}
                         disabled={createConv.isPending}
-                        className="flex w-full items-center gap-3 rounded-xl border border-border-subtle bg-card p-2.5 text-left transition-colors hover:bg-card/[0.04] disabled:opacity-60"
+                        className="flex w-full items-center gap-3 rounded-xl border border-border-subtle bg-card p-2.5 text-left transition-colors hover:bg-card/[0.06] disabled:opacity-60"
                       >
                         <div className="relative shrink-0">
-                          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-50 text-sm font-semibold text-primary-700">
-                            {initial}
-                          </div>
+                          <Avatar user={s} size={36} />
                           {presence.online && (
                             <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-pos ring-2 ring-card" />
                           )}
