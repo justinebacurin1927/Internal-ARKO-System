@@ -8,11 +8,11 @@ import {
   ChevronDown,
 } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
-import { useSignOut } from '../../../lib/use-sign-out'
+import { useRequestSignOut } from '../../../components/sign-out-provider'
 
 export function DashboardHeader() {
   const { data: session, status } = useSession()
-  const signOut = useSignOut()
+  const requestSignOut = useRequestSignOut()
   const [showMenu, setShowMenu] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -88,7 +88,7 @@ export function DashboardHeader() {
             </div>
 
             <button
-              onClick={() => signOut()}
+              onClick={requestSignOut}
               className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-red-600 transition-colors hover:bg-neg-bg"
             >
               <LogOut className="h-4 w-4" />

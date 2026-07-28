@@ -15,19 +15,26 @@ const HEADERS: Record<string, string> = {
   'Content-Security-Policy': [
     "default-src 'self'",
     "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
-    "style-src 'self' 'unsafe-inline'",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' data: blob:",
-    "font-src 'self'",
+    "font-src 'self' https://fonts.gstatic.com",
     "connect-src 'self' ws:",
     "frame-ancestors 'none'",
   ].join('; '),
 }
 
-export function middleware(_request: NextRequest) {
+export function middleware(request: NextRequest) {
   const response = NextResponse.next()
 
   for (const [key, value] of Object.entries(HEADERS)) {
     response.headers.set(key, value)
+  }
+
+  // Prevent the browser from caching authenticated pages (HTTP cache + bfcache).
+  // Without this, hitting Back after signing out restores the cached dashboard
+  // instead of forcing a fresh request (which redirects to login).
+  if (request.nextUrl.pathname.startsWith('/dashboard')) {
+    response.headers.set('Cache-Control', 'no-store, max-age=0, must-revalidate')
   }
 
   return response

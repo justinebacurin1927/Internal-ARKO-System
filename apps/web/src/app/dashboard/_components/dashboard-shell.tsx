@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import { useSignOut } from '../../../lib/use-sign-out'
+import { useRequestSignOut } from '../../../components/sign-out-provider'
 import {
   LayoutDashboard,
   TrendingUp,
@@ -223,8 +223,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     setShowDrawer(false)
   }, [pathname])
 
-  const signOut = useSignOut()
-  const handleLogout = () => signOut()
+  const requestSignOut = useRequestSignOut()
+  const handleLogout = () => requestSignOut()
 
   const categories = ALL_CATEGORIES
   const filteredCategories = navSearch
