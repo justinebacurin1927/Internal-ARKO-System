@@ -1,6 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
+  "fluid": true,
+  "regions": ["syd1"],
   "installCommand": "pnpm install",
   "buildCommand": "DIRECT_URL=\"${DIRECT_URL:-$DATABASE_URL}\" pnpm --filter @arko/db exec prisma migrate deploy && pnpm turbo run build --filter=@arko/web",
   "outputDirectory": "apps/web/.next"

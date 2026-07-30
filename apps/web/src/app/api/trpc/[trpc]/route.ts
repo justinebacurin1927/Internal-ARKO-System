@@ -4,6 +4,10 @@ import { appRouter } from '../../../../server/api/root'
 import { createTRPCContext } from '../../../../lib/trpc/context'
 import { apiLimiter, requestKey } from '../../../../lib/rate-limit'
 
+export const runtime = 'nodejs'
+export const preferredRegion = 'syd1'
+export const maxDuration = 15
+
 const handler = async (req: Request) => {
   // Rate limit: 100 requests per minute per IP
   const ipKey = requestKey(req)

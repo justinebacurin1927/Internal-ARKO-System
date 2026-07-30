@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, Button } from '@arko/ui'
 import { Plus, ArrowUpRight, ArrowDownRight, AlertCircle, Wallet, Users, CheckCircle2, RefreshCw, Calendar, Trash2, Pencil, TrendingUp } from 'lucide-react'
 import { api } from '../../../lib/trpc/client'
 import { formatCurrency } from '@arko/finance'
-import { AddTransactionDialog } from './add-transaction-dialog'
+import { AddTransactionDialog, type GhostTransaction } from './add-transaction-dialog'
 import { RecurringTransactionDialog } from './recurring-transaction-dialog'
 import { MetricsPanel } from './metrics-panel'
 
@@ -33,6 +33,7 @@ export default function FinancePage() {
   const [editRecurringId, setEditRecurringId] = useState<string | undefined>()
   const [showRecurring, setShowRecurring] = useState(false)
   const [showMetrics, setShowMetrics] = useState(0) // 0 = collapsed, 1 = show
+  const [ghostTransactions, setGhostTransactions] = useState<GhostTransaction[]>([])
 
   const query = api.finance.getBalance.useQuery(
     scopeFilter !== 'ALL' ? { scope: scopeFilter } : undefined,
@@ -191,7 +192,7 @@ export default function FinancePage() {
                   <p className="text-sm font-medium text-red-600">Failed to load transactions.</p>
                   <Button variant="outline" size="sm" className="mt-3" onClick={refetchTransactions}>Try Again</Button>
                 </div>
-              ) : transactions.length === 0 ? (
+              ) : transactions.length === 0 && ghostTransactions.length === 0 ? (
                 <div className="flex flex-col items-center py-14 text-center">
                   <Wallet className="h-10 w-10 text-text-muted mb-3" />
                   <p className="text-sm text-text-tertiary">No transactions yet</p>
@@ -202,6 +203,29 @@ export default function FinancePage() {
                 </div>
               ) : (
                 <div className="divide-y divide-border-subtle">
+                  {ghostTransactions.map((tx) => (
+                    <div key={tx.id} className="flex animate-pulse items-center justify-between py-3 opacity-55">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <div className="h-9 w-9 shrink-0 rounded-full bg-card" />
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="truncate text-sm font-medium text-text-primary">
+                              {tx.description || tx.categoryName || 'Untitled'}
+                            </p>
+                            <span className="rounded bg-card px-1.5 py-0.5 text-[9px] font-semibold uppercase text-text-tertiary">
+                              Pending
+                            </span>
+                          </div>
+                          <p className="text-xs text-text-tertiary">
+                            {tx.categoryName ?? 'Saving transaction…'}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="ml-3 shrink-0 text-sm font-semibold text-text-tertiary">
+                        {tx.type === 'INCOME' ? '+' : '-'}{formatCurrency(tx.amount)}
+                      </span>
+                    </div>
+                  ))}
                   {transactions.map((tx) => {
                     const unsettledShares = tx.splitShares?.filter((s) => !s.settled) ?? []
                     return (
@@ -434,7 +458,12 @@ export default function FinancePage() {
         </>
       )}
 
-      <AddTransactionDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+      <AddTransactionDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onGhostAdd={(transaction) => setGhostTransactions((current) => [transaction, ...current])}
+        onGhostRemove={(id) => setGhostTransactions((current) => current.filter((transaction) => transaction.id !== id))}
+      />
       <RecurringTransactionDialog
         open={recurringOpen}
         onOpenChange={setRecurringOpen}

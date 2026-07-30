@@ -9,6 +9,18 @@ import { api } from '../../../lib/trpc/client'
 interface AddTransactionDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  onGhostAdd?: (transaction: GhostTransaction) => void
+  onGhostRemove?: (id: string) => void
+}
+
+export interface GhostTransaction {
+  id: string
+  type: 'INCOME' | 'EXPENSE' | 'TRANSFER'
+  scope: 'PERSONAL' | 'COMPANY'
+  amount: number
+  description?: string
+  categoryName?: string
+  date: Date
 }
 
 interface SplitEntry {
@@ -16,7 +28,7 @@ interface SplitEntry {
   amount: string
 }
 
-export function AddTransactionDialog({ open, onOpenChange }: AddTransactionDialogProps) {
+export function AddTransactionDialog({ open, onOpenChange, onGhostAdd, onGhostRemove }: AddTransactionDialogProps) {
   const [type, setType] = useState<'INCOME' | 'EXPENSE' | 'TRANSFER'>('EXPENSE')
   const [scope, setScope] = useState<'PERSONAL' | 'COMPANY'>('PERSONAL')
   const [amount, setAmount] = useState('')
@@ -30,10 +42,12 @@ export function AddTransactionDialog({ open, onOpenChange }: AddTransactionDialo
   const { data: users } = api.users.search.useQuery({})
   const utils = api.useUtils()
   const createTx = api.finance.createTransaction.useMutation({
-    onSuccess: () => {
-      utils.finance.getTransactions.invalidate()
-      utils.finance.getBalance.invalidate()
-      utils.finance.getPendingSplits.invalidate()
+    onSuccess: async () => {
+      await Promise.all([
+        utils.finance.getTransactions.invalidate(),
+        utils.finance.getBalance.invalidate(),
+        utils.finance.getPendingSplits.invalidate(),
+      ])
       handleReset()
     },
   })
@@ -103,17 +117,33 @@ export function AddTransactionDialog({ open, onOpenChange }: AddTransactionDialo
       ? splits.map((s) => ({ userId: s.userId, amount: parseFloat(s.amount) }))
       : undefined
 
-    await createTx.mutateAsync({
+    const ghostId = `pending-${crypto.randomUUID()}`
+    onGhostAdd?.({
+      id: ghostId,
       type,
+      scope,
       amount: parsedAmount,
       description: description || undefined,
-      categoryId,
-      scope,
-      isSplit,
-      splitWith,
+      categoryName: categories?.find((category) => category.id === categoryId)?.name,
+      date: new Date(),
     })
-
     onOpenChange(false)
+
+    try {
+      await createTx.mutateAsync({
+        type,
+        amount: parsedAmount,
+        description: description || undefined,
+        categoryId,
+        scope,
+        isSplit,
+        splitWith,
+      })
+    } catch {
+      onOpenChange(true)
+    } finally {
+      onGhostRemove?.(ghostId)
+    }
   }
 
   return (
@@ -384,6 +414,9 @@ export function AddTransactionDialog({ open, onOpenChange }: AddTransactionDialo
             )}
 
             {/* Actions */}
+            {createTx.error && (
+              <p className="text-sm text-red-500">{createTx.error.message}</p>
+            )}
             <div className="flex gap-3 justify-end pt-2">
               <Dialog.Close asChild>
                 <Button type="button" variant="outline">
