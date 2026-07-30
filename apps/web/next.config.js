@@ -28,11 +28,6 @@ const nextConfig = {
   poweredByHeader: false,
   async redirects() {
     return [
-      {
-        source: '/',
-        destination: '/auth/login',
-        permanent: false,
-      },
       { source: '/dashboard/calendar', destination: '/dashboard/events', permanent: true },
     ]
   },
