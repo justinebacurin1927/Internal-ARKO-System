@@ -92,23 +92,6 @@ function RedirectSplash({ email, name }: { email: string; name?: string }) {
   )
 }
 
-/* ─── Warm-up: prefetch main dashboard pages after login ─── */
-
-const PREFETCH_PATHS = [
-  '/dashboard',
-  '/dashboard/tasks',
-  '/dashboard/finance',
-  '/dashboard/events',
-  '/dashboard/notes',
-  '/dashboard/messages',
-]
-
-function prefetchDashboard(router: ReturnType<typeof useRouter>) {
-  for (const path of PREFETCH_PATHS) {
-    router.prefetch(path)
-  }
-}
-
 /* ─── Fallback quotes ─── */
 
 const fallbackQuotes = [
@@ -273,7 +256,7 @@ function LoginForm() {
       sessionStorage.removeItem(CACHE_KEY)
       // Start this session with an empty cache so no prior user's data shows.
       queryClient.clear()
-      prefetchDashboard(router)
+      router.prefetch('/dashboard')
       setRedirecting(true)
       router.push('/dashboard')
     } catch (err: any) {
