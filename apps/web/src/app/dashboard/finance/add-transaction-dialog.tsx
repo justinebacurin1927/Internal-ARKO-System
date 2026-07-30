@@ -160,13 +160,18 @@ export function AddTransactionDialog({ open, onOpenChange, onGhostAdd, onGhostRe
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-xl bg-card p-5 shadow-2xl data-[state=open]:animate-in data-[state=closed]:animate-out max-h-[90vh] overflow-y-auto">
+        <Dialog.Overlay className="fixed inset-0 bg-black/75 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out" />
+        <Dialog.Content className="transaction-dialog fixed left-1/2 top-1/2 max-h-[90vh] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-white/10 bg-[#121417]/95 p-6 shadow-[0_32px_100px_rgba(0,0,0,0.65)] data-[state=open]:animate-in data-[state=closed]:animate-out">
           {/* Header */}
-          <div className="flex items-center justify-between mb-6">
-            <Dialog.Title className="text-lg font-bold tracking-tight text-text-primary">
-              Add Transaction
-            </Dialog.Title>
+          <div className="mb-6 flex items-start justify-between">
+            <div>
+              <Dialog.Title className="text-xl font-semibold tracking-tight text-text-primary">
+                Add transaction
+              </Dialog.Title>
+              <Dialog.Description className="mt-1 text-sm text-text-tertiary">
+                Record a new entry in your financial activity.
+              </Dialog.Description>
+            </div>
             <Dialog.Close asChild>
               <button className="rounded-lg p-1.5 text-text-tertiary hover:bg-card hover:text-text-secondary transition-colors">
                 <X className="h-4 w-4" />
@@ -178,7 +183,7 @@ export function AddTransactionDialog({ open, onOpenChange, onGhostAdd, onGhostRe
             {/* Scope toggle */}
             <div>
               <label className="block text-sm font-medium text-text-secondary mb-2">Scope</label>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="dashboard-segmented grid grid-cols-2 gap-1 p-1">
                 {(['PERSONAL', ...(canUseCompany ? ['COMPANY' as const] : [])] as const).map((s) => (
                   <button
                     key={s}
@@ -187,12 +192,10 @@ export function AddTransactionDialog({ open, onOpenChange, onGhostAdd, onGhostRe
                       setScope(s)
                       setCategoryId('')
                     }}
-                    className={`rounded-lg px-3 py-2 text-sm font-medium transition-all ${
+                    className={`min-h-10 rounded-full px-3 py-2 text-sm font-medium transition-all ${
                       scope === s
-                        ? s === 'PERSONAL'
-                          ? 'bg-primary-50 text-primary-700 ring-2 ring-primary-500'
-                          : 'bg-blue-50 text-blue-700 ring-2 ring-blue-500'
-                        : 'bg-card text-text-secondary hover:bg-card ring-1 ring-inset ring-border-subtle'
+                        ? 'bg-primary-500 text-white shadow-[0_0_18px_rgba(34,197,94,0.18)]'
+                        : 'text-text-secondary hover:bg-white/[0.04]'
                     }`}
                   >
                     {s === 'PERSONAL' ? 'Personal' : 'Company'}
@@ -204,7 +207,7 @@ export function AddTransactionDialog({ open, onOpenChange, onGhostAdd, onGhostRe
             {/* Type selector */}
             <div>
               <label className="block text-sm font-medium text-text-secondary mb-2">Type</label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="dashboard-segmented grid grid-cols-3 gap-1 p-1">
                 {(['INCOME', 'EXPENSE', 'TRANSFER'] as const).map((t) => (
                   <button
                     key={t}
@@ -214,14 +217,14 @@ export function AddTransactionDialog({ open, onOpenChange, onGhostAdd, onGhostRe
                       setCategoryId('')
                       if (t !== 'EXPENSE') setIsSplit(false)
                     }}
-                    className={`rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150 ${
+                    className={`min-h-10 rounded-full px-3 py-2.5 text-sm font-medium transition-all duration-150 ${
                       type === t
                         ? t === 'INCOME'
-                          ? 'bg-finance-50 text-finance-700 ring-2 ring-finance-500'
+                          ? 'bg-primary-500 text-white'
                           : t === 'EXPENSE'
-                            ? 'bg-red-50 text-red-700 ring-2 ring-red-500'
-                            : 'bg-blue-50 text-blue-700 ring-2 ring-blue-500'
-                        : 'bg-card text-text-secondary hover:bg-card ring-1 ring-inset ring-border-subtle'
+                            ? 'bg-red-500 text-white'
+                            : 'bg-primary-700 text-white'
+                        : 'text-text-secondary hover:bg-white/[0.04]'
                     }`}
                   >
                     {t.charAt(0) + t.slice(1).toLowerCase()}

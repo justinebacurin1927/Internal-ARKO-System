@@ -1,6 +1,6 @@
 export default function DashboardLoading() {
   return (
-    <div className="grid grid-cols-[1fr_1.4fr] gap-4 flex-1 min-h-0 h-full animate-pulse">
+    <div className="mx-auto grid min-h-full w-full max-w-[1500px] grid-cols-1 gap-4 animate-pulse xl:grid-cols-[minmax(320px,0.9fr)_minmax(0,1.4fr)]">
       {/* Left column skeleton */}
       <div className="flex flex-col gap-4 min-h-0">
         <div className="h-[92px] rounded-xl bg-card" />

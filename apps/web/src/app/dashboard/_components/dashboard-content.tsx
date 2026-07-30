@@ -2,30 +2,40 @@
 
 import { useMemo, useState } from 'react'
 import { useSession } from 'next-auth/react'
+import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@arko/ui'
-import { PerformanceChart } from './performance-chart'
 import {
-  Wallet,
-  TrendingUp,
-  Users,
-  ArrowUpRight,
   ArrowDownRight,
-  Plus,
-  GitCommit,
+  ArrowUpRight,
+  CheckCircle2,
+  CircleDollarSign,
+  Clock3,
   ExternalLink,
+  GitCommit,
+  Plus,
+  Target,
+  Users,
+  Wallet,
 } from 'lucide-react'
 import { api } from '../../../lib/trpc/client'
+import { PerformanceChart } from './performance-chart'
 
-// ── helpers ──────────────────────────────────────────────
-function formatCurrency(n: number) {
-  return new Intl.NumberFormat('en-US', {
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat('en-PH', {
     style: 'currency',
-    currency: 'USD',
-    notation: 'compact',
-  }).format(n)
+    currency: 'PHP',
+    maximumFractionDigits: 0,
+  }).format(value)
 }
 
-// ── Dashboard content ────────────────────────────────────
+function timeAgo(date: string) {
+  const minutes = Math.floor((Date.now() - new Date(date).getTime()) / 60_000)
+  if (minutes < 1) return 'now'
+  if (minutes < 60) return `${minutes}m`
+  if (minutes < 1_440) return `${Math.floor(minutes / 60)}h`
+  return `${Math.floor(minutes / 1_440)}d`
+}
+
 export default function DashboardContent() {
   const { data: session } = useSession()
   const canUseCompany = session?.user?.role === 'ADMIN' || session?.user?.role === 'ACCOUNTANT'
@@ -35,380 +45,276 @@ export default function DashboardContent() {
   const { data: tasks } = api.tasks.list.useQuery()
   const { data: transactions } = api.finance.getTransactions.useQuery({ scope: financeScope })
   const { data: users } = api.users.search.useQuery({})
-  const { data: updates, isLoading: ghLoading } = api.github.recentCommits.useQuery({ limit: 8 })
+  const { data: updates, isLoading: updatesLoading } = api.github.recentCommits.useQuery({ limit: 5 })
 
-  const completedTasks = tasks?.filter((t) => t.status === 'DONE').length ?? 0
-  const openTasks = tasks?.filter((t) => t.status === 'TODO' || t.status === 'IN_PROGRESS').length ?? 0
-  const reviewTasks = tasks?.filter((t) => t.status === 'REVIEW').length ?? 0
-  const recentTx = transactions?.slice(0, 2) ?? []
-
+  const completedTasks = tasks?.filter((task) => task.status === 'DONE').length ?? 0
+  const activeTasks = tasks?.filter((task) => task.status !== 'DONE').length ?? 0
   const totalTasks = tasks?.length ?? 0
-  const donePct = totalTasks ? (completedTasks / totalTasks) * 100 : 0
-  const reviewPct = totalTasks ? (reviewTasks / totalTasks) * 100 : 0
-  const openPct = totalTasks ? (openTasks / totalTasks) * 100 : 0
+  const completionRate = totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0
+  const recentTransactions = transactions?.slice(0, 6) ?? []
+  const team = users?.slice(0, 5) ?? []
+  const commits = updates?.commits ?? []
 
-  // ── Chart data: monthly income/expenses ────────────────
   const chartData = useMemo(() => {
-    if (!transactions)
-      return { income: [0, 0, 0, 0, 0, 0], expenses: [0, 0, 0, 0, 0, 0], labels: [] as string[] }
-    const months: Record<string, { inc: number; exp: number }> = {}
+    const months: Record<string, { income: number; expenses: number }> = {}
     const now = new Date()
-    for (let i = 5; i >= 0; i--) {
-      const m = new Date(now.getFullYear(), now.getMonth() - i, 1)
-      months[m.toLocaleDateString('en-US', { month: 'short' })] = { inc: 0, exp: 0 }
+    for (let index = 5; index >= 0; index--) {
+      const month = new Date(now.getFullYear(), now.getMonth() - index, 1)
+      months[month.toLocaleDateString('en-US', { month: 'short' })] = { income: 0, expenses: 0 }
     }
-    transactions.forEach((tx) => {
-      const key = new Date(tx.date).toLocaleDateString('en-US', { month: 'short' })
-      if (key in months) {
-        if (tx.type === 'INCOME') months[key].inc += tx.amount
-        else months[key].exp += tx.amount
-      }
-    })
+    for (const transaction of transactions ?? []) {
+      const month = new Date(transaction.date).toLocaleDateString('en-US', { month: 'short' })
+      if (!months[month]) continue
+      if (transaction.type === 'INCOME') months[month].income += transaction.amount
+      if (transaction.type === 'EXPENSE') months[month].expenses += transaction.amount
+    }
     return {
-      income: Object.values(months).map((m) => m.inc),
-      expenses: Object.values(months).map((m) => m.exp),
       labels: Object.keys(months),
+      income: Object.values(months).map((month) => month.income),
+      expenses: Object.values(months).map((month) => month.expenses),
     }
   }, [transactions])
 
-  // ── helpers ──
-  const commits = updates?.commits ?? []
-  const timeAgo = (dateStr: string) => {
-    const diff = Date.now() - new Date(dateStr).getTime()
-    const mins = Math.floor(diff / 60000)
-    if (mins < 1) return 'now'
-    if (mins < 60) return `${mins}m`
-    return `${Math.floor(mins / 60)}h`
-  }
-
-  const teamAvatars = users?.slice(0, 6) ?? []
-
-  const priorityBars = [
-    { label: 'Urgent', value: tasks?.filter((t) => t.priority === 'URGENT').length ?? 0, color: '#ef4444' },
-    { label: 'High', value: tasks?.filter((t) => t.priority === 'HIGH').length ?? 0, color: '#f97316' },
-    { label: 'Medium', value: tasks?.filter((t) => t.priority === 'MEDIUM').length ?? 0, color: '#22c55e' },
-    { label: 'Low', value: tasks?.filter((t) => t.priority === 'LOW').length ?? 0, color: '#9ca3af' },
-  ]
-
   return (
-    <div className="h-full flex flex-col">
-      {/* ── Header row — action buttons ──────────────── */}
-      <div className="flex items-center justify-between gap-3 shrink-0 mb-3">
-        <div className="inline-flex items-center rounded-lg border border-border-subtle bg-card p-1">
-          {(['PERSONAL', ...(canUseCompany ? ['COMPANY' as const] : [])] as const).map((scope) => (
-            <button
-              key={scope}
-              onClick={() => setFinanceScope(scope)}
-              className={`rounded-md px-2.5 py-1 text-[10px] font-semibold transition-colors ${
-                financeScope === scope ? 'bg-primary-500 text-white' : 'text-text-tertiary hover:text-text-primary'
-              }`}
-            >
-              {scope === 'PERSONAL' ? 'Personal' : 'Company'}
-            </button>
-          ))}
+    <div className="dashboard-reference mx-auto min-h-full w-full max-w-[1500px]">
+      <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-text-primary">Dashboard</h1>
+          <p className="mt-1 text-sm text-text-tertiary">
+            Track your finances, work, and team performance in one place.
+          </p>
         </div>
-        <div className="flex items-center gap-2">
-          <button className="inline-flex items-center gap-1 rounded-full border border-border-subtle bg-card px-3 py-1.5 text-[11px] font-medium text-text-secondary shadow-sm hover:border-border-subtle active:scale-[0.97]">
-            <Plus className="h-3 w-3" />
-            Task
-          </button>
-          <button className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-primary-500 to-primary-700 px-3 py-1.5 text-[11px] font-semibold text-white shadow-sm active:scale-[0.97]">
-            <TrendingUp className="h-3 w-3" />
-            Report
-          </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="dashboard-segmented inline-flex min-h-10 items-center p-1">
+            {(['PERSONAL', ...(canUseCompany ? ['COMPANY' as const] : [])] as const).map((scope) => (
+              <button
+                key={scope}
+                type="button"
+                aria-pressed={financeScope === scope}
+                onClick={() => setFinanceScope(scope)}
+                className={`min-h-8 rounded-full px-4 text-xs font-medium transition-all ${
+                  financeScope === scope
+                    ? 'bg-primary-500 text-white shadow-[0_0_20px_rgba(34,197,94,0.2)]'
+                    : 'text-text-tertiary hover:text-text-primary'
+                }`}
+              >
+                {scope === 'PERSONAL' ? 'Personal' : 'Company'}
+              </button>
+            ))}
+          </div>
+          <Link href="/dashboard/finance" className="dashboard-outline-button">
+            <Plus className="h-4 w-4" />
+            New transaction
+          </Link>
         </div>
       </div>
 
-      {/* ── Main grid ───────────────────────────────── */}
-      <div className="grid grid-cols-[1fr_1.4fr] gap-4 flex-1 min-h-0">
-        {/* ══ LEFT COLUMN (content-sized) ════════════ */}
-        <div className="flex flex-col gap-4 min-h-0 self-start w-full">
-
-          {/* ── Cash Balance ──────────────────────── */}
-          <Card className="shrink-0 overflow-hidden">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
+      <div className="grid gap-4 xl:grid-cols-[300px_minmax(0,1fr)]">
+        <div className="flex flex-col gap-4">
+          <Card className="dashboard-panel overflow-hidden">
+            <CardHeader className="flex-row items-center justify-between p-5 pb-3">
+              <CardTitle className="text-base font-medium">Current balance</CardTitle>
+              <Wallet className="h-4 w-4 text-primary-400" />
+            </CardHeader>
+            <CardContent className="p-5 pt-0">
+              <div className="dashboard-balance-card">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-white/65">{financeScope === 'PERSONAL' ? 'Personal funds' : 'Company funds'}</span>
+                  <CircleDollarSign className="h-5 w-5 text-white/80" />
+                </div>
+                <p className="mt-10 text-3xl font-semibold tabular-nums text-white">
+                  {formatCurrency(balance?.balance ?? 0)}
+                </p>
+                <p className="mt-1 text-xs text-white/60">{(insights?.savingsRate ?? 0).toFixed(1)}% retained this month</p>
+              </div>
+              <div className="mt-4 grid grid-cols-2 gap-3">
                 <div>
-                  <p className="text-[10px] font-medium text-text-tertiary uppercase tracking-wider">
-                    {financeScope === 'PERSONAL' ? 'Personal balance' : 'Company balance'}
-                  </p>
-                  <p className="text-xl font-black text-text-primary mt-0.5">
-                    {formatCurrency(balance?.balance ?? 0)}
-                  </p>
+                  <p className="text-xs text-text-tertiary">Income</p>
+                  <p className="mt-1 text-sm font-semibold tabular-nums text-primary-400">{formatCurrency(balance?.income ?? 0)}</p>
                 </div>
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-primary-400 to-primary-600 shadow">
-                  <Wallet className="h-4 w-4 text-white" />
+                <div>
+                  <p className="text-xs text-text-tertiary">Expenses</p>
+                  <p className="mt-1 text-sm font-semibold tabular-nums text-red-400">{formatCurrency(balance?.expenses ?? 0)}</p>
                 </div>
               </div>
-              <div className="flex gap-4 mt-2">
-                <div className="flex items-center gap-1.5">
-                  <ArrowUpRight className="h-3 w-3 text-finance-600 shrink-0" />
-                  <span className="text-[10px] font-semibold text-text-primary">
-                    {formatCurrency(balance?.income ?? 0)}
-                  </span>
-                  <span className="text-[9px] text-text-tertiary">in</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <ArrowDownRight className="h-3 w-3 text-red-500 shrink-0" />
-                  <span className="text-[10px] font-semibold text-text-primary">
-                    {formatCurrency(balance?.expenses ?? 0)}
-                  </span>
-                  <span className="text-[9px] text-text-tertiary">out</span>
-                </div>
-              </div>
-              <p className="mt-2 text-[9px] text-text-tertiary">
-                {insights?.upcomingCount ?? 0} upcoming · {(insights?.savingsRate ?? 0).toFixed(0)}% retained
-              </p>
             </CardContent>
           </Card>
 
-          {/* ── Team + Priority ── */}
-          <div className="grid grid-cols-2 gap-3 shrink-0">
-            <Card className="overflow-hidden">
-              <CardHeader className="px-2.5 pt-2 pb-0">
-                <CardTitle className="text-[10px] font-bold text-text-primary">Team</CardTitle>
-              </CardHeader>
-              <CardContent className="px-2.5 pb-2.5 pt-2 flex items-center justify-between">
-                <div className="flex -space-x-2">
-                  {teamAvatars.length === 0 ? (
-                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-card">
-                      <Users className="h-3 w-3 text-text-tertiary" />
-                    </div>
-                  ) : (
-                    teamAvatars.map((u) => (
-                      <div
-                        key={u.id}
-                        className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-gradient-to-br from-primary-400 to-primary-500 text-[9px] font-bold text-white shadow-sm"
-                        title={u.name ?? u.email}
-                      >
-                        {(u.name ?? u.email).charAt(0).toUpperCase()}
-                      </div>
-                    ))
-                  )}
+          <Card className="dashboard-panel">
+            <CardHeader className="p-5 pb-3">
+              <CardTitle className="text-base font-medium">Task completion</CardTitle>
+            </CardHeader>
+            <CardContent className="p-5 pt-0">
+              <div className="flex items-end justify-between">
+                <div>
+                  <p className="text-3xl font-semibold tabular-nums text-text-primary">{completionRate}%</p>
+                  <p className="mt-1 text-xs text-text-tertiary">{completedTasks} of {totalTasks} completed</p>
                 </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <span className="text-[9px] text-text-tertiary">{teamAvatars.length}</span>
-                  <span className="text-[9px] font-medium text-primary-600">View</span>
-                </div>
-              </CardContent>
-            </Card>
+                <Target className="h-5 w-5 text-primary-400" />
+              </div>
+              <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
+                <div className="h-full rounded-full bg-gradient-to-r from-primary-700 to-primary-400" style={{ width: `${completionRate}%` }} />
+              </div>
+              <Link href="/dashboard/tasks" className="mt-4 inline-flex min-h-9 items-center text-xs font-medium text-primary-400 hover:text-primary-300">
+                Manage tasks <ArrowUpRight className="ml-1 h-3.5 w-3.5" />
+              </Link>
+            </CardContent>
+          </Card>
 
-            <Card className="overflow-hidden">
-              <CardHeader className="px-2.5 pt-2 pb-0">
-                <CardTitle className="text-[10px] font-bold text-text-primary">Priority</CardTitle>
-              </CardHeader>
-              <CardContent className="px-2.5 pb-2.5 pt-2 flex flex-col gap-1">
-                {priorityBars.map((i) => (
-                  <div key={i.label} className="flex items-center gap-1.5">
-                    <span className="w-8 text-[8px] font-medium text-text-tertiary text-right shrink-0">
-                      {i.label}
-                    </span>
-                    <div className="flex-1 h-2 rounded-full bg-card overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all duration-500"
-                        style={{
-                          width: `${totalTasks ? (i.value / totalTasks) * 100 : 0}%`,
-                          backgroundColor: i.color,
-                        }}
-                      />
-                    </div>
-                    <span className="w-4 text-[8px] font-semibold text-text-secondary text-right">
-                      {i.value}
-                    </span>
+          <Card className="dashboard-panel">
+            <CardHeader className="flex-row items-center justify-between p-5 pb-3">
+              <CardTitle className="text-base font-medium">Team</CardTitle>
+              <span className="text-xs text-text-tertiary">{users?.length ?? 0} members</span>
+            </CardHeader>
+            <CardContent className="flex items-center justify-between p-5 pt-0">
+              <div className="flex -space-x-2">
+                {team.map((user) => (
+                  <div
+                    key={user.id}
+                    title={user.name ?? user.email}
+                    className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-[#15171a] bg-gradient-to-br from-primary-700 to-primary-400 text-xs font-semibold text-white"
+                  >
+                    {(user.name ?? user.email).charAt(0).toUpperCase()}
                   </div>
                 ))}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* ── Task Progress ──────────────────────── */}
-          <Card className="shrink-0 h-32 overflow-hidden flex flex-col">
-            <CardHeader className="p-4 pb-1">
-              <CardTitle className="text-[11px] font-bold text-text-primary">
-                Task Progress
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 pt-0 flex-1 flex flex-col min-h-0">
-              <div className="flex gap-1.5 flex-1 min-h-0">
-                {[
-                  { label: 'Open', pct: openPct, color: '#6366f1' },
-                  { label: 'Review', pct: reviewPct, color: '#f59e0b' },
-                  { label: 'Done', pct: donePct, color: '#22c55e' },
-                ].map((s) => {
-                  const barWeight = Math.max(s.pct, 5)
-                  return (
-                    <div key={s.label} className="flex-1 flex flex-col items-center min-h-0">
-                      <div className="w-full" style={{ flex: `${100 - barWeight}` }} />
-                      <div
-                        className="flex flex-col items-center w-full"
-                        style={{ flex: `${barWeight}` }}
-                      >
-                        <span className="text-[9px] font-semibold text-text-tertiary">
-                          {Math.round(s.pct)}%
-                        </span>
-                        <div
-                          className="w-full rounded-full min-h-[4px] transition-all duration-500"
-                          style={{ flex: 1, backgroundColor: s.color }}
-                        />
-                      </div>
-                      <span className="text-[8px] text-text-tertiary truncate pt-0.5">
-                        {s.label}
-                      </span>
-                    </div>
-                  )
-                })}
+                {team.length === 0 && <Users className="h-5 w-5 text-text-tertiary" />}
               </div>
-            </CardContent>
-          </Card>
-
-          {/* ── Recent Transactions ────────────────── */}
-          <Card className="shrink-0 overflow-hidden">
-            <CardHeader className="p-4 pb-1 flex flex-row items-center justify-between">
-              <CardTitle className="text-[11px] font-bold text-text-primary">
-                Transactions
-              </CardTitle>
-              <span className="text-[9px] font-medium text-primary-600">View all</span>
-            </CardHeader>
-            <CardContent className="p-0">
-              {recentTx.length === 0 ? (
-                <div className="flex flex-col items-center py-4">
-                  <Wallet className="h-5 w-5 text-text-muted mb-1" />
-                  <p className="text-[10px] text-text-tertiary">No transactions yet</p>
-                </div>
-              ) : (
-                <div>
-                  {recentTx.map((tx, i) => (
-                    <div
-                      key={tx.id}
-                      className={`flex items-center justify-between px-4 py-2.5 ${i === 0 ? 'border-b border-border-subtle' : ''}`}
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <div
-                          className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg ${
-                            tx.type === 'INCOME'
-                              ? 'bg-finance-50 text-finance-600'
-                              : 'bg-red-50 text-red-500'
-                          }`}
-                        >
-                          {tx.type === 'INCOME' ? (
-                            <ArrowUpRight className="h-3 w-3" />
-                          ) : (
-                            <ArrowDownRight className="h-3 w-3" />
-                          )}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-[11px] font-medium text-text-primary truncate">
-                            {tx.description || tx.category?.name || 'Transaction'}
-                          </p>
-                          <p className="text-[9px] text-text-tertiary">
-                            {new Date(tx.date).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                            })}
-                          </p>
-                        </div>
-                      </div>
-                      <span
-                        className={`text-[11px] font-bold shrink-0 ${
-                          tx.type === 'INCOME' ? 'text-finance-600' : 'text-red-500'
-                        }`}
-                      >
-                        {tx.type === 'INCOME' ? '+' : '-'}
-                        {formatCurrency(tx.amount)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <Link href="/dashboard/users" className="text-xs font-medium text-primary-400 hover:text-primary-300">View team</Link>
             </CardContent>
           </Card>
         </div>
 
-        {/* ══ RIGHT COLUMN ────────────────────────── */}
-        <div className="flex flex-col gap-4 min-h-0">
-          {/* ── Performance Growth ──────────────────── */}
-          <Card className="shrink-0 h-[200px] overflow-hidden flex flex-col">
-            <CardHeader className="p-4 pb-1 flex flex-row items-center justify-between shrink-0">
-              <div className="flex items-center gap-3">
-                <CardTitle className="text-[11px] font-bold text-text-primary">
-                  Income & Expenses
-                </CardTitle>
+        <div className="flex min-w-0 flex-col gap-4">
+          <div className="grid gap-4 md:grid-cols-3">
+            <MetricCard
+              label="Income"
+              value={formatCurrency(balance?.income ?? 0)}
+              detail="Total recorded"
+              icon={<ArrowUpRight className="h-4 w-4" />}
+              positive
+            />
+            <MetricCard
+              label="Expenses"
+              value={formatCurrency(balance?.expenses ?? 0)}
+              detail={`${insights?.upcomingCount ?? 0} upcoming`}
+              icon={<ArrowDownRight className="h-4 w-4" />}
+            />
+            <MetricCard
+              label="Active tasks"
+              value={String(activeTasks)}
+              detail={`${completedTasks} completed`}
+              icon={<CheckCircle2 className="h-4 w-4" />}
+              positive
+            />
+          </div>
+
+          <Card className="dashboard-panel flex h-[300px] flex-col overflow-hidden">
+            <CardHeader className="flex-row items-center justify-between p-5 pb-1">
+              <div>
+                <CardTitle className="text-base font-medium">Income overview</CardTitle>
+                <p className="mt-1 text-xs text-text-tertiary">Six-month financial performance</p>
+              </div>
+              <div className="hidden items-center gap-3 text-xs text-text-tertiary sm:flex">
+                <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-primary-500" />Income</span>
+                <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-orange-500" />Expenses</span>
               </div>
             </CardHeader>
-            <CardContent className="p-4 pt-0 flex-1 min-h-0">
-              <PerformanceChart
-                incomeData={chartData.income}
-                expenseData={chartData.expenses}
-                labels={chartData.labels}
-              />
+            <CardContent className="min-h-0 flex-1 p-4 pt-0">
+              <PerformanceChart incomeData={chartData.income} expenseData={chartData.expenses} labels={chartData.labels} />
             </CardContent>
           </Card>
 
-          {/* ── Recent Updates ─────────────────────── */}
-          <Card className="flex-1 min-h-0 overflow-hidden flex flex-col">
-            <CardHeader className="p-4 pb-1 flex flex-row items-center justify-between shrink-0">
-              <CardTitle className="text-[11px] font-bold text-text-primary">
-                Recent Updates
-              </CardTitle>
-              <GitCommit className="h-3 w-3 text-text-tertiary" />
+          <Card className="dashboard-panel overflow-hidden">
+            <CardHeader className="flex-row items-center justify-between p-5">
+              <div>
+                <CardTitle className="text-base font-medium">Transactions</CardTitle>
+                <p className="mt-1 text-xs text-text-tertiary">Latest activity in this account</p>
+              </div>
+              <Link href="/dashboard/finance" className="dashboard-small-button">View all <ArrowUpRight className="h-3.5 w-3.5" /></Link>
             </CardHeader>
-            <CardContent className="p-0 flex-1 overflow-y-auto min-h-0">
-              {ghLoading ? (
-                <div className="flex flex-col gap-2 p-4">
-                  {[...Array(5)].map((_, i) => (
-                    <div key={i} className="flex items-center gap-2.5">
-                      <div className="h-5 w-5 shrink-0 rounded-full bg-card animate-pulse" />
-                      <div className="h-3 flex-1 rounded bg-card animate-pulse" />
-                      <div className="h-3 w-8 rounded bg-card animate-pulse" />
-                    </div>
-                  ))}
+            <CardContent className="overflow-x-auto p-0">
+              <div className="min-w-[620px]">
+                <div className="grid grid-cols-[1.4fr_.8fr_1fr_.8fr] gap-4 bg-white/[0.025] px-5 py-3 text-[11px] font-medium text-text-tertiary">
+                  <span>Transaction</span><span>Type</span><span>Date</span><span className="text-right">Amount</span>
+                </div>
+                {recentTransactions.length === 0 ? (
+                  <div className="flex flex-col items-center py-10 text-center">
+                    <Wallet className="h-6 w-6 text-text-tertiary" />
+                    <p className="mt-2 text-sm text-text-tertiary">No transactions yet</p>
+                  </div>
+                ) : recentTransactions.map((transaction) => (
+                  <div key={transaction.id} className="grid min-h-12 grid-cols-[1.4fr_.8fr_1fr_.8fr] items-center gap-4 border-t border-white/[0.045] px-5 py-2.5 text-xs">
+                    <span className="truncate font-medium text-text-primary">{transaction.description || transaction.category?.name || 'Transaction'}</span>
+                    <span className="text-text-tertiary">{transaction.type.charAt(0) + transaction.type.slice(1).toLowerCase()}</span>
+                    <span className="text-text-tertiary">{new Date(transaction.date).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                    <span className={`text-right font-semibold tabular-nums ${transaction.type === 'INCOME' ? 'text-primary-400' : 'text-red-400'}`}>
+                      {transaction.type === 'INCOME' ? '+' : '-'}{formatCurrency(transaction.amount)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="dashboard-panel overflow-hidden">
+            <CardHeader className="flex-row items-center justify-between p-5 pb-3">
+              <CardTitle className="text-base font-medium">Recent updates</CardTitle>
+              <GitCommit className="h-4 w-4 text-text-tertiary" />
+            </CardHeader>
+            <CardContent className="p-0">
+              {updatesLoading ? (
+                <div className="space-y-2 p-5">
+                  {[0, 1, 2].map((item) => <div key={item} className="h-10 animate-pulse rounded-lg bg-white/[0.035]" />)}
                 </div>
               ) : commits.length === 0 ? (
-                <div className="flex items-center justify-center h-full py-6">
-                  <p className="text-[10px] text-text-tertiary">No recent commits</p>
-                </div>
-              ) : (
-                commits.map((commit) => {
-                  const msg = commit.commit.message.split('\n')[0]
-                  const cat = msg.match(/^(\w+)/)?.[1]?.toLowerCase() ?? ''
-                  const isFeature = cat === 'feat'
-                  const isFix = cat === 'fix'
-                  return (
-                    <a
-                      key={commit.sha}
-                      href={commit.html_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2.5 px-4 py-2 transition-colors hover:bg-card/[0.04] border-b border-border-subtle last:border-0 group"
-                    >
-                      <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-card group-hover:bg-bg-subtle transition-colors">
-                        <GitCommit className="h-2.5 w-2.5 text-text-tertiary" />
-                      </div>
-                      <p className="flex-1 text-[10px] text-text-secondary truncate min-w-0">
-                        {msg}
-                      </p>
-                      {isFeature && (
-                        <span className="shrink-0 rounded px-1 py-0.5 text-[7px] font-semibold uppercase bg-primary-50 text-primary-700 leading-none">
-                          feat
-                        </span>
-                      )}
-                      {isFix && (
-                        <span className="shrink-0 rounded px-1 py-0.5 text-[7px] font-semibold uppercase bg-green-50 text-green-700 leading-none">
-                          fix
-                        </span>
-                      )}
-                      <span className="shrink-0 text-[9px] tabular-nums text-text-tertiary">
-                        {timeAgo(commit.commit.author.date)}
-                      </span>
-                      <ExternalLink className="h-2.5 w-2.5 shrink-0 text-text-muted group-hover:text-text-tertiary transition-colors" />
-                    </a>
-                  )
-                })
-              )}
+                <p className="p-5 text-sm text-text-tertiary">No recent updates.</p>
+              ) : commits.map((commit) => (
+                <a
+                  key={commit.sha}
+                  href={commit.html_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex min-h-12 items-center gap-3 border-t border-white/[0.045] px-5 py-2.5 hover:bg-white/[0.025]"
+                >
+                  <GitCommit className="h-4 w-4 shrink-0 text-primary-500" />
+                  <span className="min-w-0 flex-1 truncate text-sm text-text-secondary">{commit.commit.message.split('\n')[0]}</span>
+                  <span className="text-xs tabular-nums text-text-tertiary">{timeAgo(commit.commit.author.date)}</span>
+                  <ExternalLink className="h-3.5 w-3.5 text-text-tertiary group-hover:text-text-primary" />
+                </a>
+              ))}
             </CardContent>
           </Card>
         </div>
       </div>
     </div>
+  )
+}
+
+function MetricCard({
+  label,
+  value,
+  detail,
+  icon,
+  positive = false,
+}: {
+  label: string
+  value: string
+  detail: string
+  icon: React.ReactNode
+  positive?: boolean
+}) {
+  return (
+    <Card className="dashboard-panel">
+      <CardContent className="p-5">
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-text-tertiary">{label}</p>
+          <span className={`flex h-8 w-8 items-center justify-center rounded-full ${positive ? 'bg-primary-500/10 text-primary-400' : 'bg-red-500/10 text-red-400'}`}>{icon}</span>
+        </div>
+        <p className="mt-4 truncate text-2xl font-semibold tabular-nums text-text-primary">{value}</p>
+        <p className="mt-1 flex items-center gap-1 text-xs text-text-tertiary">
+          <Clock3 className="h-3 w-3" />{detail}
+        </p>
+      </CardContent>
+    </Card>
   )
 }
