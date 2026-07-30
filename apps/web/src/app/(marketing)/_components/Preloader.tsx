@@ -2,11 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react'
 
-let _blobUrl: string | null = null
-export function getPreloadedVideoUrl(): string | null {
-  return _blobUrl
-}
-
 export default function Preloader() {
   const [dismissed, setDismissed] = useState(false)
   const [phase, setPhase] = useState<'loading' | 'ready'>('loading')
@@ -25,26 +20,17 @@ export default function Preloader() {
     }
     document.addEventListener('touchstart', activate, { once: true })
 
-    // Fetch video blob
-    fetch('/services.mp4')
-      .then((r) => r.blob())
-      .then((blob) => {
-        _blobUrl = URL.createObjectURL(blob)
-        video.src = _blobUrl
-        video.load()
-        const poll = () => {
-          if (Number.isFinite(video.duration) && video.duration > 0 && video.readyState >= 2) {
-            video.currentTime = 0
-            setPhase('ready')
-            return
-          }
-          setTimeout(poll, 150)
-        }
-        poll()
-      })
-      .catch(() => {
+    video.src = '/services.mp4'
+    video.load()
+    const poll = () => {
+      if (Number.isFinite(video.duration) && video.duration > 0 && video.readyState >= 2) {
+        video.currentTime = 0
         setPhase('ready')
-      })
+        return
+      }
+      setTimeout(poll, 150)
+    }
+    poll()
 
     // Safety: show enter button after 8s no matter what
     setTimeout(() => {

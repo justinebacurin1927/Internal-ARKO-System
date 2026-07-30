@@ -3,9 +3,8 @@
 import { useGSAP } from '@gsap/react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useRef } from 'react'
 import StarBorder from './StarBorder'
-import { getPreloadedVideoUrl } from './Preloader'
 
 gsap.registerPlugin(ScrollTrigger, useGSAP)
 
@@ -28,24 +27,6 @@ export default function ScrollServices() {
   const progressRef = useRef<HTMLDivElement>(null)
   const scrimRef = useRef<HTMLDivElement>(null)
   const dotRefs = useRef<(HTMLSpanElement | null)[]>([])
-
-  // Load video source (one-shot)
-  useEffect(() => {
-    const video = videoRef.current
-    if (!video) return
-
-    const preloaded = getPreloadedVideoUrl()
-    if (preloaded) {
-      video.src = preloaded
-    } else {
-      fetch('/services.mp4')
-        .then((r) => r.blob())
-        .then((blob) => {
-          video.src = URL.createObjectURL(blob)
-        })
-        .catch(() => {})
-    }
-  }, [])
 
   const paint = useCallback((progress: number) => {
     // ——— TEXT SLIDES (always work, no video dependency) ———
@@ -96,9 +77,13 @@ export default function ScrollServices() {
   useGSAP(
     () => {
       const section = sectionRef.current
-      if (!section) return
+      const video = videoRef.current
+      if (!section || !video) return
 
-      ScrollTrigger.create({
+      const refresh = () => ScrollTrigger.refresh()
+      video.addEventListener('loadedmetadata', refresh)
+
+      const trigger = ScrollTrigger.create({
         trigger: section,
         start: 'top top',
         end: 'bottom bottom',
@@ -110,11 +95,16 @@ export default function ScrollServices() {
           // Video seeking is best-effort
           const video = videoRef.current
           if (!video || !Number.isFinite(video.duration) || video.duration <= 0) return
-          if (video.readyState < 2) return
-          try { video.currentTime = self.progress * video.duration } catch {}
+          const lastFrame = Math.max(0, video.duration - 1 / 30)
+          try { video.currentTime = self.progress * lastFrame } catch {}
         },
       })
       paint(0)
+
+      return () => {
+        video.removeEventListener('loadedmetadata', refresh)
+        trigger.kill()
+      }
     },
     { scope: sectionRef },
   )
