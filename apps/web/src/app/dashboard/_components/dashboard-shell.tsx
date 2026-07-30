@@ -257,8 +257,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     : ALL_CATEGORIES.filter(
         (item) =>
           item.to !== '/dashboard/client-portal' ||
-          sessionUser?.role === 'ADMIN' ||
-          sessionUser?.role === 'MEMBER',
+          sessionUser?.role === 'ADMIN',
       )
   const filteredCategories = navSearch
     ? categories.filter((c) => c.label.toLowerCase().includes(navSearch.toLowerCase()))

@@ -289,6 +289,7 @@ model Task {
   // `blockedBy` = edges where this task is blocked by another.
   blocking  TaskDependency[] @relation("BlockingTask")
   blockedBy TaskDependency[] @relation("BlockedTask")
+  clientRequest ClientRequest?
 }
 
 // A directed "A blocks B" edge between two tasks. `blockedId` cannot be marked
@@ -558,6 +559,9 @@ model ClientProject {
   owner    User            @relation("ManagedClientProjects", fields: [ownerId], references: [id], onDelete: Restrict)
   updates  ClientUpdate[]
   requests ClientRequest[]
+  milestones ProjectMilestone[]
+  deliverables ProjectDeliverable[]
+  activities ProjectActivity[]
 
   @@index([clientId])
   @@index([ownerId])
@@ -584,14 +588,60 @@ model ClientRequest {
   status      String   @default("OPEN")
   clientId    String
   projectId   String?
+  taskId      String?  @unique
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   client  User           @relation(fields: [clientId], references: [id], onDelete: Cascade)
   project ClientProject? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  task    Task?           @relation(fields: [taskId], references: [id], onDelete: SetNull)
 
   @@index([clientId, status])
   @@index([projectId])
+}
+
+model ProjectMilestone {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  completed   Boolean  @default(false)
+  dueDate     DateTime?
+  projectId   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  project ClientProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, completed])
+}
+
+model ProjectDeliverable {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  url         String?
+  status      String   @default("PENDING_REVIEW")
+  feedback    String?
+  projectId   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  project ClientProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, status])
+}
+
+model ProjectActivity {
+  id        String   @id @default(cuid())
+  action    String
+  detail    String
+  actorName String?
+  projectId String
+  createdAt DateTime @default(now())
+
+  project ClientProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, createdAt])
 }
 
 // ===== FINANCE EXTRAS =====

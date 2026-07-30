@@ -31,11 +31,21 @@ function persist(st: ContactState) {
 
 export default function ContactForm() {
   const [doneState, setDoneState] = useState<ContactState | null>(null)
+  const [message, setMessage] = useState('')
   const [state, formAction, pending] = useActionState(sendContact, initial)
 
   // Hydration-safe: restore from localStorage after mount
   useEffect(() => {
     setDoneState(readPersisted())
+  }, [])
+
+  useEffect(() => {
+    const receiveIdea = (event: Event) => {
+      const idea = (event as CustomEvent<string>).detail
+      if (idea) setMessage(idea)
+    }
+    window.addEventListener('arko:funnel', receiveIdea)
+    return () => window.removeEventListener('arko:funnel', receiveIdea)
   }, [])
 
   // Persist done states so they survive future refreshes
@@ -76,7 +86,7 @@ export default function ContactForm() {
 
   // SSR / first paint: match the form so hydration doesn't mismatch
   return (
-    <form action={formAction} className="flex flex-col gap-5">
+    <form id="contact-form" action={formAction} className="flex flex-col gap-5">
       {FIELDS.map((f) => (
         <label key={f.name} className="flex flex-col gap-2">
           <span className="eyebrow text-white/50">{f.label}</span>
@@ -94,6 +104,8 @@ export default function ContactForm() {
           name="message"
           rows={3}
           required
+          value={message}
+          onChange={(event) => setMessage(event.target.value)}
           className="resize-none border-b-2 border-white/20 bg-transparent py-3 text-lg font-medium outline-none transition-colors focus:border-acid"
         />
       </label>

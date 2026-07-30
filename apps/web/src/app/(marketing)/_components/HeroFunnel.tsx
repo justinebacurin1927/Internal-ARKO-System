@@ -1,8 +1,18 @@
 'use client'
 
+import { useState } from 'react'
+
 export default function HeroFunnel() {
+  const [idea, setIdea] = useState('')
+
   const scrollToContact = () => {
-    document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })
+    const contactForm = document.getElementById('contact-form')
+    const destination = contactForm ?? document.getElementById('contact')
+    destination?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    window.dispatchEvent(new CustomEvent('arko:funnel', { detail: idea.trim() }))
+    window.setTimeout(() => {
+      document.querySelector<HTMLTextAreaElement>('#contact-form textarea[name="message"]')?.focus()
+    }, 500)
   }
 
   return (
@@ -10,6 +20,8 @@ export default function HeroFunnel() {
       <input
         type="text"
         placeholder="what are you building?"
+        value={idea}
+        onChange={(event) => setIdea(event.target.value)}
         className="min-w-0 flex-1 bg-transparent px-4 py-3 font-mono text-sm font-medium text-ink outline-none placeholder:text-ink/30"
         onKeyDown={(e) => {
           if (e.key === 'Enter') scrollToContact()

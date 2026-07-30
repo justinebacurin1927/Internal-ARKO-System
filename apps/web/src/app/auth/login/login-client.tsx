@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { signIn } from 'next-auth/react'
 import { useQueryClient } from '@tanstack/react-query'
@@ -290,6 +291,13 @@ function LoginForm() {
 
   return (
     <div className="flex flex-1 items-center justify-center bg-[#09090B] px-6 relative overflow-hidden">
+      <Link
+        href="/"
+        className="absolute left-6 top-6 z-10 text-xs font-medium text-zinc-500 transition-colors hover:text-white"
+        style={{ fontFamily: "'DM Sans', sans-serif" }}
+      >
+        ← Back to ARKO
+      </Link>
       <div
         className="absolute top-[-30%] right-[-20%] w-[60%] aspect-square rounded-full opacity-[0.03]"
         style={{ background: 'radial-gradient(circle, #2D6A4F 0%, transparent 70%)' }}
