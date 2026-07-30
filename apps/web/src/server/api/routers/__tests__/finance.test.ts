@@ -40,6 +40,19 @@ const ctx = (over: any = {}) => {
           transactions.push(row)
           return Promise.resolve(row)
         }),
+        findUnique: jest.fn().mockImplementation(({ where }: any) =>
+          Promise.resolve(transactions.find((t: any) => t.id === where.id) ?? null),
+        ),
+        update: jest.fn().mockImplementation(({ where, data }: any) => {
+          const index = transactions.findIndex((t: any) => t.id === where.id)
+          transactions[index] = { ...transactions[index], ...data }
+          return Promise.resolve(transactions[index])
+        }),
+        delete: jest.fn().mockImplementation(({ where }: any) => {
+          const index = transactions.findIndex((t: any) => t.id === where.id)
+          const [deleted] = transactions.splice(index, 1)
+          return Promise.resolve(deleted)
+        }),
         aggregate: jest.fn().mockImplementation(({ where }: any) => {
           const filtered = transactions.filter((t: any) => {
             if (where?.userId && t.userId !== where.userId) return false
@@ -109,6 +122,27 @@ const ctx = (over: any = {}) => {
 
       accountCategory: {
         findMany: jest.fn().mockImplementation(() => Promise.resolve(categories)),
+        findFirst: jest.fn().mockImplementation(({ where }: any) =>
+          Promise.resolve(categories.find((c: any) => c.id === where.id) ?? null),
+        ),
+        create: jest.fn().mockImplementation(({ data }: any) => {
+          const row = { id: `c-${categories.length + 1}`, ...data }
+          categories.push(row)
+          return Promise.resolve(row)
+        }),
+        findUnique: jest.fn().mockImplementation(({ where }: any) =>
+          Promise.resolve(categories.find((c: any) => c.id === where.id) ?? null),
+        ),
+        delete: jest.fn().mockImplementation(({ where }: any) => {
+          const index = categories.findIndex((c: any) => c.id === where.id)
+          const [deleted] = categories.splice(index, 1)
+          return Promise.resolve(deleted)
+        }),
+        update: jest.fn().mockImplementation(({ where, data }: any) => {
+          const index = categories.findIndex((c: any) => c.id === where.id)
+          categories[index] = { ...categories[index], ...data }
+          return Promise.resolve(categories[index])
+        }),
         ...(over.accountCategory ?? {}),
       },
 
@@ -233,7 +267,7 @@ describe('finance router', () => {
 
   describe('createTransaction', () => {
     it('creates a simple transaction', async () => {
-      const c = ctx({ _categories: [{ id: 'c1', name: 'Salary' }] })
+      const c = ctx({ _categories: [{ id: 'c1', name: 'Salary', type: 'INVESTMENT', userId: null }] })
       const res = await financeRouter.createCaller(c).createTransaction({
         amount: 500,
         type: 'INCOME',
@@ -249,7 +283,7 @@ describe('finance router', () => {
     })
 
     it('creates a split transaction with split shares', async () => {
-      const c = ctx({ _categories: [{ id: 'c1', name: 'Bill' }] })
+      const c = ctx({ _categories: [{ id: 'c1', name: 'Bill', type: 'CASH', userId: null }] })
       await financeRouter.createCaller(c).createTransaction({
         amount: 300,
         type: 'EXPENSE',
@@ -260,11 +294,17 @@ describe('finance router', () => {
           { userId: 'u3', amount: 150 },
         ],
       })
-      expect(c.prisma.splitShare.createMany).toHaveBeenCalledWith(
+      expect(c.prisma.transaction.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.arrayContaining([
-            expect.objectContaining({ userId: 'u2', amount: 150 }),
-          ]),
+          data: expect.objectContaining({
+            splitShares: {
+              createMany: {
+                data: expect.arrayContaining([
+                  expect.objectContaining({ userId: 'u2', amount: 150 }),
+                ]),
+              },
+            },
+          }),
         }),
       )
     })
@@ -279,6 +319,30 @@ describe('finance router', () => {
         }),
       ).rejects.toThrow()
     })
+
+    it('rejects split amounts that do not equal the transaction amount', async () => {
+      const c = ctx({ _categories: [{ id: 'c1', type: 'CASH', userId: null }] })
+      await expect(
+        financeRouter.createCaller(c).createTransaction({
+          amount: 300,
+          type: 'EXPENSE',
+          categoryId: 'c1',
+          isSplit: true,
+          splitWith: [{ userId: 'u2', amount: 100 }],
+        }),
+      ).rejects.toMatchObject({ code: 'BAD_REQUEST' })
+    })
+
+    it('rejects a category for the wrong transaction type', async () => {
+      const c = ctx({ _categories: [{ id: 'c1', type: 'CASH', userId: null }] })
+      await expect(
+        financeRouter.createCaller(c).createTransaction({
+          amount: 300,
+          type: 'INCOME',
+          categoryId: 'c1',
+        }),
+      ).rejects.toMatchObject({ code: 'BAD_REQUEST' })
+    })
   })
 
   describe('getCategories', () => {
@@ -291,6 +355,57 @@ describe('finance router', () => {
       expect(res).toHaveLength(2)
       expect(res[0].name).toBe('Food')
       expect(res[1].name).toBe('Salary')
+    })
+
+    it('creates a custom category for the current user and transaction type', async () => {
+      const c = ctx()
+      const category = await financeRouter.createCaller(c).createCategory({
+        name: 'Subscriptions',
+        transactionType: 'EXPENSE',
+      })
+      expect(category).toMatchObject({
+        name: 'Subscriptions',
+        type: 'CASH',
+        userId: 'u1',
+      })
+    })
+
+    it('rejects deleting another user’s category', async () => {
+      const c = ctx({
+        _categories: [{ id: 'c1', name: 'Private', type: 'CASH', userId: 'u2' }],
+      })
+      await expect(
+        financeRouter.createCaller(c).deleteCategory({ id: 'c1' }),
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    })
+
+    it('deletes an unused custom category owned by the current user', async () => {
+      const remove = jest.fn().mockResolvedValue({ id: 'c1' })
+      const c = ctx({
+        accountCategory: {
+          findUnique: jest.fn().mockResolvedValue({
+            userId: 'u1',
+            _count: { transactions: 0, recurring: 0 },
+          }),
+          delete: remove,
+        },
+      })
+      await financeRouter.createCaller(c).deleteCategory({ id: 'c1' })
+      expect(remove).toHaveBeenCalledWith({ where: { id: 'c1' } })
+    })
+
+    it('keeps a custom category that is already in use', async () => {
+      const c = ctx({
+        accountCategory: {
+          findUnique: jest.fn().mockResolvedValue({
+            userId: 'u1',
+            _count: { transactions: 1, recurring: 0 },
+          }),
+        },
+      })
+      await expect(
+        financeRouter.createCaller(c).deleteCategory({ id: 'c1' }),
+      ).rejects.toMatchObject({ code: 'CONFLICT' })
     })
   })
 

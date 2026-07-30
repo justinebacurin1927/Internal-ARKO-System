@@ -2,6 +2,26 @@ import { z } from 'zod'
 import { TRPCError } from '@trpc/server'
 import { router, protectedProcedure } from '../trpc'
 
+const categoryTypes = {
+  INCOME: ['INVESTMENT'],
+  EXPENSE: ['CREDIT_CARD', 'CASH', 'CHECKING', 'SAVINGS'],
+  TRANSFER: ['RECEIVABLE', 'PAYABLE'],
+} as const
+
+async function assertCategoryAccess(ctx: any, categoryId: string, transactionType: keyof typeof categoryTypes) {
+  const category = await ctx.prisma.accountCategory.findFirst({
+    where: {
+      id: categoryId,
+      OR: [{ userId: null }, { userId: ctx.user.id }],
+    },
+    select: { type: true },
+  })
+  if (!category) throw new TRPCError({ code: 'FORBIDDEN', message: 'Category is not available.' })
+  if (!(categoryTypes[transactionType] as readonly string[]).includes(category.type)) {
+    throw new TRPCError({ code: 'BAD_REQUEST', message: 'Category does not match the transaction type.' })
+  }
+}
+
 export const financeRouter = router({
   getTransactions: protectedProcedure
     .input(
@@ -52,8 +72,23 @@ export const financeRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.user.id!
+      await assertCategoryAccess(ctx, input.categoryId, input.type)
 
-      const tx = await ctx.prisma.transaction.create({
+      const splits = input.isSplit ? (input.splitWith ?? []) : []
+      if (input.isSplit) {
+        if (input.type !== 'EXPENSE' || splits.length === 0) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Only expenses can be split.' })
+        }
+        if (new Set(splits.map((split) => split.userId)).size !== splits.length) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'A person can only appear once in a split.' })
+        }
+        const splitTotal = splits.reduce((sum, split) => sum + split.amount, 0)
+        if (Math.abs(splitTotal - input.amount) >= 0.01) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Split amounts must equal the transaction amount.' })
+        }
+      }
+
+      return ctx.prisma.transaction.create({
         data: {
           amount: input.amount,
           description: input.description,
@@ -63,28 +98,106 @@ export const financeRouter = router({
           categoryId: input.categoryId,
           userId,
           date: input.date ?? new Date(),
+          ...(splits.length > 0 && {
+            splitShares: {
+              createMany: {
+                data: splits.map((split) => ({
+                  userId: split.userId,
+                  amount: split.amount,
+                })),
+              },
+            },
+          }),
         },
       })
+    }),
 
-      // Create split shares if splitting
-      if (input.isSplit && input.splitWith && input.splitWith.length > 0) {
-        await ctx.prisma.splitShare.createMany({
-          data: input.splitWith.map((s) => ({
-            transactionId: tx.id,
-            userId: s.userId,
-            amount: s.amount,
-          })),
-        })
-      }
+  updateTransaction: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        amount: z.number().positive(),
+        description: z.string().optional(),
+        type: z.enum(['INCOME', 'EXPENSE', 'TRANSFER']),
+        categoryId: z.string(),
+        scope: z.enum(['PERSONAL', 'COMPANY']),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const row = await ctx.prisma.transaction.findUnique({ where: { id: input.id } })
+      if (!row || row.userId !== ctx.user.id) throw new TRPCError({ code: 'FORBIDDEN' })
+      await assertCategoryAccess(ctx, input.categoryId, input.type)
+      const { id, ...data } = input
+      return ctx.prisma.transaction.update({ where: { id }, data })
+    }),
 
-      return tx
+  deleteTransaction: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const row = await ctx.prisma.transaction.findUnique({ where: { id: input.id } })
+      if (!row || row.userId !== ctx.user.id) throw new TRPCError({ code: 'FORBIDDEN' })
+      return ctx.prisma.transaction.delete({ where: { id: input.id } })
     }),
 
   getCategories: protectedProcedure.query(async ({ ctx }) => {
     return ctx.prisma.accountCategory.findMany({
+      where: { OR: [{ userId: null }, { userId: ctx.user.id! }] },
       orderBy: { name: 'asc' },
     })
   }),
+
+  createCategory: protectedProcedure
+    .input(
+      z.object({
+        name: z.string().trim().min(1).max(80),
+        transactionType: z.enum(['INCOME', 'EXPENSE', 'TRANSFER']),
+      }),
+    )
+    .mutation(({ ctx, input }) => {
+      const accountType = {
+        INCOME: 'INVESTMENT',
+        EXPENSE: 'CASH',
+        TRANSFER: 'RECEIVABLE',
+      } as const
+
+      return ctx.prisma.accountCategory.create({
+        data: {
+          name: input.name,
+          type: accountType[input.transactionType],
+          userId: ctx.user.id!,
+        },
+      })
+    }),
+
+  updateCategory: protectedProcedure
+    .input(z.object({ id: z.string(), name: z.string().trim().min(1).max(80) }))
+    .mutation(async ({ ctx, input }) => {
+      const category = await ctx.prisma.accountCategory.findUnique({ where: { id: input.id } })
+      if (!category || category.userId !== ctx.user.id) throw new TRPCError({ code: 'FORBIDDEN' })
+      return ctx.prisma.accountCategory.update({
+        where: { id: input.id },
+        data: { name: input.name },
+      })
+    }),
+
+  deleteCategory: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const category = await ctx.prisma.accountCategory.findUnique({
+        where: { id: input.id },
+        select: { userId: true, _count: { select: { transactions: true, recurring: true } } },
+      })
+      if (!category || category.userId !== ctx.user.id) {
+        throw new TRPCError({ code: 'FORBIDDEN' })
+      }
+      if (category._count.transactions > 0 || category._count.recurring > 0) {
+        throw new TRPCError({
+          code: 'CONFLICT',
+          message: 'This category is already used by a transaction.',
+        })
+      }
+      return ctx.prisma.accountCategory.delete({ where: { id: input.id } })
+    }),
 
   getBalance: protectedProcedure
     .input(

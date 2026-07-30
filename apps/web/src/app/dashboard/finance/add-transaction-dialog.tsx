@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import { Button } from '@arko/ui'
-import { X, Loader2, Users } from 'lucide-react'
+import { X, Loader2, Users, Plus, Trash2 } from 'lucide-react'
 import { api } from '../../../lib/trpc/client'
 
 interface AddTransactionDialogProps {
@@ -22,6 +22,7 @@ export function AddTransactionDialog({ open, onOpenChange }: AddTransactionDialo
   const [amount, setAmount] = useState('')
   const [description, setDescription] = useState('')
   const [categoryId, setCategoryId] = useState('')
+  const [newCategoryName, setNewCategoryName] = useState('')
   const [isSplit, setIsSplit] = useState(false)
   const [splits, setSplits] = useState<SplitEntry[]>([])
 
@@ -35,6 +36,22 @@ export function AddTransactionDialog({ open, onOpenChange }: AddTransactionDialo
       utils.finance.getPendingSplits.invalidate()
       handleReset()
     },
+  })
+  const createCategory = api.finance.createCategory.useMutation({
+    onSuccess: async (category) => {
+      await utils.finance.getCategories.invalidate()
+      setCategoryId(category.id)
+      setNewCategoryName('')
+    },
+  })
+  const deleteCategory = api.finance.deleteCategory.useMutation({
+    onSuccess: async (_, variables) => {
+      if (categoryId === variables.id) setCategoryId('')
+      await utils.finance.getCategories.invalidate()
+    },
+  })
+  const updateCategory = api.finance.updateCategory.useMutation({
+    onSuccess: () => utils.finance.getCategories.invalidate(),
   })
 
   const filteredCategories = categories?.filter((cat) => {
@@ -134,7 +151,7 @@ export function AddTransactionDialog({ open, onOpenChange }: AddTransactionDialo
                         : 'bg-card text-text-secondary hover:bg-card ring-1 ring-inset ring-border-subtle'
                     }`}
                   >
-                    {s === 'PERSONAL' ? '🏠 Personal' : '🏢 Company'}
+                    {s === 'PERSONAL' ? 'Personal' : 'Company'}
                   </button>
                 ))}
               </div>
@@ -228,6 +245,63 @@ export function AddTransactionDialog({ open, onOpenChange }: AddTransactionDialo
               </select>
               {(!filteredCategories || filteredCategories.length === 0) && (
                 <p className="text-xs text-text-tertiary mt-1.5">No categories available for this transaction type.</p>
+              )}
+              <div className="mt-2 flex gap-2">
+                <input
+                  type="text"
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  placeholder="New category"
+                  maxLength={80}
+                  className="min-w-0 flex-1 rounded-lg border border-border-subtle px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={!newCategoryName.trim() || createCategory.isPending}
+                  onClick={() => createCategory.mutate({ name: newCategoryName, transactionType: type })}
+                >
+                  {createCategory.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                  Add
+                </Button>
+              </div>
+              {filteredCategories?.some((cat) => cat.userId) && (
+                <div className="mt-2 space-y-1">
+                  {filteredCategories
+                    .filter((cat) => cat.userId)
+                    .map((cat) => (
+                      <div key={cat.id} className="flex items-center justify-between rounded-md bg-card px-2.5 py-1.5 text-xs text-text-secondary">
+                        <span>{cat.name}</span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            aria-label={`Rename ${cat.name}`}
+                            onClick={() => {
+                              const name = window.prompt('Rename category', cat.name)
+                              if (name?.trim()) updateCategory.mutate({ id: cat.id, name })
+                            }}
+                            className="text-text-tertiary transition-colors hover:text-text-primary"
+                          >
+                            Rename
+                          </button>
+                          <button
+                            type="button"
+                            aria-label={`Delete ${cat.name}`}
+                            disabled={deleteCategory.isPending}
+                            onClick={() => deleteCategory.mutate({ id: cat.id })}
+                            className="text-text-tertiary transition-colors hover:text-red-500"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              )}
+              {(createCategory.error || updateCategory.error || deleteCategory.error) && (
+                <p className="mt-1.5 text-xs text-red-500">
+                  {createCategory.error?.message ?? updateCategory.error?.message ?? deleteCategory.error?.message}
+                </p>
               )}
             </div>
 

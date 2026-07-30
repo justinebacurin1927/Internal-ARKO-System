@@ -50,6 +50,13 @@ export default function FinancePage() {
   const settleSplitMut = api.finance.settleSplit.useMutation({
     onSuccess: () => utils.finance.getPendingSplits.invalidate(),
   })
+  const deleteTransactionMut = api.finance.deleteTransaction.useMutation({
+    onSuccess: () => {
+      utils.finance.getTransactions.invalidate()
+      utils.finance.getBalance.invalidate()
+      utils.finance.getPendingSplits.invalidate()
+    },
+  })
 
   const balance = query.data
   const transactions = txQuery.data ?? []
@@ -123,7 +130,7 @@ export default function FinancePage() {
                     : 'bg-card text-text-secondary hover:bg-card/[0.04]'
                 }`}
               >
-                {s === 'ALL' ? 'All' : s === 'PERSONAL' ? '🏠 Personal' : '🏢 Company'}
+                {s === 'ALL' ? 'All' : s === 'PERSONAL' ? 'Personal' : 'Company'}
               </button>
             ))}
           </div>
@@ -238,11 +245,26 @@ export default function FinancePage() {
                             </p>
                           </div>
                         </div>
-                        <span className={`text-sm font-semibold shrink-0 ml-3 ${
-                          tx.type === 'INCOME' ? 'text-green-600' : tx.type === 'EXPENSE' ? 'text-red-600' : 'text-blue-600'
-                        }`}>
-                          {tx.type === 'INCOME' ? '+' : '-'}{formatCurrency(tx.amount)}
-                        </span>
+                        <div className="ml-3 flex shrink-0 items-center gap-2">
+                          <span className={`text-sm font-semibold ${
+                            tx.type === 'INCOME' ? 'text-green-600' : tx.type === 'EXPENSE' ? 'text-red-600' : 'text-blue-600'
+                          }`}>
+                            {tx.type === 'INCOME' ? '+' : '-'}{formatCurrency(tx.amount)}
+                          </span>
+                          <button
+                            type="button"
+                            aria-label="Delete transaction"
+                            disabled={deleteTransactionMut.isPending}
+                            onClick={() => {
+                              if (window.confirm('Delete this transaction?')) {
+                                deleteTransactionMut.mutate({ id: tx.id })
+                              }
+                            }}
+                            className="rounded p-1 text-text-tertiary transition-colors hover:bg-red-50 hover:text-red-600"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
                       </div>
                     )
                   })}

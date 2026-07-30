@@ -29,6 +29,7 @@ model User {
   sessions          Session[]
   workspaceMembers  WorkspaceMember[]
   transactions      Transaction[]
+  accountCategories AccountCategory[]
   splitShares       SplitShare[]
   tasks             Task[]
   comments          Comment[]
@@ -122,10 +123,15 @@ model AccountCategory {
   color    String?     @default("#6b7280")
   icon     String?
   budgetId String?
+  userId   String?
 
   transactions Transaction[]
   budget       Budget?                @relation(fields: [budgetId], references: [id])
+  user         User?                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   recurring    RecurringTransaction[]
+
+  @@index([userId])
+  @@unique([userId, name, type])
 }
 
 enum AccountType {
