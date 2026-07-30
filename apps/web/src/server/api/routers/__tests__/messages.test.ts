@@ -9,7 +9,7 @@ const ctx = (over: any = {}) => {
   return {
     user: { id: over.userId ?? 'u1' },
     session: { user: { id: over.userId ?? 'u1' } },
-    userRole: 'USER',
+    userRole: over.userRole ?? 'USER',
     prisma: {
       conversation: {
         findMany: jest.fn().mockImplementation(({ where, include, orderBy }: any) => {
@@ -21,22 +21,34 @@ const ctx = (over: any = {}) => {
           if (orderBy?.updatedAt === 'desc') {
             result = [...result].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
           }
-          return Promise.resolve(result.map((c: any) => ({
-            ...c,
-            participants: include?.participants
-              ? participants.filter((p: any) => p.conversationId === c.id).map((p: any) => ({
-                  ...p,
-                  user: p.user ?? { id: p.userId, name: 'User', email: `${p.userId}@test.com`, image: null },
-                }))
-              : undefined,
-            messages: include?.messages
-              ? messages
-                  .filter((m: any) => m.conversationId === c.id)
-                  .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                  .slice(0, include.messages.take ?? 1)
-                  .map((m: any) => ({ ...m, sender: m.sender ?? { id: m.senderId, name: 'User' } }))
-              : undefined,
-          })))
+          return Promise.resolve(
+            result.map((c: any) => ({
+              ...c,
+              participants: include?.participants
+                ? participants
+                    .filter((p: any) => p.conversationId === c.id)
+                    .map((p: any) => ({
+                      ...p,
+                      user: p.user ?? {
+                        id: p.userId,
+                        name: 'User',
+                        email: `${p.userId}@test.com`,
+                        image: null,
+                      },
+                    }))
+                : undefined,
+              messages: include?.messages
+                ? messages
+                    .filter((m: any) => m.conversationId === c.id)
+                    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                    .slice(0, include.messages.take ?? 1)
+                    .map((m: any) => ({
+                      ...m,
+                      sender: m.sender ?? { id: m.senderId, name: 'User' },
+                    }))
+                : undefined,
+            })),
+          )
         }),
         findFirst: jest.fn().mockImplementation(({ where }: any) => {
           // Handle the "find existing DM" query
@@ -46,9 +58,7 @@ const ctx = (over: any = {}) => {
             const otherUserIdCond = conditions.find((c: any) => c.participants?.some?.['userId'] ?? c.participants?.some?.userId)
             const noExtraCond = conditions.find((c: any) => c.participants?.none)
             const targetUserId = userIdCond?.participants?.some?.userId
-            const otherUserId = otherUserIdCond?.participants?.some?.userId !== targetUserId
-              ? otherUserIdCond?.participants?.some?.userId
-              : undefined
+            const otherUserId = otherUserIdCond?.participants?.some?.userId !== targetUserId ? otherUserIdCond?.participants?.some?.userId : undefined
 
             const match = conversations.find((c: any) => {
               const pIds = participants.filter((p: any) => p.conversationId === c.id).map((p: any) => p.userId)
@@ -59,21 +69,36 @@ const ctx = (over: any = {}) => {
             if (!match) return Promise.resolve(null)
             return Promise.resolve({
               ...match,
-              participants: participants.filter((p: any) => p.conversationId === match.id).map((p: any) => ({
-                ...p,
-                user: p.user ?? { id: p.userId, name: 'User', email: `${p.userId}@test.com`, image: null },
-              })),
+              participants: participants
+                .filter((p: any) => p.conversationId === match.id)
+                .map((p: any) => ({
+                  ...p,
+                  user: p.user ?? {
+                    id: p.userId,
+                    name: 'User',
+                    email: `${p.userId}@test.com`,
+                    image: null,
+                  },
+                })),
               messages: messages
                 .filter((m: any) => m.conversationId === match.id)
                 .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
                 .slice(0, 1)
-                .map((m: any) => ({ ...m, sender: m.sender ?? { id: m.senderId, name: 'User' } })),
+                .map((m: any) => ({
+                  ...m,
+                  sender: m.sender ?? { id: m.senderId, name: 'User' },
+                })),
             })
           }
           return Promise.resolve(null)
         }),
         create: jest.fn().mockImplementation(({ data }: any) => {
-          const row = { id: `conv-${conversations.length + 1}`, ...data, createdAt: new Date(), updatedAt: new Date() }
+          const row = {
+            id: `conv-${conversations.length + 1}`,
+            ...data,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          }
           conversations.push(row)
           // If data includes participants.createMany, add them
           if (data?.participants?.createMany?.data) {
@@ -83,7 +108,12 @@ const ctx = (over: any = {}) => {
                 conversationId: row.id,
                 userId: p.userId,
                 lastReadAt: null,
-                user: { id: p.userId, name: 'User', email: `${p.userId}@test.com`, image: null },
+                user: {
+                  id: p.userId,
+                  name: 'User',
+                  email: `${p.userId}@test.com`,
+                  image: null,
+                },
               })
             }
           }
@@ -99,6 +129,7 @@ const ctx = (over: any = {}) => {
           conversations[idx] = { ...conversations[idx], ...data }
           return Promise.resolve(conversations[idx])
         }),
+        delete: jest.fn().mockResolvedValue({ id: 'c1' }),
         ...(over.conversation ?? {}),
       },
 
@@ -106,18 +137,14 @@ const ctx = (over: any = {}) => {
         findUnique: jest.fn().mockImplementation(({ where }: any) => {
           if (where?.conversationId_userId) {
             const { conversationId, userId } = where.conversationId_userId
-            const p = participants.find(
-              (p: any) => p.conversationId === conversationId && p.userId === userId,
-            ) ?? null
+            const p = participants.find((p: any) => p.conversationId === conversationId && p.userId === userId) ?? null
             return Promise.resolve(p)
           }
           return Promise.resolve(null)
         }),
         update: jest.fn().mockImplementation(({ where, data }: any) => {
           const { conversationId, userId } = where.conversationId_userId
-          const idx = participants.findIndex(
-            (p: any) => p.conversationId === conversationId && p.userId === userId,
-          )
+          const idx = participants.findIndex((p: any) => p.conversationId === conversationId && p.userId === userId)
           if (idx === -1) return Promise.resolve(null)
           participants[idx] = { ...participants[idx], ...data }
           return Promise.resolve(participants[idx])
@@ -142,10 +169,16 @@ const ctx = (over: any = {}) => {
             }
           }
           if (take) result = result.slice(0, take)
-          return Promise.resolve(result.map((m: any) => ({
-            ...m,
-            sender: m.sender ?? { id: m.senderId, name: 'User', image: null },
-          })))
+          return Promise.resolve(
+            result.map((m: any) => ({
+              ...m,
+              sender: m.sender ?? {
+                id: m.senderId,
+                name: 'User',
+                image: null,
+              },
+            })),
+          )
         }),
         create: jest.fn().mockImplementation(({ data }: any) => {
           const row = {
@@ -153,7 +186,11 @@ const ctx = (over: any = {}) => {
             ...data,
             createdAt: new Date(),
             sender: data.senderId
-              ? { id: data.senderId, name: data.senderId === 'u1' ? 'Current User' : 'Other User', image: null }
+              ? {
+                  id: data.senderId,
+                  name: data.senderId === 'u1' ? 'Current User' : 'Other User',
+                  image: null,
+                }
               : { id: 'u1', name: 'Current User', image: null },
           }
           messages.push(row)
@@ -174,9 +211,13 @@ const ctx = (over: any = {}) => {
 
       user: {
         findUnique: jest.fn().mockImplementation(({ where }: any) => {
-          const existingUsers: string[] = (over._existingUsers ?? ['u1', 'u2', 'u3'])
+          const existingUsers: string[] = over._existingUsers ?? ['u1', 'u2', 'u3']
           if (existingUsers.includes(where.id)) {
-            return Promise.resolve({ id: where.id, name: 'User', email: `${where.id}@test.com` })
+            return Promise.resolve({
+              id: where.id,
+              name: 'User',
+              email: `${where.id}@test.com`,
+            })
           }
           return Promise.resolve(null)
         }),
@@ -187,6 +228,20 @@ const ctx = (over: any = {}) => {
 }
 
 describe('messages router', () => {
+  describe('deleteConversation', () => {
+    it('rejects permanent deletion by a regular participant', async () => {
+      await expect(messagesRouter.createCaller(ctx()).deleteConversation({ conversationId: 'c1' })).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    })
+
+    it('allows an administrator to permanently delete a conversation', async () => {
+      const c = ctx({ userRole: 'ADMIN' })
+      await expect(messagesRouter.createCaller(c).deleteConversation({ conversationId: 'c1' })).resolves.toEqual({ success: true })
+      expect(c.prisma.conversation.delete).toHaveBeenCalledWith({
+        where: { id: 'c1' },
+      })
+    })
+  })
+
   describe('listConversations', () => {
     it('returns conversations where user is a participant', async () => {
       const c = ctx({
@@ -200,7 +255,13 @@ describe('messages router', () => {
           { id: 'p3', conversationId: 'c2', userId: 'u3' }, // u1 not in c2
         ],
         _messages: [
-          { id: 'm1', conversationId: 'c1', content: 'Hey', senderId: 'u2', createdAt: new Date('2026-07-23T10:00:00Z') },
+          {
+            id: 'm1',
+            conversationId: 'c1',
+            content: 'Hey',
+            senderId: 'u2',
+            createdAt: new Date('2026-07-23T10:00:00Z'),
+          },
         ],
       })
       const res = await messagesRouter.createCaller(c).listConversations()
@@ -237,7 +298,13 @@ describe('messages router', () => {
       const c = ctx({
         _participants: [{ id: 'p1', conversationId: 'c1', userId: 'u1' }],
         _messages: [
-          { id: 'm1', conversationId: 'c1', content: 'Only', senderId: 'u2', createdAt: new Date() },
+          {
+            id: 'm1',
+            conversationId: 'c1',
+            content: 'Only',
+            senderId: 'u2',
+            createdAt: new Date(),
+          },
         ],
       })
       const res = await messagesRouter.createCaller(c).getMessages({
@@ -252,9 +319,7 @@ describe('messages router', () => {
       const c = ctx({
         _participants: [{ id: 'p1', conversationId: 'c1', userId: 'u2' }], // u1 not a participant
       })
-      await expect(
-        messagesRouter.createCaller(c).getMessages({ conversationId: 'c1' }),
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      await expect(messagesRouter.createCaller(c).getMessages({ conversationId: 'c1' })).rejects.toMatchObject({ code: 'FORBIDDEN' })
     })
   })
 
@@ -277,18 +342,14 @@ describe('messages router', () => {
       const c = ctx({
         _participants: [{ id: 'p1', conversationId: 'c1', userId: 'u2' }],
       })
-      await expect(
-        messagesRouter.createCaller(c).sendMessage({ conversationId: 'c1', content: 'Hi' }),
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      await expect(messagesRouter.createCaller(c).sendMessage({ conversationId: 'c1', content: 'Hi' })).rejects.toMatchObject({ code: 'FORBIDDEN' })
     })
 
     it('rejects empty content', async () => {
       const c = ctx({
         _participants: [{ id: 'p1', conversationId: 'c1', userId: 'u1' }],
       })
-      await expect(
-        messagesRouter.createCaller(c).sendMessage({ conversationId: 'c1', content: '' }),
-      ).rejects.toThrow()
+      await expect(messagesRouter.createCaller(c).sendMessage({ conversationId: 'c1', content: '' })).rejects.toThrow()
     })
   })
 
@@ -305,9 +366,7 @@ describe('messages router', () => {
       const c = ctx({
         _participants: [{ id: 'p1', conversationId: 'c1', userId: 'u2' }],
       })
-      await expect(
-        messagesRouter.createCaller(c).markRead({ conversationId: 'c1' }),
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      await expect(messagesRouter.createCaller(c).markRead({ conversationId: 'c1' })).rejects.toMatchObject({ code: 'FORBIDDEN' })
     })
   })
 
@@ -325,16 +384,12 @@ describe('messages router', () => {
 
     it('rejects self-conversation', async () => {
       const c = ctx()
-      await expect(
-        messagesRouter.createCaller(c).createConversation({ participantId: 'u1' }),
-      ).rejects.toMatchObject({ code: 'BAD_REQUEST' })
+      await expect(messagesRouter.createCaller(c).createConversation({ participantId: 'u1' })).rejects.toMatchObject({ code: 'BAD_REQUEST' })
     })
 
     it('rejects non-existent user', async () => {
       const c = ctx({ _existingUsers: ['u1'] })
-      await expect(
-        messagesRouter.createCaller(c).createConversation({ participantId: 'ghost' }),
-      ).rejects.toMatchObject({ code: 'NOT_FOUND' })
+      await expect(messagesRouter.createCaller(c).createConversation({ participantId: 'ghost' })).rejects.toMatchObject({ code: 'NOT_FOUND' })
     })
   })
 })

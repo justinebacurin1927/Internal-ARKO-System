@@ -1,14 +1,5 @@
 import { NextResponse } from 'next/server'
-import { hash } from 'bcryptjs'
-import { prisma } from '@arko/db'
-import { z } from 'zod'
 import { registerLimiter, requestKey } from '../../../../lib/rate-limit'
-
-const registerSchema = z.object({
-  name: z.string().min(1),
-  email: z.string().email(),
-  password: z.string().min(6),
-})
 
 export async function POST(req: Request) {
   // Rate limit: 5 registrations per minute per IP
@@ -26,48 +17,10 @@ export async function POST(req: Request) {
     )
   }
 
-  try {
-    const json = await req.json()
-    const body = registerSchema.parse(json)
-    const email = body.email.trim().toLowerCase()
-
-    const existing = await prisma.user.findUnique({
-      where: { email },
-    })
-
-    if (existing) {
-      // Generic error to prevent user enumeration
-      return NextResponse.json(
-        { error: 'Registration failed. Please check your details and try again.' },
-        { status: 409 },
-      )
-    }
-
-    const hashedPassword = await hash(body.password, 12)
-
-    // First registered user gets ADMIN so they can manage the system
-    const userCount = await prisma.user.count()
-    const role = userCount === 0 ? 'ADMIN' : 'USER'
-
-    const user = await prisma.user.create({
-      data: {
-        name: body.name,
-        email,
-        password: hashedPassword,
-        role,
-      },
-    })
-
-    return NextResponse.json({
-      id: user.id,
-      email: user.email,
-      name: user.name,
-    })
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.errors[0].message }, { status: 422 })
-    }
-    console.error('Register error:', error)
-    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
-  }
+  return NextResponse.json(
+    {
+      error: 'Public registration is disabled. Ask an administrator to create your account.',
+    },
+    { status: 403 },
+  )
 }

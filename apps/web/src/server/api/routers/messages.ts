@@ -62,7 +62,16 @@ export const messagesRouter = router({
       include: {
         participants: {
           include: {
-            user: { select: { id: true, name: true, email: true, image: true, avatar: true, lastActiveAt: true } },
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                image: true,
+                avatar: true,
+                lastActiveAt: true,
+              },
+            },
           },
         },
         messages: {
@@ -91,11 +100,17 @@ export const messagesRouter = router({
       // Verify user is a participant
       const participant = await ctx.prisma.conversationParticipant.findUnique({
         where: {
-          conversationId_userId: { conversationId: input.conversationId, userId },
+          conversationId_userId: {
+            conversationId: input.conversationId,
+            userId,
+          },
         },
       })
       if (!participant) {
-        throw new TRPCError({ code: 'FORBIDDEN', message: 'Not a participant in this conversation' })
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'Not a participant in this conversation',
+        })
       }
 
       const messages = await ctx.prisma.message.findMany({
@@ -131,11 +146,17 @@ export const messagesRouter = router({
       // Verify user is a participant
       const participant = await ctx.prisma.conversationParticipant.findUnique({
         where: {
-          conversationId_userId: { conversationId: input.conversationId, userId },
+          conversationId_userId: {
+            conversationId: input.conversationId,
+            userId,
+          },
         },
       })
       if (!participant) {
-        throw new TRPCError({ code: 'FORBIDDEN', message: 'Not a participant in this conversation' })
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'Not a participant in this conversation',
+        })
       }
 
       const [message] = await ctx.prisma.$transaction([
@@ -159,25 +180,32 @@ export const messagesRouter = router({
     }),
 
   /** Mark a conversation as read up to now for the current participant (polling-friendly). */
-  markRead: protectedProcedure
-    .input(z.object({ conversationId: z.string() }))
-    .mutation(async ({ ctx, input }) => {
-      const userId = ctx.user.id!
-      const participant = await ctx.prisma.conversationParticipant.findUnique({
-        where: {
-          conversationId_userId: { conversationId: input.conversationId, userId },
+  markRead: protectedProcedure.input(z.object({ conversationId: z.string() })).mutation(async ({ ctx, input }) => {
+    const userId = ctx.user.id!
+    const participant = await ctx.prisma.conversationParticipant.findUnique({
+      where: {
+        conversationId_userId: {
+          conversationId: input.conversationId,
+          userId,
         },
+      },
+    })
+    if (!participant) {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: 'Not a participant in this conversation',
       })
-      if (!participant) {
-        throw new TRPCError({ code: 'FORBIDDEN', message: 'Not a participant in this conversation' })
-      }
-      return ctx.prisma.conversationParticipant.update({
-        where: {
-          conversationId_userId: { conversationId: input.conversationId, userId },
+    }
+    return ctx.prisma.conversationParticipant.update({
+      where: {
+        conversationId_userId: {
+          conversationId: input.conversationId,
+          userId,
         },
-        data: { lastReadAt: new Date() },
-      })
-    }),
+      },
+      data: { lastReadAt: new Date() },
+    })
+  }),
 
   createConversation: protectedProcedure
     .input(
@@ -189,12 +217,26 @@ export const messagesRouter = router({
       const userId = ctx.user.id!
 
       if (input.participantId === userId) {
-        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Cannot start a conversation with yourself' })
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Cannot start a conversation with yourself',
+        })
       }
 
       const include = {
         participants: {
-          include: { user: { select: { id: true, name: true, email: true, image: true, avatar: true, lastActiveAt: true } } },
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                image: true,
+                avatar: true,
+                lastActiveAt: true,
+              },
+            },
+          },
         },
         messages: {
           orderBy: { createdAt: 'desc' as const },
@@ -213,16 +255,18 @@ export const messagesRouter = router({
             { participants: { some: { userId } } },
             { participants: { some: { userId: input.participantId } } },
             // exactly these two participants — a 1:1 conversation
-            { participants: { none: { userId: { notIn: [userId, input.participantId] } } } },
+            {
+              participants: {
+                none: { userId: { notIn: [userId, input.participantId] } },
+              },
+            },
           ],
         },
         include,
       })
       if (existing) {
         if (!existing.dmKey) {
-          await ctx.prisma.conversation
-            .update({ where: { id: existing.id }, data: { dmKey } })
-            .catch(() => {})
+          await ctx.prisma.conversation.update({ where: { id: existing.id }, data: { dmKey } }).catch(() => {})
         }
         return existing
       }
@@ -240,7 +284,9 @@ export const messagesRouter = router({
           data: {
             dmKey,
             participants: {
-              createMany: { data: [{ userId }, { userId: input.participantId }] },
+              createMany: {
+                data: [{ userId }, { userId: input.participantId }],
+              },
             },
           },
           include,
@@ -248,30 +294,28 @@ export const messagesRouter = router({
       } catch (err) {
         // Two requests raced: the unique dmKey rejected the second create.
         if ((err as { code?: string })?.code === 'P2002') {
-          const conv = await ctx.prisma.conversation.findUnique({ where: { dmKey }, include })
+          const conv = await ctx.prisma.conversation.findUnique({
+            where: { dmKey },
+            include,
+          })
           if (conv) return conv
         }
         throw err
       }
     }),
 
-  deleteConversation: protectedProcedure
-    .input(z.object({ conversationId: z.string() }))
-    .mutation(async ({ ctx, input }) => {
-      const userId = ctx.user.id!
-
-      // Only a participant may delete the conversation.
-      const participant = await ctx.prisma.conversationParticipant.findUnique({
-        where: {
-          conversationId_userId: { conversationId: input.conversationId, userId },
-        },
+  deleteConversation: protectedProcedure.input(z.object({ conversationId: z.string() })).mutation(async ({ ctx, input }) => {
+    if (ctx.userRole !== 'ADMIN') {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: 'Only an administrator can permanently delete a conversation',
       })
-      if (!participant) {
-        throw new TRPCError({ code: 'FORBIDDEN', message: 'Not a participant in this conversation' })
-      }
+    }
 
-      // Cascades to participants + messages (onDelete: Cascade).
-      await ctx.prisma.conversation.delete({ where: { id: input.conversationId } })
-      return { success: true }
-    }),
+    // Cascades to participants + messages (onDelete: Cascade).
+    await ctx.prisma.conversation.delete({
+      where: { id: input.conversationId },
+    })
+    return { success: true }
+  }),
 })

@@ -3,7 +3,10 @@ import { describe, it, expect, jest } from '@jest/globals'
 jest.mock('@aws-sdk/s3-request-presigner', () => ({
   getSignedUrl: jest.fn().mockResolvedValue('https://s3.example/signed'),
 }))
-jest.mock('../../../../lib/s3', () => ({ s3: { send: jest.fn().mockResolvedValue({}) }, S3_BUCKET: 'test-bucket' }))
+jest.mock('../../../../lib/s3', () => ({
+  s3: { send: jest.fn().mockResolvedValue({}) },
+  S3_BUCKET: 'test-bucket',
+}))
 
 import { storageRouter } from '../storage'
 
@@ -15,6 +18,14 @@ const ctx = (over: any = {}) => {
       create: jest.fn().mockImplementation(({ data }: any) => Promise.resolve({ id: 'f1', ...data })),
       delete: jest.fn().mockResolvedValue({ id: 'f1' }),
       ...(over.fileAttachment ?? {}),
+    },
+    task: {
+      findUnique: jest.fn().mockResolvedValue({ assigneeId: over.userId ?? 'u1' }),
+      ...(over.task ?? {}),
+    },
+    resource: {
+      findUnique: jest.fn().mockResolvedValue({ userId: over.userId ?? 'u1', isPublic: false }),
+      ...(over.resource ?? {}),
     },
   }
   return {
@@ -110,12 +121,27 @@ describe('storage router', () => {
         }),
       ).rejects.toMatchObject({ code: 'BAD_REQUEST' })
     })
+
+    it('rejects a file key belonging to another user', async () => {
+      await expect(
+        storageRouter.createCaller(ctx()).confirm({
+          fileKey: 'u2/private.pdf',
+          fileName: 'private.pdf',
+          fileSize: 100,
+          mimeType: 'application/pdf',
+          resourceType: 'TASK',
+          resourceId: 'task-1',
+        }),
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    })
   })
 
   describe('listFor', () => {
     it('returns files for the given resource', async () => {
       const files = [{ id: 'f1', fileName: 'doc.pdf' }]
-      const c = ctx({ fileAttachment: { findMany: jest.fn().mockResolvedValue(files) } })
+      const c = ctx({
+        fileAttachment: { findMany: jest.fn().mockResolvedValue(files) },
+      })
       const res = await storageRouter.createCaller(c).listFor({ resourceType: 'TASK', resourceId: 'task-1' })
       expect(res).toEqual(files)
       expect(c.prisma.fileAttachment.findMany).toHaveBeenCalledWith(
@@ -123,6 +149,13 @@ describe('storage router', () => {
           where: { resourceType: 'TASK', resourceId: 'task-1' },
         }),
       )
+    })
+
+    it('rejects listing a task the user cannot access', async () => {
+      const c = ctx({
+        task: { findUnique: jest.fn().mockResolvedValue({ assigneeId: 'u2' }) },
+      })
+      await expect(storageRouter.createCaller(c).listFor({ resourceType: 'TASK', resourceId: 'task-1' })).rejects.toMatchObject({ code: 'FORBIDDEN' })
     })
   })
 
@@ -151,9 +184,7 @@ describe('storage router', () => {
           }),
         },
       })
-      await expect(
-        storageRouter.createCaller(c).getDownloadUrl({ id: 'f1' }),
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      await expect(storageRouter.createCaller(c).getDownloadUrl({ id: 'f1' })).rejects.toMatchObject({ code: 'FORBIDDEN' })
     })
 
     it('returns NOT_FOUND when file does not exist', async () => {
@@ -162,9 +193,7 @@ describe('storage router', () => {
           findUnique: jest.fn().mockResolvedValue(null),
         },
       })
-      await expect(
-        storageRouter.createCaller(c).getDownloadUrl({ id: 'ghost' }),
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      await expect(storageRouter.createCaller(c).getDownloadUrl({ id: 'ghost' })).rejects.toMatchObject({ code: 'NOT_FOUND' })
     })
   })
 
@@ -194,9 +223,7 @@ describe('storage router', () => {
           }),
         },
       })
-      await expect(
-        storageRouter.createCaller(c).delete({ id: 'f1' }),
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      await expect(storageRouter.createCaller(c).delete({ id: 'f1' })).rejects.toMatchObject({ code: 'FORBIDDEN' })
     })
   })
 
@@ -205,9 +232,7 @@ describe('storage router', () => {
       const fileRows: any[] = []
       const c = ctx({
         fileAttachment: {
-          findUnique: jest.fn().mockImplementation(({ where }: any) =>
-            Promise.resolve(fileRows.find((r) => r.id === where.id) ?? null),
-          ),
+          findUnique: jest.fn().mockImplementation(({ where }: any) => Promise.resolve(fileRows.find((r) => r.id === where.id) ?? null)),
           findMany: jest.fn().mockResolvedValue(fileRows),
           create: jest.fn().mockImplementation(({ data }: any) => {
             const row = { id: 'f-new', ...data }
@@ -242,7 +267,10 @@ describe('storage router', () => {
       })
 
       // 3. List
-      const list1 = await caller.listFor({ resourceType: 'TASK', resourceId: 'task-1' })
+      const list1 = await caller.listFor({
+        resourceType: 'TASK',
+        resourceId: 'task-1',
+      })
       expect(list1).toHaveLength(1)
       expect(list1[0].fileName).toBe('report.pdf')
 
@@ -250,7 +278,10 @@ describe('storage router', () => {
       await caller.delete({ id: list1[0].id })
 
       // 5. List again — should be empty
-      const list2 = await caller.listFor({ resourceType: 'TASK', resourceId: 'task-1' })
+      const list2 = await caller.listFor({
+        resourceType: 'TASK',
+        resourceId: 'task-1',
+      })
       expect(list2).toHaveLength(0)
     })
   })
