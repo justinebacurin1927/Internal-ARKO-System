@@ -12,6 +12,11 @@ import {
   Trash2,
   Ban,
   CornerDownRight,
+  Search,
+  SlidersHorizontal,
+  ArrowUpDown,
+  Folder,
+  CalendarDays,
 } from 'lucide-react'
 import { api } from '../../../lib/trpc/client'
 import { CommentThread } from './comment-thread'
@@ -48,6 +53,10 @@ export default function TasksPage() {
   const [newAssignee, setNewAssignee] = useState('')
   const [showAssigneeSearch, setShowAssigneeSearch] = useState(false)
   const [assigneeSearch, setAssigneeSearch] = useState('')
+  const [search, setSearch] = useState('')
+  const [priorityFilter, setPriorityFilter] = useState('ALL')
+  const [sortNewest, setSortNewest] = useState(false)
+  const [workstream, setWorkstream] = useState<'ALL' | 'ACTIVE' | 'REVIEW'>('ALL')
 
   const [selectedId, setSelectedId] = useState<string | null>(null)
   // Derive from the live list so the drawer reflects fresh data after invalidation
@@ -126,16 +135,69 @@ export default function TasksPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="tasks-reference mx-auto max-w-[1600px] space-y-5">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-text-primary tracking-tight">Tasks</h1>
-          <p className="text-sm text-text-tertiary mt-1">Manage your tasks and projects</p>
+          <h1 className="text-2xl font-semibold text-text-primary tracking-tight">Projects</h1>
+          <p className="text-sm text-text-tertiary mt-1">Plan work, track progress, and move tasks through delivery.</p>
         </div>
-        <Button onClick={() => setShowNew(!showNew)}>
+        <Button className="rounded-full px-5" onClick={() => setShowNew(!showNew)}>
           <Plus className="h-4 w-4" />
           {showNew ? 'Cancel' : 'New Task'}
         </Button>
+      </div>
+
+      <div className="tasks-project-bar">
+        <span className="mr-1 text-xs font-medium text-text-tertiary">Workstreams</span>
+        {([
+          ['ALL', 'All work'],
+          ['ACTIVE', 'Active sprint'],
+          ['REVIEW', 'Review queue'],
+        ] as const).map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            aria-pressed={workstream === value}
+            onClick={() => setWorkstream(value)}
+            className={`tasks-project-chip ${workstream === value ? 'tasks-project-chip-active' : ''}`}
+          >
+            <Folder className="h-3.5 w-3.5" />
+            {label}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative min-w-0 flex-1 sm:max-w-md">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-tertiary" />
+          <input
+            type="search"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search tasks..."
+            className="tasks-control w-full pl-9 pr-3"
+          />
+        </div>
+        <button type="button" onClick={() => setSortNewest((value) => !value)} className="tasks-control-button">
+          <ArrowUpDown className="h-4 w-4" />
+          {sortNewest ? 'Newest' : 'Board order'}
+        </button>
+        <label className="tasks-control-button">
+          <SlidersHorizontal className="h-4 w-4" />
+          <span className="sr-only">Filter by priority</span>
+          <select
+            value={priorityFilter}
+            onChange={(event) => setPriorityFilter(event.target.value)}
+            className="border-0 bg-transparent p-0 text-xs text-text-secondary outline-none"
+          >
+            <option value="ALL">All priorities</option>
+            {priorities.map((priority) => (
+              <option key={priority} value={priority}>
+                {priority.charAt(0) + priority.slice(1).toLowerCase()}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
 
       {/* New task form */}
@@ -283,15 +345,26 @@ export default function TasksPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-4">
           {columns.map((column) => {
-            const colTasks = tasks?.filter((t) => t.status === column && !t.parentId) ?? []
+            const colTasks = (tasks
+              ?.filter((task) => {
+                if (task.status !== column || task.parentId) return false
+                if (workstream === 'ACTIVE' && !['TODO', 'IN_PROGRESS'].includes(task.status)) return false
+                if (workstream === 'REVIEW' && task.status !== 'REVIEW') return false
+                if (priorityFilter !== 'ALL' && task.priority !== priorityFilter) return false
+                if (search && !`${task.title} ${task.description ?? ''}`.toLowerCase().includes(search.toLowerCase())) return false
+                return true
+              })
+              .sort((a, b) => sortNewest
+                ? new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+                : a.position - b.position)) ?? []
             const isEmpty = !isLoading && colTasks.length === 0
 
             return (
               <div
                 key={column}
-                className="space-y-3"
+                className="tasks-column space-y-3"
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => {
                   const taskId = e.dataTransfer.getData('taskId')
@@ -299,7 +372,12 @@ export default function TasksPage() {
                 }}
               >
                 <div className="flex items-center justify-between px-1">
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">
+                  <h3 className="flex items-center gap-2 text-xs font-semibold text-text-secondary">
+                    <span className={`h-2 w-2 rounded-full ${
+                      column === 'TODO' ? 'bg-gray-500' :
+                      column === 'IN_PROGRESS' ? 'bg-blue-500' :
+                      column === 'REVIEW' ? 'bg-amber-500' : 'bg-primary-500'
+                    }`} />
                     {columnLabels[column]}
                   </h3>
                   {!isLoading && (
@@ -338,12 +416,28 @@ export default function TasksPage() {
                       return (
                         <Card
                           key={task.id}
-                          className="cursor-pointer"
+                          className={`tasks-card cursor-pointer ${blocked ? 'border-red-500/30' : ''}`}
                           draggable
                           onDragStart={(e) => handleDragStart(e, task.id)}
                           onClick={() => setSelectedId(task.id)}
                         >
                           <CardContent className="p-4">
+                            <div className="mb-3 flex items-center justify-between gap-2">
+                              <span className="inline-flex items-center gap-1 rounded-full border border-white/10 px-2 py-1 text-[10px] text-text-tertiary">
+                                <Folder className="h-3 w-3 text-primary-400" />
+                                General
+                              </span>
+                              {task.priority && (
+                                <span className={`rounded-full px-2 py-1 text-[10px] font-medium ${
+                                  task.priority === 'URGENT' ? 'bg-red-500/10 text-red-400' :
+                                  task.priority === 'HIGH' ? 'bg-orange-500/10 text-orange-400' :
+                                  task.priority === 'MEDIUM' ? 'bg-amber-500/10 text-amber-300' :
+                                  'bg-white/[0.05] text-text-tertiary'
+                                }`}>
+                                  {task.priority.charAt(0) + task.priority.slice(1).toLowerCase()}
+                                </span>
+                              )}
+                            </div>
                             <p className="text-sm font-medium text-text-primary">{task.title}</p>
                             {task.description && (
                               <p className="mt-1.5 text-xs text-text-tertiary line-clamp-2">
@@ -351,21 +445,6 @@ export default function TasksPage() {
                               </p>
                             )}
                             <div className="mt-3 flex flex-wrap items-center gap-2">
-                              {task.priority && (
-                                <span
-                                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${
-                                    task.priority === 'URGENT'
-                                      ? 'bg-red-50 text-red-700'
-                                      : task.priority === 'HIGH'
-                                        ? 'bg-orange-50 text-orange-700'
-                                        : task.priority === 'MEDIUM'
-                                          ? 'bg-primary-50 text-primary-700'
-                                          : 'bg-card text-text-secondary'
-                                  }`}
-                                >
-                                  {task.priority}
-                                </span>
-                              )}
                               {task.assignee && (
                                 <span className="inline-flex items-center gap-1 rounded-full bg-card px-2 py-0.5 text-[10px] text-text-tertiary">
                                   <User className="h-2.5 w-2.5" />
@@ -388,6 +467,42 @@ export default function TasksPage() {
                                   to Task (generic resourceType/resourceId), so a per-card count
                                   needs a batched count proc — out of scope for this story. */}
                             </div>
+                            <div className="mt-4 flex items-center gap-2 text-[10px] text-text-tertiary">
+                              <CalendarDays className="h-3.5 w-3.5" />
+                              <span>
+                                {task.dueDate
+                                  ? new Date(task.dueDate).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })
+                                  : 'No due date'}
+                              </span>
+                            </div>
+                            {(() => {
+                              const progress = task.status === 'DONE'
+                                ? 100
+                                : subs.length
+                                  ? Math.round((doneSubs / subs.length) * 100)
+                                  : task.status === 'REVIEW'
+                                    ? 80
+                                    : task.status === 'IN_PROGRESS'
+                                      ? 45
+                                      : 0
+                              return (
+                                <div className="mt-3">
+                                  <div className="mb-1.5 flex justify-between text-[10px] text-text-tertiary">
+                                    <span>Progress</span>
+                                    <span className="tabular-nums">{progress}%</span>
+                                  </div>
+                                  <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
+                                    <div
+                                      className={`h-full rounded-full ${
+                                        column === 'REVIEW' ? 'bg-amber-500' :
+                                        column === 'DONE' ? 'bg-primary-500' : 'bg-blue-500'
+                                      }`}
+                                      style={{ width: `${progress}%` }}
+                                    />
+                                  </div>
+                                </div>
+                              )
+                            })()}
                           </CardContent>
                         </Card>
                       )

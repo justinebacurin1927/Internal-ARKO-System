@@ -107,6 +107,8 @@ function UserAvatar({ name, email, image, id, avatar, size = 'md' }: {
 export default function UsersPage() {
   const { data: session } = useSession()
   const [search, setSearch] = useState('')
+  const [roleFilter, setRoleFilter] = useState<'ALL' | keyof typeof roleConfig>('ALL')
+  const [statusFilter, setStatusFilter] = useState<'ALL' | keyof typeof statusConfig>('ALL')
   const [showAddModal, setShowAddModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState<{ id: string; name: string; phone: string | null; title: string | null } | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
@@ -145,24 +147,28 @@ export default function UsersPage() {
     onSuccess: () => utils.users.list.invalidate(),
   })
 
-  const filteredUsers = users ?? []
+  const filteredUsers = (users ?? []).filter((user) =>
+    (roleFilter === 'ALL' || user.role === roleFilter) &&
+    (statusFilter === 'ALL' || user.status === statusFilter),
+  )
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="users-reference mx-auto flex h-full w-full max-w-[1500px] flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between shrink-0 mb-4">
+      <div className="mb-5 flex shrink-0 flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-lg font-bold tracking-tight text-text-primary">Users</h1>
-          <p className="text-[11px] text-text-tertiary">Manage team members and permissions</p>
+          <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-primary-400">Users / User Management</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-text-primary">User Management</h1>
+          <p className="mt-1 text-sm text-text-tertiary">Manage roles, access, account status, and team activity.</p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1 rounded-full bg-card px-2.5 py-1 text-[10px] text-text-tertiary">
+          <span className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-white/[0.07] bg-white/[0.025] px-3 text-xs text-text-tertiary">
             <UsersIcon className="h-3 w-3" />
             {users?.length ?? 0} members
           </span>
           <button
             onClick={() => setShowAddModal(true)}
-            className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-primary-500 to-primary-700 px-3 py-1.5 text-[11px] font-semibold text-white shadow-sm active:scale-[0.97]"
+            className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-gradient-to-r from-primary-500 to-primary-700 px-4 text-xs font-semibold text-white shadow-sm transition-transform active:scale-[0.97]"
           >
             <UserPlus className="h-3.5 w-3.5" />
             Add User
@@ -170,16 +176,33 @@ export default function UsersPage() {
         </div>
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-sm shrink-0 mb-3">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-tertiary" />
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by name, email, or phone..."
-          className="block w-full rounded-xl border border-border-subtle bg-card py-2 pl-9 pr-3 text-[12px] placeholder:text-text-tertiary focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
-        />
+      {/* Search and filters */}
+      <div className="users-toolbar mb-3 grid shrink-0 gap-2 md:grid-cols-[minmax(240px,1fr)_180px_180px]">
+        <label className="relative">
+          <span className="sr-only">Search users</span>
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-tertiary" />
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by name, email, or phone..."
+            className="users-control w-full pl-9 pr-3"
+          />
+        </label>
+        <label>
+          <span className="sr-only">Filter by role</span>
+          <select value={roleFilter} onChange={(event) => setRoleFilter(event.target.value as typeof roleFilter)} className="users-control w-full px-3">
+            <option value="ALL">All roles</option>
+            {Object.entries(roleConfig).map(([value, config]) => <option key={value} value={value}>{config.label}</option>)}
+          </select>
+        </label>
+        <label>
+          <span className="sr-only">Filter by status</span>
+          <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)} className="users-control w-full px-3">
+            <option value="ALL">All statuses</option>
+            {Object.entries(statusConfig).map(([value, config]) => <option key={value} value={value}>{config.label}</option>)}
+          </select>
+        </label>
       </div>
 
       {/* Error */}
@@ -215,14 +238,19 @@ export default function UsersPage() {
 
       {/* User list */}
       {!isLoading && !error && filteredUsers.length > 0 && (
-        <div className="flex-1 overflow-y-auto min-h-0 space-y-1.5">
+        <div className="users-table min-h-0 flex-1 overflow-y-auto">
+          <div className="users-table-head">
+            <span>Profile</span>
+            <span>Contact & activity</span>
+            <span className="text-right">Access & actions</span>
+          </div>
           {filteredUsers.map((user) => {
             const RoleIcon = roleConfig[user.role].icon
             const isCurrentUser = user.id === session?.user?.id
             const isRestricted = user.status === 'RESTRICTED' || user.status === 'SUSPENDED'
 
             return (
-              <Card key={user.id} className="overflow-hidden">
+              <Card key={user.id} className="users-row overflow-hidden">
                 <CardContent className="flex items-center gap-3 p-3">
                   {/* Avatar with profile pic */}
                   <UserAvatar name={user.name} email={user.email} image={user.image} id={user.id} avatar={user.avatar} />
@@ -299,7 +327,8 @@ export default function UsersPage() {
                             setMenuPos({ top, left: Math.max(8, r.right - 208) })
                             setOpenDropdown(user.id)
                           }}
-                          className="rounded-lg p-1.5 text-text-tertiary hover:bg-card hover:text-text-secondary transition-colors"
+                          aria-label={`Manage ${user.name ?? user.email}`}
+                          className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-text-tertiary transition-colors hover:bg-white/[0.05] hover:text-text-secondary"
                         >
                           <UserCog className="h-3.5 w-3.5" />
                         </button>

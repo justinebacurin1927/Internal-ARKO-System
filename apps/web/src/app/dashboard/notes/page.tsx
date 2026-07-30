@@ -14,6 +14,7 @@ export default function NotesPage() {
   const [content, setContent] = useState('')
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [noteSearch, setNoteSearch] = useState('')
+  const [noteView, setNoteView] = useState<'ALL' | 'RECENT'>('ALL')
 
   const { data: selectedNote } = api.notes.get.useQuery(
     { id: selectedId! },
@@ -88,21 +89,39 @@ export default function NotesPage() {
     )
   }
 
-  const filtered = (notes ?? []).filter(
-    (n) => !noteSearch || n.title?.toLowerCase().includes(noteSearch.toLowerCase()),
-  )
+  const filtered = (notes ?? [])
+    .filter((note) => !noteSearch || note.title?.toLowerCase().includes(noteSearch.toLowerCase()))
+    .sort((a, b) => noteView === 'RECENT'
+      ? new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+      : a.title.localeCompare(b.title))
 
   return (
-    <div className="h-full flex flex-col gap-3">
+    <div className="notes-reference mx-auto flex h-full w-full max-w-[1500px] flex-col gap-4">
       <div className="flex items-start justify-between shrink-0">
         <div>
-          <h1 className="text-2xl font-bold text-text-primary tracking-tight">Notes</h1>
-          <p className="text-sm text-text-tertiary mt-1">Write and manage your notes</p>
+          <h1 className="text-2xl font-semibold text-text-primary tracking-tight">Notes workspace</h1>
+          <p className="text-sm text-text-tertiary mt-1">Capture ideas, decisions, and project knowledge.</p>
         </div>
-        <Button onClick={() => createNote.mutate({ title: 'Untitled', content: '' })}>
+        <Button className="rounded-full px-5" onClick={() => createNote.mutate({ title: 'Untitled', content: '' })}>
           <Plus className="h-4 w-4" />
           New Note
         </Button>
+      </div>
+
+      <div className="notes-view-bar">
+        {([['ALL', 'All notes'], ['RECENT', 'Recently updated']] as const).map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            aria-pressed={noteView === value}
+            onClick={() => setNoteView(value)}
+            className={`notes-view-chip ${noteView === value ? 'notes-view-chip-active' : ''}`}
+          >
+            <FileText className="h-3.5 w-3.5" />
+            {label}
+          </button>
+        ))}
+        <span className="ml-auto text-xs text-text-tertiary">{notes?.length ?? 0} notes</span>
       </div>
 
       {notes?.length === 0 ? (
@@ -121,7 +140,7 @@ export default function NotesPage() {
       ) : (
       <div className="flex gap-4 flex-1 min-h-0">
         {/* Notes list */}
-        <Card className={`w-64 shrink-0 overflow-hidden flex-col ${selectedId ? 'hidden md:flex' : 'flex w-full md:w-64'}`}>
+        <Card className={`notes-panel w-80 shrink-0 overflow-hidden flex-col ${selectedId ? 'hidden md:flex' : 'flex w-full md:w-80'}`}>
           <CardHeader className="p-3 border-b border-border-subtle space-y-2">
             <CardTitle className="text-xs font-semibold text-text-tertiary uppercase tracking-wider">All Notes</CardTitle>
             <div className="relative">
@@ -139,8 +158,10 @@ export default function NotesPage() {
               <button
                 key={note.id}
                 onClick={() => setSelectedId(note.id)}
-                className={`w-full px-4 py-3 text-left transition-colors ${
-                  selectedId === note.id ? 'bg-accent-50' : 'hover:bg-black/[0.02]'
+                className={`m-1.5 w-[calc(100%-0.75rem)] rounded-xl border px-3 py-3 text-left transition-colors ${
+                  selectedId === note.id
+                    ? 'border-primary-500/35 bg-primary-500/[0.08]'
+                    : 'border-white/[0.05] bg-white/[0.015] hover:border-white/10 hover:bg-white/[0.03]'
                 }`}
               >
                 <div className="flex items-start gap-2">
@@ -158,7 +179,7 @@ export default function NotesPage() {
         </Card>
 
         {/* Editor */}
-        <Card className={`flex-1 overflow-hidden flex-col ${!selectedId ? 'hidden md:flex' : 'flex w-full md:flex'}`}>
+        <Card className={`notes-panel flex-1 overflow-hidden flex-col ${!selectedId ? 'hidden md:flex' : 'flex w-full md:flex'}`}>
           {!selectedId && notes && notes.length > 0 ? (
             <div className="flex-1 flex items-center justify-center text-text-tertiary">
               <div className="text-center">
