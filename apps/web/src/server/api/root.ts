@@ -14,6 +14,7 @@ import { journalRouter } from './routers/journal'
 import { resourcesRouter } from './routers/resources'
 import { commentsRouter } from './routers/comments'
 import { storageRouter } from './routers/storage'
+import { clientPortalRouter } from './routers/client-portal'
 
 export const appRouter = router({
   finance: financeRouter,
@@ -31,6 +32,7 @@ export const appRouter = router({
   resources: resourcesRouter,
   comments: commentsRouter,
   storage: storageRouter,
+  clientPortal: clientPortalRouter,
 })
 
 export type AppRouter = typeof appRouter

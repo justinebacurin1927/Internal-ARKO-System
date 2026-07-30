@@ -24,6 +24,7 @@ import {
   Menu,
   X,
   PanelsTopLeft,
+  BriefcaseBusiness,
 } from 'lucide-react'
 import { api } from '../../../lib/trpc/client'
 import dynamic from 'next/dynamic'
@@ -51,7 +52,14 @@ const ALL_CATEGORIES: NavCategory[] = [
   { to: '/dashboard/journal', icon: Book, label: 'Journal' },
   { to: '/dashboard/ideas', icon: Lightbulb, label: 'Ideas' },
   { to: '/dashboard/resources', icon: Bookmark, label: 'Resources' },
+  { to: '/dashboard/client-portal', icon: BriefcaseBusiness, label: 'Client Portal' },
   { to: '/dashboard/users', icon: Users, label: 'Users' },
+]
+
+const CLIENT_CATEGORIES: NavCategory[] = [
+  { to: '/dashboard/client-portal', icon: BriefcaseBusiness, label: 'Client Portal', end: true },
+  { to: '/dashboard/messages', icon: MessageSquare, label: 'Messages' },
+  { to: '/dashboard/resources', icon: Bookmark, label: 'Shared Resources' },
 ]
 
 const BOTTOM_NAV = ALL_CATEGORIES.slice(0, 5)
@@ -60,11 +68,15 @@ function isActivePath(pathname: string, item: NavCategory) {
   return item.end ? pathname === item.to : pathname.startsWith(item.to)
 }
 
-/* ─── Unread badge source (Messages / Notifications) ─── */
+/* ─── Unread badge sources ─── */
 
-function useUnread() {
-  const { data } = api.notifications.unreadCount.useQuery(undefined, { refetchInterval: 60000 })
-  return typeof data === 'number' ? data : 0
+function useUnreadCounts() {
+  const { data: notifications } = api.notifications.unreadCount.useQuery(undefined, { refetchInterval: 60000 })
+  const { data: messages } = api.messages.unreadCount.useQuery(undefined, { refetchInterval: 10000 })
+  return {
+    notifications: typeof notifications === 'number' ? notifications : 0,
+    messages: typeof messages === 'number' ? messages : 0,
+  }
 }
 
 /* ─── Nav row in the labelled sidebar ─── */
@@ -115,7 +127,7 @@ function MobileDrawer({
   onClose,
   categories,
   user,
-  unread,
+  messageUnread,
   onSettings,
   onLogout,
 }: {
@@ -123,7 +135,7 @@ function MobileDrawer({
   onClose: () => void
   categories: NavCategory[]
   user: any
-  unread: number
+  messageUnread: number
   onSettings: () => void
   onLogout: () => void
 }) {
@@ -162,7 +174,7 @@ function MobileDrawer({
               key={item.to}
               item={item}
               active={isActivePath(pathname, item)}
-              badge={item.to === '/dashboard/messages' ? unread : undefined}
+              badge={item.to === '/dashboard/messages' ? messageUnread : undefined}
               onClick={onClose}
             />
           ))}
@@ -211,11 +223,12 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const sessionUser = session?.user as any
   const { data: profile } = api.users.getProfile.useQuery(undefined, { enabled: status === 'authenticated' })
   const user = profile ?? sessionUser
+  const isClient = sessionUser?.role === 'CLIENT'
   const [showSearch, setShowSearch] = useState(false)
   const [showDrawer, setShowDrawer] = useState(false)
   const [navSearch, setNavSearch] = useState('')
   const searchRef = useRef<HTMLInputElement>(null)
-  const unread = useUnread()
+  const unread = useUnreadCounts()
 
   useEffect(() => {
     if (showSearch && searchRef.current) searchRef.current.focus()
@@ -225,14 +238,33 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     setShowDrawer(false)
   }, [pathname])
 
+  useEffect(() => {
+    if (
+      status === 'authenticated' &&
+      isClient &&
+      !CLIENT_CATEGORIES.some((item) => isActivePath(pathname, item)) &&
+      pathname !== '/dashboard/settings'
+    ) {
+      router.replace('/dashboard/client-portal')
+    }
+  }, [isClient, pathname, router, status])
+
   const requestSignOut = useRequestSignOut()
   const handleLogout = () => requestSignOut()
 
-  const categories = ALL_CATEGORIES
+  const categories = isClient
+    ? CLIENT_CATEGORIES
+    : ALL_CATEGORIES.filter(
+        (item) =>
+          item.to !== '/dashboard/client-portal' ||
+          sessionUser?.role === 'ADMIN' ||
+          sessionUser?.role === 'MEMBER',
+      )
   const filteredCategories = navSearch
     ? categories.filter((c) => c.label.toLowerCase().includes(navSearch.toLowerCase()))
     : categories
   const currentCategory = categories.find((c) => isActivePath(pathname, c))
+  const bottomCategories = isClient ? CLIENT_CATEGORIES : BOTTOM_NAV
   return (
     <div className="h-dvh bg-bg-app text-text-primary">
       <MobileDrawer
@@ -240,7 +272,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         onClose={() => setShowDrawer(false)}
         categories={categories}
         user={user}
-        unread={unread}
+        messageUnread={unread.messages}
         onSettings={() => router.push('/dashboard/settings')}
         onLogout={handleLogout}
       />
@@ -280,7 +312,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 key={item.to}
                 item={item}
                 active={isActivePath(pathname, item)}
-                badge={item.to === '/dashboard/messages' ? unread : undefined}
+                badge={item.to === '/dashboard/messages' ? unread.messages : undefined}
               />
             )))}
           </nav>
@@ -366,14 +398,27 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 </button>
               )}
               <Link
+                href="/dashboard/messages"
+                title={`${unread.messages} unread messages`}
+                aria-label={`${unread.messages} unread messages`}
+                className="relative flex h-9 w-9 items-center justify-center rounded-lg border border-border-subtle text-text-tertiary hover:border-primary-500/40 hover:text-text-primary transition-colors cursor-pointer"
+              >
+                <MessageSquare className="h-4 w-4" />
+                {unread.messages > 0 && (
+                  <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary-500 px-1 text-[9px] font-bold text-white">
+                    {unread.messages > 99 ? '99+' : unread.messages}
+                  </span>
+                )}
+              </Link>
+              <Link
                 href="/dashboard/notifications"
                 title="Notifications"
                 className="relative flex h-9 w-9 items-center justify-center rounded-lg border border-border-subtle text-text-tertiary hover:border-primary-500/40 hover:text-text-primary transition-colors cursor-pointer"
               >
                 <Bell className="h-4 w-4" />
-                {unread > 0 && (
+                {unread.notifications > 0 && (
                   <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-neg px-1 text-[9px] font-bold text-white">
-                    {unread > 9 ? '9+' : unread}
+                    {unread.notifications > 99 ? '99+' : unread.notifications}
                   </span>
                 )}
               </Link>
@@ -384,7 +429,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
           {/* Mobile bottom nav */}
           <nav className="flex md:hidden items-center justify-around border-t border-border-subtle bg-bg-sidebar px-2 py-1.5 shrink-0 z-30">
-            {BOTTOM_NAV.map((item) => {
+            {bottomCategories.map((item) => {
               const active = isActivePath(pathname, item)
               return (
                 <Link

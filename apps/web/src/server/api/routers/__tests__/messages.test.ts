@@ -210,6 +210,12 @@ const ctx = (over: any = {}) => {
       }),
 
       user: {
+        count: jest.fn().mockImplementation(({ where }: any) => {
+          const existingUsers: string[] = over._existingUsers ?? ['u1', 'u2', 'u3']
+          return Promise.resolve(
+            where.id.in.filter((id: string) => existingUsers.includes(id)).length,
+          )
+        }),
         findUnique: jest.fn().mockImplementation(({ where }: any) => {
           const existingUsers: string[] = over._existingUsers ?? ['u1', 'u2', 'u3']
           if (existingUsers.includes(where.id)) {
@@ -390,6 +396,40 @@ describe('messages router', () => {
     it('rejects non-existent user', async () => {
       const c = ctx({ _existingUsers: ['u1'] })
       await expect(messagesRouter.createCaller(c).createConversation({ participantId: 'ghost' })).rejects.toMatchObject({ code: 'NOT_FOUND' })
+    })
+  })
+
+  describe('createGroupConversation', () => {
+    it('creates a named conversation with the caller and selected members', async () => {
+      const c = ctx({ _existingUsers: ['u1', 'u2', 'u3'] })
+      const result = await messagesRouter.createCaller(c).createGroupConversation({
+        name: 'Product team',
+        participantIds: ['u2', 'u3'],
+      })
+
+      expect(result.name).toBe('Product team')
+      expect(c.prisma.conversation.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            name: 'Product team',
+            participants: {
+              createMany: {
+                data: [{ userId: 'u1' }, { userId: 'u2' }, { userId: 'u3' }],
+              },
+            },
+          }),
+        }),
+      )
+    })
+
+    it('requires at least two other available members', async () => {
+      const c = ctx({ _existingUsers: ['u1', 'u2'] })
+      await expect(
+        messagesRouter.createCaller(c).createGroupConversation({
+          name: 'Too small',
+          participantIds: ['u1', 'u2'],
+        }),
+      ).rejects.toMatchObject({ code: 'BAD_REQUEST' })
     })
   })
 })

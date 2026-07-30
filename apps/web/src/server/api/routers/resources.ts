@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { TRPCError } from '@trpc/server'
-import { router, protectedProcedure } from '../trpc'
+import { router, protectedProcedure, requireRole } from '../trpc'
 
 const TYPE = ['LINK', 'FILE', 'DOC'] as const
 
@@ -87,6 +87,7 @@ export const resourcesRouter = router({
     }),
 
   create: protectedProcedure
+    .use(requireRole(['ADMIN', 'MEMBER', 'USER']))
     .input(
       z.object({
         title: z.string().min(1).max(255),
@@ -104,6 +105,7 @@ export const resourcesRouter = router({
     ),
 
   update: protectedProcedure
+    .use(requireRole(['ADMIN', 'MEMBER', 'USER']))
     .input(
       z.object({
         id: z.string(),
@@ -124,6 +126,7 @@ export const resourcesRouter = router({
     }),
 
   delete: protectedProcedure
+    .use(requireRole(['ADMIN', 'MEMBER', 'USER']))
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       await manageableResource(ctx, input.id)
@@ -150,6 +153,7 @@ export const resourcesRouter = router({
   }),
 
   createCategory: protectedProcedure
+    .use(requireRole(['ADMIN', 'MEMBER', 'USER']))
     .input(
       z.object({
         name: z.string().min(1).max(100),
@@ -164,6 +168,7 @@ export const resourcesRouter = router({
     ),
 
   updateCategory: protectedProcedure
+    .use(requireRole(['ADMIN', 'MEMBER', 'USER']))
     .input(
       z.object({
         id: z.string(),
@@ -179,6 +184,7 @@ export const resourcesRouter = router({
     }),
 
   deleteCategory: protectedProcedure
+    .use(requireRole(['ADMIN', 'MEMBER', 'USER']))
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       await manageableCategory(ctx, input.id)

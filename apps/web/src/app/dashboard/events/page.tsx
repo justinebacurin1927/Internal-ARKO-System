@@ -26,6 +26,36 @@ const OpenPeepsAvatar = dynamic(() =>
   { ssr: false },
 )
 
+type CalendarUser = {
+  id?: string
+  name?: string | null
+  image?: string | null
+  avatar?: unknown
+}
+
+function ProfileAvatar({ user, size }: { user?: CalendarUser | null; size: number }) {
+  return (
+    <span className="relative inline-flex shrink-0" style={{ width: size, height: size }}>
+      <OpenPeepsAvatar
+        userId={user?.id}
+        userName={user?.name ?? undefined}
+        avatarJson={user?.avatar ? JSON.stringify(user.avatar) : undefined}
+        size={size}
+      />
+      {user?.image && (
+        <img
+          src={user.image}
+          alt=""
+          className="absolute inset-0 h-full w-full rounded-full object-cover"
+          onError={(event) => {
+            event.currentTarget.style.display = 'none'
+          }}
+        />
+      )}
+    </span>
+  )
+}
+
 const WEEKDAY = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 // Month grid is Monday-first, matching the reference layout
 const MONTH_HEADS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -48,7 +78,10 @@ function sameDay(a: Date, b: Date) {
 
 export default function EventsPage() {
   const { data: session } = useSession()
-  const user = session?.user as any
+  const { data: profile } = api.users.getProfile.useQuery(undefined, {
+    refetchOnMount: 'always',
+  })
+  const user = profile ?? (session?.user as CalendarUser | undefined)
 
   const [view, setView] = useState<'month' | 'day'>('month')
   const [viewMenu, setViewMenu] = useState(false)
@@ -464,7 +497,7 @@ export default function EventsPage() {
                               <p className="mt-0.5 truncate text-xs text-text-tertiary">{ev.description}</p>
                             )}
                           </div>
-                          <OpenPeepsAvatar userId={user?.id} size={28} />
+                          <ProfileAvatar user={user} size={28} />
                         </button>
                       )
                     })}
@@ -507,7 +540,7 @@ export default function EventsPage() {
               <div className="mt-4 border-t border-border-subtle pt-3">
                 <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-text-tertiary">Activity</p>
                 <div className="flex items-center gap-2.5">
-                  <OpenPeepsAvatar userId={user?.id} size={32} />
+                  <ProfileAvatar user={user} size={32} />
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-text-primary">{user?.name ?? 'You'}</p>
                     <p className="text-[11px] text-text-tertiary">Owner</p>

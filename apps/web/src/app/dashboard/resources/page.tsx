@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSession } from 'next-auth/react'
 import { Card, CardContent, Button } from '@arko/ui'
 import {
   Link2,
@@ -50,6 +51,8 @@ function CategoryIcon({ name, className }: { name: string; className?: string })
 }
 
 export default function ResourcesPage() {
+  const { data: session } = useSession()
+  const canEdit = session?.user?.role !== 'CLIENT'
   const [showForm, setShowForm] = useState(false)
   const [editId, setEditId] = useState<string | undefined>()
   const [editResource, setEditResource] = useState<{
@@ -176,7 +179,7 @@ export default function ResourcesPage() {
             Shared links and references · {total} item{total === 1 ? '' : 's'}
           </p>
         </div>
-        <Button
+        {canEdit && <Button
           size="sm"
           onClick={() => {
             setEditId(undefined)
@@ -191,7 +194,7 @@ export default function ResourcesPage() {
               <Plus className="h-4 w-4" /> New
             </>
           )}
-        </Button>
+        </Button>}
       </div>
 
       {/* Inline form */}
@@ -279,7 +282,7 @@ export default function ResourcesPage() {
         ))}
 
         {/* Add category */}
-        {showCategoryForm ? (
+        {canEdit && (showCategoryForm ? (
           <div className="flex items-center gap-2 rounded-lg bg-card px-3 py-2 border border-border-subtle">
             <input
               value={newCatName}
@@ -340,7 +343,7 @@ export default function ResourcesPage() {
             <Plus className="h-3 w-3" />
             Add Box
           </button>
-        )}
+        ))}
       </div>
 
       {/* List */}

@@ -33,7 +33,10 @@ export const messagesRouter = router({
     const userId = ctx.user.id!
 
     const convos = await ctx.prisma.conversation.findMany({
-      where: { participants: { some: { userId } } },
+      where: {
+        name: null,
+        participants: { some: { userId } },
+      },
       select: { participants: { select: { userId: true } } },
     })
     const known = new Set<string>([userId])
@@ -302,6 +305,67 @@ export const messagesRouter = router({
         }
         throw err
       }
+    }),
+
+  createGroupConversation: protectedProcedure
+    .input(
+      z.object({
+        name: z.string().trim().min(1).max(80),
+        participantIds: z.array(z.string()).min(2).max(49),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.user.id!
+      const participantIds = [...new Set(input.participantIds)].filter((id) => id !== userId)
+
+      if (participantIds.length < 2) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Select at least two other people for a group chat',
+        })
+      }
+
+      const memberCount = await ctx.prisma.user.count({
+        where: { id: { in: participantIds }, status: 'ACTIVE' },
+      })
+      if (memberCount !== participantIds.length) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'One or more selected users are unavailable',
+        })
+      }
+
+      return ctx.prisma.conversation.create({
+        data: {
+          name: input.name,
+          participants: {
+            createMany: {
+              data: [userId, ...participantIds].map((memberId) => ({ userId: memberId })),
+            },
+          },
+        },
+        include: {
+          participants: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                  image: true,
+                  avatar: true,
+                  lastActiveAt: true,
+                },
+              },
+            },
+          },
+          messages: {
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+            include: { sender: { select: { id: true, name: true } } },
+          },
+        },
+      })
     }),
 
   deleteConversation: protectedProcedure.input(z.object({ conversationId: z.string() })).mutation(async ({ ctx, input }) => {

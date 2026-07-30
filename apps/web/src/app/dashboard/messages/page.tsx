@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { Card, CardContent, Button } from '@arko/ui'
 import {
@@ -11,6 +11,8 @@ import {
   Search,
   Plus,
   Trash2,
+  Users,
+  Check,
 } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { api } from '../../../lib/trpc/client'
@@ -38,7 +40,9 @@ export default function MessagesPage() {
   const [newMsg, setNewMsg] = useState('')
   const [showNewConv, setShowNewConv] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
+  const [newConversationType, setNewConversationType] = useState<'direct' | 'group'>('direct')
+  const [groupName, setGroupName] = useState('')
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([])
 
   const { data: session } = useSession()
   const currentUserId = session?.user?.id
@@ -77,8 +81,26 @@ export default function MessagesPage() {
       utils.messages.suggestions.invalidate()
       setSelectedConv(conv.id)
       setShowNewConv(false)
-      setSelectedUserId(null)
+      setSelectedUserIds([])
       setSearchQuery('')
+    },
+  })
+
+  const createGroup = api.messages.createGroupConversation.useMutation({
+    onSuccess: (conv) => {
+      utils.messages.listConversations.invalidate()
+      setSelectedConv(conv.id)
+      setShowNewConv(false)
+      setSelectedUserIds([])
+      setGroupName('')
+      setSearchQuery('')
+    },
+  })
+
+  const { mutate: markConversationRead } = api.messages.markRead.useMutation({
+    onSuccess: () => {
+      utils.messages.unreadCount.invalidate()
+      utils.messages.listConversations.invalidate()
     },
   })
 
@@ -94,6 +116,18 @@ export default function MessagesPage() {
   const headerOther =
     selectedConversation?.participants.find((p) => p.user.id !== currentUserId)?.user ??
     selectedConversation?.participants[0]?.user
+  const isGroup = Boolean(selectedConversation?.name)
+  const conversationTitle = selectedConversation?.name ??
+    headerOther?.name ??
+    headerOther?.email ??
+    'Conversation'
+  const lastMessageId = messages?.messages.at(-1)?.id
+  const selectableUsers = users?.filter((user) => user.id !== currentUserId)
+
+  useEffect(() => {
+    if (!selectedConv || !lastMessageId) return
+    markConversationRead({ conversationId: selectedConv })
+  }, [lastMessageId, markConversationRead, selectedConv])
 
   const handleSend = () => {
     if (!newMsg.trim() || !selectedConv) return
@@ -142,6 +176,40 @@ export default function MessagesPage() {
           </Card>
         ) : showNewConv ? (
           <div className="flex-1 flex flex-col overflow-hidden">
+            <div className="mb-3 grid grid-cols-2 rounded-lg bg-card p-1">
+              {(['direct', 'group'] as const).map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => {
+                    setNewConversationType(type)
+                    setSelectedUserIds([])
+                  }}
+                  className={`rounded-md px-3 py-2 text-xs font-medium transition-colors ${
+                    newConversationType === type
+                      ? 'bg-primary-500 text-white'
+                      : 'text-text-secondary hover:text-text-primary'
+                  }`}
+                >
+                  {type === 'direct' ? 'Direct message' : 'Group chat'}
+                </button>
+              ))}
+            </div>
+            {newConversationType === 'group' && (
+              <div className="mb-3">
+                <label htmlFor="group-name" className="mb-1.5 block text-xs font-medium text-text-secondary">
+                  Group name
+                </label>
+                <input
+                  id="group-name"
+                  value={groupName}
+                  onChange={(event) => setGroupName(event.target.value)}
+                  maxLength={80}
+                  placeholder="e.g. Product team"
+                  className="w-full rounded-lg border border-border-subtle bg-card px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                />
+              </div>
+            )}
             <div className="flex-1 space-y-1 overflow-y-auto">
               <div className="relative mb-3">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-tertiary" />
@@ -154,29 +222,63 @@ export default function MessagesPage() {
                   autoFocus
                 />
               </div>
-              {users?.map((u) => (
+              {selectableUsers?.map((u) => (
                 <button
                   key={u.id}
                   onClick={() => {
-                    setSelectedUserId(u.id)
-                    createConv.mutate({ participantId: u.id })
+                    if (newConversationType === 'direct') {
+                      createConv.mutate({ participantId: u.id })
+                      return
+                    }
+                    setSelectedUserIds((current) =>
+                      current.includes(u.id)
+                        ? current.filter((id) => id !== u.id)
+                        : [...current, u.id],
+                    )
                   }}
-                  disabled={createConv.isPending}
-                  className="flex w-full items-center gap-3 rounded-lg p-2 text-left hover:bg-card/[0.04] transition-colors"
+                  disabled={createConv.isPending || createGroup.isPending}
+                  className={`flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors ${
+                    selectedUserIds.includes(u.id)
+                      ? 'bg-primary-500/10 ring-1 ring-inset ring-primary-500/30'
+                      : 'hover:bg-card/[0.04]'
+                  }`}
                 >
                   <div className="shrink-0">
                     <Avatar user={u} size={32} />
                   </div>
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-text-primary">{u.name ?? 'Unknown'}</p>
                     <p className="text-xs text-text-tertiary">{u.email}</p>
                   </div>
+                  {newConversationType === 'group' && (
+                    <span className={`flex h-5 w-5 items-center justify-center rounded-md border ${
+                      selectedUserIds.includes(u.id)
+                        ? 'border-primary-500 bg-primary-500 text-white'
+                        : 'border-border-subtle text-transparent'
+                    }`}>
+                      <Check className="h-3.5 w-3.5" />
+                    </span>
+                  )}
                 </button>
               ))}
-              {users?.length === 0 && (
+              {selectableUsers?.length === 0 && (
                 <p className="py-4 text-center text-sm text-text-tertiary">No users found</p>
               )}
             </div>
+            {newConversationType === 'group' && (
+              <Button
+                size="sm"
+                className="mt-2 w-full shrink-0"
+                disabled={!groupName.trim() || selectedUserIds.length < 2 || createGroup.isPending}
+                onClick={() => createGroup.mutate({
+                  name: groupName.trim(),
+                  participantIds: selectedUserIds,
+                })}
+              >
+                {createGroup.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Users className="h-4 w-4" />}
+                Create group ({selectedUserIds.length})
+              </Button>
+            )}
             <Button variant="ghost" size="sm" className="w-full text-text-tertiary shrink-0 mt-2" onClick={() => setShowNewConv(false)}>
               Cancel
             </Button>
@@ -184,6 +286,7 @@ export default function MessagesPage() {
         ) : (
           <div className="flex-1 space-y-1 overflow-y-auto">
             {conversations?.map((conv) => {
+              const group = Boolean(conv.name)
               const other =
                 conv.participants.find((p) => p.user.id !== currentUserId)?.user ??
                 conv.participants[0]?.user
@@ -201,11 +304,17 @@ export default function MessagesPage() {
                 >
                   <div className="flex items-center gap-3">
                     <div className="shrink-0">
-                      <Avatar user={other} size={36} />
+                      {group ? (
+                        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-500/15 text-primary-400">
+                          <Users className="h-4 w-4" />
+                        </span>
+                      ) : (
+                        <Avatar user={other} size={36} />
+                      )}
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-text-primary">
-                        {other?.name ?? other?.email ?? 'Unknown'}
+                        {conv.name ?? other?.name ?? other?.email ?? 'Unknown'}
                       </p>
                       {lastMsg && (
                         <p className="truncate text-xs text-text-tertiary mt-0.5">
@@ -229,17 +338,27 @@ export default function MessagesPage() {
             {/* Header */}
             <div className="flex items-center gap-3 border-b border-border-subtle px-6 py-4">
               <div className="shrink-0">
-                <Avatar user={headerOther} size={36} />
+                {isGroup ? (
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-500/15 text-primary-400">
+                    <Users className="h-4 w-4" />
+                  </span>
+                ) : (
+                  <Avatar user={headerOther} size={36} />
+                )}
               </div>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold text-text-primary">
-                  {headerOther?.name ?? headerOther?.email ?? 'Conversation'}
+                  {conversationTitle}
                 </p>
-                {headerOther && (
+                {isGroup ? (
+                  <p className="truncate text-[11px] text-text-tertiary">
+                    {selectedConversation?.participants.length} members
+                  </p>
+                ) : headerOther ? (
                   <p className="truncate text-[11px] text-text-tertiary">
                     {formatPresence(headerOther.lastActiveAt).label}
                   </p>
-                )}
+                ) : null}
               </div>
               <button
                 onClick={() => {
@@ -299,6 +418,11 @@ export default function MessagesPage() {
                           minute: '2-digit',
                         })}
                       </p>
+                      {isGroup && msg.senderId !== currentUserId && (
+                        <p className="mt-1 text-[10px] font-medium text-text-secondary">
+                          {msg.sender.name ?? 'Member'}
+                        </p>
+                      )}
                     </div>
                   </div>
                 ))

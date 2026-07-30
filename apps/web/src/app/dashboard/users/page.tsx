@@ -32,6 +32,7 @@ import {
   Pencil,
   KeyRound,
   RefreshCw,
+  BriefcaseBusiness,
 } from 'lucide-react'
 import { api } from '../../../lib/trpc/client'
 import { generateAvatarSeed, avatarConfigToJson } from '../../../lib/avatar'
@@ -41,6 +42,7 @@ const roleConfig = {
   ADMIN: { label: 'Admin', color: 'bg-red-50 text-red-700', icon: ShieldAlert },
   MEMBER: { label: 'Member', color: 'bg-primary-50 text-primary-700', icon: ShieldCheck },
   USER: { label: 'User', color: 'bg-card text-text-secondary', icon: Shield },
+  CLIENT: { label: 'Client', color: 'bg-blue-500/10 text-blue-400', icon: BriefcaseBusiness },
 }
 
 const statusConfig = {
@@ -349,7 +351,7 @@ export default function UsersPage() {
                               <div className="mb-1 px-1">
                                 <p className="text-[9px] font-semibold uppercase tracking-wider text-text-tertiary mb-1">Role</p>
                                 <div className="space-y-0.5">
-                                  {(['ADMIN', 'MEMBER', 'USER'] as const).map((role) => (
+                                  {(['ADMIN', 'MEMBER', 'USER', 'CLIENT'] as const).map((role) => (
                                     <button
                                       key={role}
                                       onClick={() => {
@@ -365,6 +367,7 @@ export default function UsersPage() {
                                     >
                                       {role === 'ADMIN' ? <ShieldAlert className="h-3 w-3" /> :
                                        role === 'MEMBER' ? <ShieldCheck className="h-3 w-3" /> :
+                                       role === 'CLIENT' ? <BriefcaseBusiness className="h-3 w-3" /> :
                                        <Shield className="h-3 w-3" />}
                                       {roleConfig[role].label}
                                     </button>
@@ -560,7 +563,7 @@ function AddUserModal({ onClose }: { onClose: () => void }) {
   const [lastName, setLastName] = useState('')
   const [phone, setPhone] = useState('')
   const [title, setTitle] = useState('')
-  const [role, setRole] = useState<'ADMIN' | 'MEMBER' | 'USER'>('MEMBER')
+  const [role, setRole] = useState<'ADMIN' | 'MEMBER' | 'USER' | 'CLIENT'>('MEMBER')
   const [copiedField, setCopiedField] = useState<string | null>(null)
   const [validationError, setValidationError] = useState('')
   const [success, setSuccess] = useState<{ email: string; password: string } | null>(null)
@@ -787,7 +790,7 @@ function AddUserModal({ onClose }: { onClose: () => void }) {
           <div>
             <p className="text-[9px] font-semibold uppercase tracking-wider text-text-tertiary mb-2">Permission Level</p>
             <div className="flex gap-2">
-              {(['MEMBER', 'ADMIN', 'USER'] as const).map((r) => (
+              {(['MEMBER', 'ADMIN', 'USER', 'CLIENT'] as const).map((r) => (
                 <button
                   key={r}
                   type="button"
@@ -798,7 +801,7 @@ function AddUserModal({ onClose }: { onClose: () => void }) {
                       : 'bg-card text-text-tertiary hover:bg-card'
                   }`}
                 >
-                  {r === 'ADMIN' ? 'Admin' : r === 'MEMBER' ? 'Member' : 'User'}
+                  {r === 'ADMIN' ? 'Admin' : r === 'MEMBER' ? 'Member' : r === 'CLIENT' ? 'Client' : 'User'}
                 </button>
               ))}
             </div>

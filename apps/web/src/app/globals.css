@@ -163,6 +163,24 @@
   body {
     @apply bg-bg-app text-text-primary antialiased;
   }
+  select {
+    color-scheme: dark;
+    background-color: var(--color-card);
+    color: var(--color-text-primary);
+    cursor: pointer;
+  }
+  select:hover {
+    border-color: var(--color-gray-300);
+  }
+  select:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+  select option,
+  select optgroup {
+    background-color: var(--color-card-elevated);
+    color: var(--color-text-primary);
+  }
 }
 
 @keyframes fade-in {

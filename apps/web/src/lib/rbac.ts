@@ -44,6 +44,9 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'workflows:execute',
     'users:read',
   ],
+  CLIENT: [
+    'users:read',
+  ],
 }
 
 /**
