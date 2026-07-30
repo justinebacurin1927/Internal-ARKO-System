@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation'
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { NavItem } from '@arko/ui'
+import { api } from '../../lib/trpc/client'
 import {
   LayoutDashboard,
   Wallet,
@@ -44,6 +45,12 @@ export function DashboardNav() {
   const pathname = usePathname()
   const router = useRouter()
 
+  // Poll unread messages for the sidebar badge.
+  const { data: unread } = api.messages.unreadCount.useQuery(undefined, {
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: true,
+  })
+
   // Prefetch all nav routes so they compile in the background
   useEffect(() => {
     navItems.forEach((item) => {
@@ -60,6 +67,7 @@ export function DashboardNav() {
           label={item.label}
           icon={item.icon}
           active={pathname === item.href || pathname.startsWith(item.href + '/')}
+          badge={item.href === '/dashboard/messages' ? unread : undefined}
         />
       ))}
     </div>

@@ -4,6 +4,28 @@ import { router, protectedProcedure } from '../trpc'
 
 export const messagesRouter = router({
   /**
+   * Total unread messages across all of the caller's conversations — for the
+   * sidebar "Messages (n)" badge. Unread = sent by someone else after the
+   * participant's lastReadAt (or ever, if never read).
+   */
+  unreadCount: protectedProcedure.query(async ({ ctx }) => {
+    const userId = ctx.user.id!
+    const parts = await ctx.prisma.conversationParticipant.findMany({
+      where: { userId },
+      select: { conversationId: true, lastReadAt: true },
+    })
+    if (parts.length === 0) return 0
+
+    const conditions = parts.map((p) => ({
+      conversationId: p.conversationId,
+      senderId: { not: userId },
+      ...(p.lastReadAt ? { createdAt: { gt: p.lastReadAt } } : {}),
+    }))
+
+    return ctx.prisma.message.count({ where: { OR: conditions } })
+  }),
+
+  /**
    * Suggest people to message: active team members the current user does not
    * already have a conversation with, most recently active first.
    */

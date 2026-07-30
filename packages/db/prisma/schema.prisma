@@ -43,6 +43,7 @@ model User {
   journalEntries    JournalEntry[]
   notifications     Notification[]
   resources         Resource[]
+  resourceCategories ResourceCategory[]
   fileAttachments   FileAttachment[]
   metrics           BusinessMetric[]
   recurring         RecurringTransaction[]
@@ -471,19 +472,41 @@ model Notification {
 
 // ===== RESOURCES =====
 
+model ResourceCategory {
+  id       String  @id @default(cuid())
+  name     String
+  icon     String  @default("Folder")
+  isPublic Boolean @default(true) // public boxes are visible to everyone; private only to the owner
+  userId   String
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resources Resource[]
+
+  @@unique([name, userId])
+  @@index([isPublic])
+}
+
 model Resource {
-  id           String   @id @default(cuid())
+  id           String            @id @default(cuid())
   title        String
   url          String?
-  resourceType String   @default("LINK") // LINK | FILE | DOC
+  resourceType String            @default("LINK") // LINK | FILE | DOC
   description  String?
-  tags         String[] @default([])
+  tags         String[]          @default([])
   fileId       String?
+  categoryId   String?
+  isPublic     Boolean           @default(true) // public resources are visible/accessible to all users
   userId       String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category ResourceCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  @@index([categoryId])
+  @@index([userId])
+  @@index([isPublic])
+  @@index([updatedAt])
 }
 
 // ===== STORAGE (S3) =====

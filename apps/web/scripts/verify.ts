@@ -42,7 +42,7 @@ async function main() {
 
   // resources
   const r = await api.resources.create({ title: 'Verify resource', url: 'https://example.com' })
-  ok('resources', `created ${r.id}, list=${(await api.resources.list()).length}`)
+  ok('resources', `created ${r.id}, list=${(await api.resources.list({})).total}`)
 
   // comments (polymorphic on the task above)
   const c = await api.comments.create({ resourceType: 'TASK', resourceId: task.id, content: 'nice' })
