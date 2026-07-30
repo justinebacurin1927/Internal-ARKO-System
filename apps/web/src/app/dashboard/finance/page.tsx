@@ -8,6 +8,7 @@ import { api } from '../../../lib/trpc/client'
 import { formatCurrency } from '@arko/finance'
 import { AddTransactionDialog, type GhostTransaction } from './add-transaction-dialog'
 import { RecurringTransactionDialog } from './recurring-transaction-dialog'
+import { AnalyticsCharts } from './analytics-charts'
 
 function StatsSkeleton() {
   return (
@@ -87,18 +88,18 @@ export default function FinancePage() {
   const refetchTransactions = () => txQuery.refetch()
 
   return (
-    <div className="space-y-6">
+    <div className="analytics-reference mx-auto max-w-[1500px] space-y-5">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-text-primary tracking-tight">Finance</h1>
+          <h1 className="text-2xl font-semibold text-text-primary tracking-tight">Analytics</h1>
           <p className="text-sm text-text-tertiary mt-1">
             {scopeFilter === 'PERSONAL'
               ? 'Your private budgets, spending, bills, and savings'
               : 'Shared company cash flow for admins and accountants'}
           </p>
         </div>
-        <Button onClick={() => setDialogOpen(true)}>
+        <Button className="rounded-full px-5" onClick={() => setDialogOpen(true)}>
           <Plus className="h-4 w-4" />
           Add Transaction
         </Button>
@@ -157,6 +158,9 @@ export default function FinancePage() {
               </button>
             ))}
           </div>
+
+          {/* Stat cards */}
+          <AnalyticsCharts transactions={transactions} />
 
           {/* Stat cards */}
           <div className="grid gap-4 md:grid-cols-3">

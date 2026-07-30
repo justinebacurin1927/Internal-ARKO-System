@@ -311,9 +311,39 @@
   border-color: color-mix(in srgb, var(--color-primary-400) 70%, transparent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary-500) 12%, transparent);
 }
+.analytics-reference {
+  position: relative;
+  isolation: isolate;
+}
+.analytics-reference::before {
+  position: fixed;
+  inset: 3.5rem 0 0 15rem;
+  z-index: -1;
+  pointer-events: none;
+  content: '';
+  background:
+    radial-gradient(circle at 12% 10%, color-mix(in srgb, var(--color-primary-500) 7%, transparent), transparent 30rem),
+    linear-gradient(135deg, color-mix(in srgb, var(--color-primary-950) 4%, transparent), transparent 45%);
+}
+.analytics-panel {
+  border-color: color-mix(in srgb, var(--color-text-primary) 9%, transparent);
+  border-radius: 1rem;
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--color-card-elevated) 82%, transparent), color-mix(in srgb, var(--color-card) 94%, black));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 3%),
+    0 18px 45px rgb(0 0 0 / 12%);
+}
+.analytics-panel:hover {
+  border-color: color-mix(in srgb, var(--color-primary-500) 22%, var(--color-border-subtle));
+  transform: none;
+}
 
 @media (max-width: 767px) {
   .dashboard-reference::before {
+    left: 0;
+  }
+  .analytics-reference::before {
     left: 0;
   }
 }
