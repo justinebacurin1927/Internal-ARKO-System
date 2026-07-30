@@ -64,6 +64,26 @@ export function createRateLimiter(
       }
     },
 
+    /** Test the limit WITHOUT consuming an attempt (used for lockout gating). */
+    peek(key: string): RateLimitResult {
+      const fullKey = keyPrefix + key
+      const now = Date.now()
+      const valid = purge(fullKey, config.windowMs)
+      if (valid.length >= config.maxRequests) {
+        return { success: false, remaining: 0, resetAt: (valid[0] ?? now) + config.windowMs }
+      }
+      return {
+        success: true,
+        remaining: config.maxRequests - valid.length,
+        resetAt: now + config.windowMs,
+      }
+    },
+
+    /** Clear a single key's state (e.g. reset failure count after a successful login). */
+    clear(key: string): void {
+      stores.delete(keyPrefix + key)
+    },
+
     /** Reset all state for this limiter (used in tests) */
     reset(): void {
       for (const k of stores.keys()) {
@@ -77,6 +97,18 @@ export function createRateLimiter(
 export const authLimiter = createRateLimiter('auth', {
   windowMs: 60_000,
   maxRequests: 10,
+})
+
+/** Per-IP login throttle — catches password spraying across many accounts from one source. */
+export const authIpLimiter = createRateLimiter('auth-ip', {
+  windowMs: 60_000,
+  maxRequests: 20,
+})
+
+/** Per-email account lockout — after 5 failed attempts in 15 min, the account is temporarily locked. */
+export const loginLockout = createRateLimiter('login-lockout', {
+  windowMs: 15 * 60_000,
+  maxRequests: 5,
 })
 
 export const registerLimiter = createRateLimiter('register', {
