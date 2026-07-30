@@ -44,6 +44,7 @@ const isBlocked = (task: any) =>
 export default function TasksPage() {
   const { data: tasks, isLoading, error } = api.tasks.list.useQuery()
   const { data: users } = api.users.search.useQuery({})
+  const { data: projects } = api.tasks.availableProjects.useQuery()
   const utils = api.useUtils()
 
   const [showNew, setShowNew] = useState(false)
@@ -51,6 +52,7 @@ export default function TasksPage() {
   const [newDesc, setNewDesc] = useState('')
   const [newPriority, setNewPriority] = useState('MEDIUM')
   const [newAssignee, setNewAssignee] = useState('')
+  const [newProject, setNewProject] = useState('')
   const [showAssigneeSearch, setShowAssigneeSearch] = useState(false)
   const [assigneeSearch, setAssigneeSearch] = useState('')
   const [search, setSearch] = useState('')
@@ -72,6 +74,7 @@ export default function TasksPage() {
       setNewDesc('')
       setNewPriority('MEDIUM')
       setNewAssignee('')
+      setNewProject('')
       setShowNew(false)
       utils.tasks.list.invalidate()
     },
@@ -117,6 +120,7 @@ export default function TasksPage() {
       description: newDesc.trim() || undefined,
       priority: newPriority as (typeof priorities)[number],
       assigneeId: newAssignee || undefined,
+      projectId: newProject || undefined,
     })
   }
 
@@ -227,7 +231,20 @@ export default function TasksPage() {
                   className="block w-full rounded-lg border border-border-subtle px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
                 />
               </div>
-              <div className="flex gap-4">
+              <div className="grid gap-4 md:grid-cols-3">
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-text-secondary">Project</label>
+                  <select
+                    value={newProject}
+                    onChange={(event) => setNewProject(event.target.value)}
+                    className="block w-full rounded-lg border border-border-subtle px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                  >
+                    <option value="">General / no project</option>
+                    {(projects ?? []).map((project) => (
+                      <option key={project.id} value={project.id}>{project.name}</option>
+                    ))}
+                  </select>
+                </div>
                 <div className="flex-1">
                   <label className="mb-1.5 block text-sm font-medium text-text-secondary">Priority</label>
                   <select
@@ -425,7 +442,7 @@ export default function TasksPage() {
                             <div className="mb-3 flex items-center justify-between gap-2">
                               <span className="inline-flex items-center gap-1 rounded-full border border-white/10 px-2 py-1 text-[10px] text-text-tertiary">
                                 <Folder className="h-3 w-3 text-primary-400" />
-                                General
+                                {task.project?.name ?? 'General'}
                               </span>
                               {task.priority && (
                                 <span className={`rounded-full px-2 py-1 text-[10px] font-medium ${

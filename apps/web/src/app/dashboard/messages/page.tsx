@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { Card, CardContent, Button } from '@arko/ui'
 import {
@@ -13,6 +13,7 @@ import {
   Trash2,
   Users,
   Check,
+  ChevronDown,
 } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { api } from '../../../lib/trpc/client'
@@ -43,6 +44,10 @@ export default function MessagesPage() {
   const [newConversationType, setNewConversationType] = useState<'direct' | 'group'>('direct')
   const [groupName, setGroupName] = useState('')
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([])
+  const [hasNewMessages, setHasNewMessages] = useState(false)
+  const messagesViewportRef = useRef<HTMLDivElement>(null)
+  const initializedConversationRef = useRef<string | null>(null)
+  const previousLastMessageIdRef = useRef<string | undefined>(undefined)
 
   const { data: session } = useSession()
   const currentUserId = session?.user?.id
@@ -177,6 +182,45 @@ export default function MessagesPage() {
     if (!selectedConv || !lastMessageId) return
     markConversationRead({ conversationId: selectedConv })
   }, [lastMessageId, markConversationRead, selectedConv])
+
+  useEffect(() => {
+    initializedConversationRef.current = null
+    previousLastMessageIdRef.current = undefined
+    setHasNewMessages(false)
+  }, [selectedConv])
+
+  useEffect(() => {
+    if (!selectedConv || !lastMessageId || !messagesViewportRef.current) return
+    const viewport = messagesViewportRef.current
+
+    if (initializedConversationRef.current !== selectedConv) {
+      requestAnimationFrame(() => {
+        viewport.scrollTo({ top: viewport.scrollHeight })
+      })
+      initializedConversationRef.current = selectedConv
+      previousLastMessageIdRef.current = lastMessageId
+      return
+    }
+
+    if (previousLastMessageIdRef.current && previousLastMessageIdRef.current !== lastMessageId) {
+      const newestMessage = messages?.messages.at(-1)
+      if (newestMessage?.senderId === currentUserId) {
+        requestAnimationFrame(() => {
+          viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'smooth' })
+        })
+      } else {
+        setHasNewMessages(true)
+      }
+    }
+    previousLastMessageIdRef.current = lastMessageId
+  }, [currentUserId, lastMessageId, messages?.messages, selectedConv])
+
+  const scrollToNewest = () => {
+    const viewport = messagesViewportRef.current
+    if (!viewport) return
+    viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'smooth' })
+    setHasNewMessages(false)
+  }
 
   const handleSend = () => {
     const content = newMsg.trim()
@@ -382,7 +426,7 @@ export default function MessagesPage() {
       </div>
 
       {/* Right — messages view */}
-      <div className="flex flex-1 flex-col rounded-2xl border border-border-subtle bg-card">
+      <div className="relative flex flex-1 flex-col rounded-2xl border border-border-subtle bg-card">
         {selectedConv ? (
           <>
             {/* Header */}
@@ -429,7 +473,15 @@ export default function MessagesPage() {
             </div>
 
             {/* Messages */}
-            <div className="flex-1 space-y-3 overflow-y-auto px-6 py-4">
+            <div
+              ref={messagesViewportRef}
+              onScroll={(event) => {
+                const viewport = event.currentTarget
+                const nearBottom = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight < 48
+                if (nearBottom) setHasNewMessages(false)
+              }}
+              className="flex-1 space-y-3 overflow-y-auto px-6 py-4"
+            >
               {msgsLoading ? (
                 <div className="space-y-3">
                   {[...Array(4)].map((_, i) => (
@@ -478,6 +530,17 @@ export default function MessagesPage() {
                 ))
               )}
             </div>
+
+            {hasNewMessages && (
+              <button
+                type="button"
+                onClick={scrollToNewest}
+                className="absolute bottom-24 left-1/2 z-10 inline-flex min-h-10 -translate-x-1/2 items-center gap-2 rounded-full border border-primary-500/30 bg-card-elevated px-4 text-xs font-semibold text-primary-300 shadow-xl transition-colors hover:border-primary-400 hover:text-primary-200"
+              >
+                <ChevronDown className="h-4 w-4" />
+                New messages
+              </button>
+            )}
 
             {/* Input */}
             <div className="border-t border-border-subtle px-6 py-4">

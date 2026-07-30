@@ -285,6 +285,7 @@ model Task {
   priority    Priority   @default(MEDIUM)
   assigneeId  String?
   workspaceId String?
+  projectId   String?
   dueDate     DateTime?
   position    Int        @default(0)
   parentId    String?
@@ -292,6 +293,7 @@ model Task {
   updatedAt   DateTime   @updatedAt
 
   assignee User?  @relation(fields: [assigneeId], references: [id])
+  project  ClientProject? @relation(fields: [projectId], references: [id], onDelete: SetNull)
   parent   Task?  @relation("TaskDependencies", fields: [parentId], references: [id])
   subtasks Task[] @relation("TaskDependencies")
 
@@ -303,6 +305,7 @@ model Task {
   clientRequest ClientRequest?
 
   @@index([assigneeId, position])
+  @@index([projectId])
   @@index([parentId])
 }
 
@@ -592,6 +595,7 @@ model ClientProject {
   milestones ProjectMilestone[]
   deliverables ProjectDeliverable[]
   activities ProjectActivity[]
+  tasks      Task[]
 
   @@index([clientId])
   @@index([ownerId])

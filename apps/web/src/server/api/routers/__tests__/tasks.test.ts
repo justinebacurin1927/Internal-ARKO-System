@@ -19,6 +19,11 @@ const ctx = (over: any = {}) => {
       findUnique: jest.fn().mockResolvedValue({ role: 'USER' }),
       ...(over.user ?? {}),
     },
+    clientProject: {
+      findMany: jest.fn().mockResolvedValue([]),
+      findFirst: jest.fn().mockResolvedValue({ id: 'p1' }),
+      ...(over.clientProject ?? {}),
+    },
     taskDependency: {
       findMany: jest.fn().mockResolvedValue([]),
       create: jest.fn().mockImplementation(({ data }: any) => Promise.resolve({ id: 'd1', ...data })),
@@ -90,6 +95,29 @@ describe('tasks.create subtasks', () => {
     const caller = tasksRouter.createCaller(c)
     const res = await caller.create({ title: 'sub', parentId: 'p1' })
     expect(res.parentId).toBe('p1')
+  })
+})
+
+describe('tasks.create project assignment', () => {
+  it('persists an accessible project on the task', async () => {
+    const c = ctx({ userRole: 'ADMIN' })
+    const caller = tasksRouter.createCaller(c)
+    await caller.create({ title: 'Project task', projectId: 'p1' })
+    expect(c.prisma.task.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ projectId: 'p1' }),
+      }),
+    )
+  })
+
+  it('rejects a project the caller cannot access', async () => {
+    const c = ctx({
+      clientProject: { findFirst: jest.fn().mockResolvedValue(null) },
+    })
+    const caller = tasksRouter.createCaller(c)
+    await expect(caller.create({ title: 'Project task', projectId: 'private' })).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+    })
   })
 })
 

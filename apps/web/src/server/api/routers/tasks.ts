@@ -4,6 +4,7 @@ import { router, protectedProcedure } from '../trpc'
 
 const assigneeInclude = {
   assignee: { select: { id: true, name: true, email: true, image: true } },
+  project: { select: { id: true, name: true, status: true } },
 } as const
 
 /**
@@ -58,6 +59,14 @@ async function wouldCreateCycle(ctx: any, taskId: string, blockerId: string): Pr
 }
 
 export const tasksRouter = router({
+  availableProjects: protectedProcedure.query(({ ctx }) =>
+    ctx.prisma.clientProject.findMany({
+      where: ctx.userRole === 'ADMIN' ? {} : { ownerId: ctx.user.id! },
+      select: { id: true, name: true, status: true },
+      orderBy: { updatedAt: 'desc' },
+    }),
+  ),
+
   list: protectedProcedure
     .input(z.object({ status: z.string().optional() }).optional())
     .query(async ({ ctx }) => {
@@ -84,11 +93,25 @@ export const tasksRouter = router({
         dueDate: z.date().optional(),
         assigneeId: z.string().optional(),
         parentId: z.string().optional(),
+        projectId: z.string().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.user.id!
       const assigneeId = input.assigneeId ?? userId
+
+      if (input.projectId) {
+        const project = await ctx.prisma.clientProject.findFirst({
+          where: {
+            id: input.projectId,
+            ...(ctx.userRole === 'ADMIN' ? {} : { ownerId: userId }),
+          },
+          select: { id: true },
+        })
+        if (!project) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Project not found' })
+        }
+      }
 
       // If assigning to someone else, verify user exists
       if (input.assigneeId && input.assigneeId !== userId) {
@@ -123,6 +146,7 @@ export const tasksRouter = router({
           dueDate: input.dueDate,
           assigneeId,
           parentId: input.parentId,
+          projectId: input.projectId,
           position: (maxPos?.position ?? -1) + 1,
         },
         include: assigneeInclude,
