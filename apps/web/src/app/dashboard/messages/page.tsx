@@ -49,11 +49,11 @@ export default function MessagesPage() {
 
   const { data: conversations, isLoading, error } = api.messages.listConversations.useQuery(
     undefined,
-    { refetchInterval: 5000 },
+    { refetchInterval: 3000, refetchIntervalInBackground: false },
   )
   const { data: messages, isLoading: msgsLoading } = api.messages.getMessages.useQuery(
     { conversationId: selectedConv!, limit: 50 },
-    { enabled: !!selectedConv, refetchInterval: 4000 },
+    { enabled: !!selectedConv, refetchInterval: 1500, refetchIntervalInBackground: false },
   )
   const { data: users } = api.users.search.useQuery(
     { query: searchQuery || undefined },
@@ -63,16 +63,65 @@ export default function MessagesPage() {
     enabled: !selectedConv,
   })
 
+  const utils = api.useUtils()
+  const messageQueryInput = selectedConv
+    ? { conversationId: selectedConv, limit: 50 }
+    : null
+
   const sendMsg = api.messages.sendMessage.useMutation({
-    onSuccess: () => {
+    onMutate: async (input) => {
+      if (!messageQueryInput || !currentUserId) return
+
+      await utils.messages.getMessages.cancel(messageQueryInput)
+      const previous = utils.messages.getMessages.getData(messageQueryInput)
+      const optimisticId = `pending-${Date.now()}`
+
+      utils.messages.getMessages.setData(messageQueryInput, (current) => ({
+        messages: [
+          ...(current?.messages ?? []),
+          {
+            id: optimisticId,
+            content: input.content,
+            conversationId: input.conversationId,
+            senderId: currentUserId,
+            createdAt: new Date(),
+            sender: {
+              id: currentUserId,
+              name: session?.user?.name ?? 'You',
+              image: session?.user?.image ?? null,
+            },
+          },
+        ],
+        nextCursor: current?.nextCursor,
+      }))
       setNewMsg('')
-      // Refetch messages
-      utils.messages.getMessages.invalidate({ conversationId: selectedConv! })
+
+      return { previous, optimisticId, queryInput: messageQueryInput }
+    },
+    onError: (_error, input, context) => {
+      if (context?.queryInput) {
+        utils.messages.getMessages.setData(context.queryInput, context.previous)
+      }
+      setNewMsg(input.content)
+    },
+    onSuccess: (message, _input, context) => {
+      if (context?.queryInput) {
+        utils.messages.getMessages.setData(context.queryInput, (current) => ({
+          messages: (current?.messages ?? []).map((item) =>
+            item.id === context.optimisticId ? message : item,
+          ),
+          nextCursor: current?.nextCursor,
+        }))
+      }
       utils.messages.listConversations.invalidate()
+      utils.messages.unreadCount.invalidate()
+    },
+    onSettled: (_data, _error, _input, context) => {
+      if (context?.queryInput) {
+        utils.messages.getMessages.invalidate(context.queryInput)
+      }
     },
   })
-
-  const utils = api.useUtils()
 
   const createConv = api.messages.createConversation.useMutation({
     onSuccess: (conv) => {
@@ -130,8 +179,9 @@ export default function MessagesPage() {
   }, [lastMessageId, markConversationRead, selectedConv])
 
   const handleSend = () => {
-    if (!newMsg.trim() || !selectedConv) return
-    sendMsg.mutate({ conversationId: selectedConv, content: newMsg.trim() })
+    const content = newMsg.trim()
+    if (!content || !selectedConv || sendMsg.isPending) return
+    sendMsg.mutate({ conversationId: selectedConv, content })
   }
 
   return (
@@ -452,6 +502,11 @@ export default function MessagesPage() {
                   )}
                 </Button>
               </div>
+              {sendMsg.error && (
+                <p className="mt-2 text-xs text-red-400">
+                  Message was not sent. Your text has been restored so you can retry.
+                </p>
+              )}
             </div>
           </>
         ) : (

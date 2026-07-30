@@ -1,6 +1,7 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
+import { useSession } from 'next-auth/react'
 import { Card, CardContent, CardHeader, CardTitle } from '@arko/ui'
 import { PerformanceChart } from './performance-chart'
 import {
@@ -26,9 +27,13 @@ function formatCurrency(n: number) {
 
 // ── Dashboard content ────────────────────────────────────
 export default function DashboardContent() {
-  const { data: balance } = api.finance.getBalance.useQuery()
+  const { data: session } = useSession()
+  const canUseCompany = session?.user?.role === 'ADMIN' || session?.user?.role === 'ACCOUNTANT'
+  const [financeScope, setFinanceScope] = useState<'PERSONAL' | 'COMPANY'>('PERSONAL')
+  const { data: balance } = api.finance.getBalance.useQuery({ scope: financeScope })
+  const { data: insights } = api.finance.getInsights.useQuery({ scope: financeScope })
   const { data: tasks } = api.tasks.list.useQuery()
-  const { data: transactions } = api.finance.getTransactions.useQuery()
+  const { data: transactions } = api.finance.getTransactions.useQuery({ scope: financeScope })
   const { data: users } = api.users.search.useQuery({})
   const { data: updates, isLoading: ghLoading } = api.github.recentCommits.useQuery({ limit: 8 })
 
@@ -88,7 +93,20 @@ export default function DashboardContent() {
   return (
     <div className="h-full flex flex-col">
       {/* ── Header row — action buttons ──────────────── */}
-      <div className="flex items-center justify-end shrink-0 mb-3">
+      <div className="flex items-center justify-between gap-3 shrink-0 mb-3">
+        <div className="inline-flex items-center rounded-lg border border-border-subtle bg-card p-1">
+          {(['PERSONAL', ...(canUseCompany ? ['COMPANY' as const] : [])] as const).map((scope) => (
+            <button
+              key={scope}
+              onClick={() => setFinanceScope(scope)}
+              className={`rounded-md px-2.5 py-1 text-[10px] font-semibold transition-colors ${
+                financeScope === scope ? 'bg-primary-500 text-white' : 'text-text-tertiary hover:text-text-primary'
+              }`}
+            >
+              {scope === 'PERSONAL' ? 'Personal' : 'Company'}
+            </button>
+          ))}
+        </div>
         <div className="flex items-center gap-2">
           <button className="inline-flex items-center gap-1 rounded-full border border-border-subtle bg-card px-3 py-1.5 text-[11px] font-medium text-text-secondary shadow-sm hover:border-border-subtle active:scale-[0.97]">
             <Plus className="h-3 w-3" />
@@ -112,7 +130,7 @@ export default function DashboardContent() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-[10px] font-medium text-text-tertiary uppercase tracking-wider">
-                    Cash Balance
+                    {financeScope === 'PERSONAL' ? 'Personal balance' : 'Company balance'}
                   </p>
                   <p className="text-xl font-black text-text-primary mt-0.5">
                     {formatCurrency(balance?.balance ?? 0)}
@@ -138,6 +156,9 @@ export default function DashboardContent() {
                   <span className="text-[9px] text-text-tertiary">out</span>
                 </div>
               </div>
+              <p className="mt-2 text-[9px] text-text-tertiary">
+                {insights?.upcomingCount ?? 0} upcoming · {(insights?.savingsRate ?? 0).toFixed(0)}% retained
+              </p>
             </CardContent>
           </Card>
 

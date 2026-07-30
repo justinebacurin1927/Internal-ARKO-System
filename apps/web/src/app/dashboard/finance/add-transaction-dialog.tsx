@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useSession } from 'next-auth/react'
 import * as Dialog from '@radix-ui/react-dialog'
 import { Button } from '@arko/ui'
 import { X, Loader2, Users, Plus, Trash2 } from 'lucide-react'
@@ -11,6 +12,7 @@ interface AddTransactionDialogProps {
   onOpenChange: (open: boolean) => void
   onGhostAdd?: (transaction: GhostTransaction) => void
   onGhostRemove?: (id: string) => void
+  defaultScope?: 'PERSONAL' | 'COMPANY'
 }
 
 export interface GhostTransaction {
@@ -28,7 +30,9 @@ interface SplitEntry {
   amount: string
 }
 
-export function AddTransactionDialog({ open, onOpenChange, onGhostAdd, onGhostRemove }: AddTransactionDialogProps) {
+export function AddTransactionDialog({ open, onOpenChange, onGhostAdd, onGhostRemove, defaultScope = 'PERSONAL' }: AddTransactionDialogProps) {
+  const { data: session } = useSession()
+  const canUseCompany = session?.user?.role === 'ADMIN' || session?.user?.role === 'ACCOUNTANT'
   const [type, setType] = useState<'INCOME' | 'EXPENSE' | 'TRANSFER'>('EXPENSE')
   const [scope, setScope] = useState<'PERSONAL' | 'COMPANY'>('PERSONAL')
   const [amount, setAmount] = useState('')
@@ -38,7 +42,14 @@ export function AddTransactionDialog({ open, onOpenChange, onGhostAdd, onGhostRe
   const [isSplit, setIsSplit] = useState(false)
   const [splits, setSplits] = useState<SplitEntry[]>([])
 
-  const { data: categories } = api.finance.getCategories.useQuery()
+  useEffect(() => {
+    if (open && (defaultScope === 'PERSONAL' || canUseCompany)) {
+      setScope(defaultScope)
+      setCategoryId('')
+    }
+  }, [canUseCompany, defaultScope, open])
+
+  const { data: categories } = api.finance.getCategories.useQuery({ scope })
   const { data: users } = api.users.search.useQuery({})
   const utils = api.useUtils()
   const createTx = api.finance.createTransaction.useMutation({
@@ -78,7 +89,7 @@ export function AddTransactionDialog({ open, onOpenChange, onGhostAdd, onGhostRe
 
   function handleReset() {
     setType('EXPENSE')
-    setScope('PERSONAL')
+    setScope(defaultScope)
     setAmount('')
     setDescription('')
     setCategoryId('')
@@ -168,11 +179,14 @@ export function AddTransactionDialog({ open, onOpenChange, onGhostAdd, onGhostRe
             <div>
               <label className="block text-sm font-medium text-text-secondary mb-2">Scope</label>
               <div className="grid grid-cols-2 gap-2">
-                {(['PERSONAL', 'COMPANY'] as const).map((s) => (
+                {(['PERSONAL', ...(canUseCompany ? ['COMPANY' as const] : [])] as const).map((s) => (
                   <button
                     key={s}
                     type="button"
-                    onClick={() => setScope(s)}
+                    onClick={() => {
+                      setScope(s)
+                      setCategoryId('')
+                    }}
                     className={`rounded-lg px-3 py-2 text-sm font-medium transition-all ${
                       scope === s
                         ? s === 'PERSONAL'
@@ -289,7 +303,7 @@ export function AddTransactionDialog({ open, onOpenChange, onGhostAdd, onGhostRe
                   type="button"
                   variant="outline"
                   disabled={!newCategoryName.trim() || createCategory.isPending}
-                  onClick={() => createCategory.mutate({ name: newCategoryName, transactionType: type })}
+                  onClick={() => createCategory.mutate({ name: newCategoryName, transactionType: type, scope })}
                 >
                   {createCategory.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
                   Add

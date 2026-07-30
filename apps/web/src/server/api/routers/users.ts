@@ -175,7 +175,7 @@ export const usersRouter = router({
         phone: z.string().optional(),
         title: z.string().optional(),
         password: z.string().optional(),
-        role: z.enum(['ADMIN', 'MEMBER', 'USER', 'CLIENT']).default('MEMBER'),
+        role: z.enum(['ADMIN', 'ACCOUNTANT', 'MEMBER', 'USER', 'CLIENT']).default('MEMBER'),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -312,7 +312,7 @@ export const usersRouter = router({
     .input(
       z.object({
         userId: z.string(),
-        role: z.enum(['ADMIN', 'MEMBER', 'USER', 'CLIENT']),
+        role: z.enum(['ADMIN', 'ACCOUNTANT', 'MEMBER', 'USER', 'CLIENT']),
       }),
     )
     .mutation(async ({ ctx, input }) => {

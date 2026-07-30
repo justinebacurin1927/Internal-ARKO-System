@@ -72,7 +72,10 @@ function isActivePath(pathname: string, item: NavCategory) {
 
 function useUnreadCounts() {
   const { data: notifications } = api.notifications.unreadCount.useQuery(undefined, { refetchInterval: 60000 })
-  const { data: messages } = api.messages.unreadCount.useQuery(undefined, { refetchInterval: 10000 })
+  const { data: messages } = api.messages.unreadCount.useQuery(undefined, {
+    refetchInterval: 5000,
+    refetchIntervalInBackground: false,
+  })
   return {
     notifications: typeof notifications === 'number' ? notifications : 0,
     messages: typeof messages === 'number' ? messages : 0,

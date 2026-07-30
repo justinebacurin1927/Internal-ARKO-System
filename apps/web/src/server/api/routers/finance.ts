@@ -8,11 +8,35 @@ const categoryTypes = {
   TRANSFER: ['RECEIVABLE', 'PAYABLE'],
 } as const
 
-async function assertCategoryAccess(ctx: any, categoryId: string, transactionType: keyof typeof categoryTypes) {
+type FinanceScope = 'PERSONAL' | 'COMPANY'
+
+function canManageCompanyFinance(ctx: any) {
+  return ctx.userRole === 'ADMIN' || ctx.userRole === 'ACCOUNTANT'
+}
+
+function financeWhere(ctx: any, scope: FinanceScope) {
+  if (scope === 'COMPANY') {
+    if (!canManageCompanyFinance(ctx)) {
+      throw new TRPCError({ code: 'FORBIDDEN', message: 'Company finance is restricted.' })
+    }
+    return { scope: 'COMPANY' as const }
+  }
+  return { scope: 'PERSONAL' as const, userId: ctx.user.id! }
+}
+
+async function assertCategoryAccess(
+  ctx: any,
+  categoryId: string,
+  transactionType: keyof typeof categoryTypes,
+  scope: FinanceScope,
+) {
   const category = await ctx.prisma.accountCategory.findFirst({
     where: {
       id: categoryId,
-      OR: [{ userId: null }, { userId: ctx.user.id }],
+      scope,
+      ...(scope === 'PERSONAL'
+        ? { OR: [{ userId: null }, { userId: ctx.user.id }] }
+        : {}),
     },
     select: { type: true },
   })
@@ -28,14 +52,13 @@ export const financeRouter = router({
       z
         .object({
           limit: z.number().default(50),
-          scope: z.enum(['PERSONAL', 'COMPANY']).optional(),
+          scope: z.enum(['PERSONAL', 'COMPANY']).default('PERSONAL'),
         })
         .optional(),
     )
     .query(async ({ ctx, input }) => {
-      const userId = ctx.user.id!
-      const where: any = { userId }
-      if (input?.scope) where.scope = input.scope
+      const scope = input?.scope ?? 'PERSONAL'
+      const where = financeWhere(ctx, scope)
 
       return ctx.prisma.transaction.findMany({
         where,
@@ -72,7 +95,8 @@ export const financeRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.user.id!
-      await assertCategoryAccess(ctx, input.categoryId, input.type)
+      financeWhere(ctx, input.scope)
+      await assertCategoryAccess(ctx, input.categoryId, input.type, input.scope)
 
       const splits = input.isSplit ? (input.splitWith ?? []) : []
       if (input.isSplit) {
@@ -125,8 +149,11 @@ export const financeRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       const row = await ctx.prisma.transaction.findUnique({ where: { id: input.id } })
-      if (!row || row.userId !== ctx.user.id) throw new TRPCError({ code: 'FORBIDDEN' })
-      await assertCategoryAccess(ctx, input.categoryId, input.type)
+      if (!row) throw new TRPCError({ code: 'NOT_FOUND' })
+      if (row.scope === 'COMPANY') financeWhere(ctx, 'COMPANY')
+      else if (row.userId !== ctx.user.id) throw new TRPCError({ code: 'FORBIDDEN' })
+      financeWhere(ctx, input.scope)
+      await assertCategoryAccess(ctx, input.categoryId, input.type, input.scope)
       const { id, ...data } = input
       return ctx.prisma.transaction.update({ where: { id }, data })
     }),
@@ -135,25 +162,35 @@ export const financeRouter = router({
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const row = await ctx.prisma.transaction.findUnique({ where: { id: input.id } })
-      if (!row || row.userId !== ctx.user.id) throw new TRPCError({ code: 'FORBIDDEN' })
+      if (!row) throw new TRPCError({ code: 'NOT_FOUND' })
+      if (row.scope === 'COMPANY') financeWhere(ctx, 'COMPANY')
+      else if (row.userId !== ctx.user.id) throw new TRPCError({ code: 'FORBIDDEN' })
       return ctx.prisma.transaction.delete({ where: { id: input.id } })
     }),
 
-  getCategories: protectedProcedure.query(async ({ ctx }) => {
+  getCategories: protectedProcedure
+    .input(z.object({ scope: z.enum(['PERSONAL', 'COMPANY']).default('PERSONAL') }).optional())
+    .query(async ({ ctx, input }) => {
+    const scope = input?.scope ?? 'PERSONAL'
+    financeWhere(ctx, scope)
     return ctx.prisma.accountCategory.findMany({
-      where: { OR: [{ userId: null }, { userId: ctx.user.id! }] },
+      where: scope === 'COMPANY'
+        ? { scope: 'COMPANY' }
+        : { scope: 'PERSONAL', OR: [{ userId: null }, { userId: ctx.user.id! }] },
       orderBy: { name: 'asc' },
     })
-  }),
+    }),
 
   createCategory: protectedProcedure
     .input(
       z.object({
         name: z.string().trim().min(1).max(80),
         transactionType: z.enum(['INCOME', 'EXPENSE', 'TRANSFER']),
+        scope: z.enum(['PERSONAL', 'COMPANY']).default('PERSONAL'),
       }),
     )
     .mutation(({ ctx, input }) => {
+      financeWhere(ctx, input.scope)
       const accountType = {
         INCOME: 'INVESTMENT',
         EXPENSE: 'CASH',
@@ -165,6 +202,7 @@ export const financeRouter = router({
           name: input.name,
           type: accountType[input.transactionType],
           userId: ctx.user.id!,
+          scope: input.scope,
         },
       })
     }),
@@ -173,7 +211,9 @@ export const financeRouter = router({
     .input(z.object({ id: z.string(), name: z.string().trim().min(1).max(80) }))
     .mutation(async ({ ctx, input }) => {
       const category = await ctx.prisma.accountCategory.findUnique({ where: { id: input.id } })
-      if (!category || category.userId !== ctx.user.id) throw new TRPCError({ code: 'FORBIDDEN' })
+      if (!category) throw new TRPCError({ code: 'NOT_FOUND' })
+      if (category.scope === 'COMPANY') financeWhere(ctx, 'COMPANY')
+      else if (category.userId !== ctx.user.id) throw new TRPCError({ code: 'FORBIDDEN' })
       return ctx.prisma.accountCategory.update({
         where: { id: input.id },
         data: { name: input.name },
@@ -185,9 +225,13 @@ export const financeRouter = router({
     .mutation(async ({ ctx, input }) => {
       const category = await ctx.prisma.accountCategory.findUnique({
         where: { id: input.id },
-        select: { userId: true, _count: { select: { transactions: true, recurring: true } } },
+        select: { userId: true, scope: true, _count: { select: { transactions: true, recurring: true } } },
       })
-      if (!category || category.userId !== ctx.user.id) {
+      if (!category) throw new TRPCError({ code: 'NOT_FOUND' })
+      if (
+        (category.scope === 'COMPANY' && !canManageCompanyFinance(ctx)) ||
+        (category.scope !== 'COMPANY' && category.userId !== ctx.user.id)
+      ) {
         throw new TRPCError({ code: 'FORBIDDEN' })
       }
       if (category._count.transactions > 0 || category._count.recurring > 0) {
@@ -203,14 +247,13 @@ export const financeRouter = router({
     .input(
       z
         .object({
-          scope: z.enum(['PERSONAL', 'COMPANY']).optional(),
+          scope: z.enum(['PERSONAL', 'COMPANY']).default('PERSONAL'),
         })
         .optional(),
     )
     .query(async ({ ctx, input }) => {
-      const userId = ctx.user.id!
-      const where: any = { userId }
-      if (input?.scope) where.scope = input.scope
+      const scope = input?.scope ?? 'PERSONAL'
+      const where = financeWhere(ctx, scope)
 
       const incomes = await ctx.prisma.transaction.aggregate({
         where: { ...where, type: 'INCOME' },
@@ -304,14 +347,144 @@ export const financeRouter = router({
       return metric
     }),
 
+  getInsights: protectedProcedure
+    .input(z.object({ scope: z.enum(['PERSONAL', 'COMPANY']).default('PERSONAL') }))
+    .query(async ({ ctx, input }) => {
+      const where = financeWhere(ctx, input.scope)
+      const now = new Date()
+      const currentStart = new Date(now.getFullYear(), now.getMonth(), 1)
+      const previousStart = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+      const rows = await ctx.prisma.transaction.findMany({
+        where: { ...where, date: { gte: previousStart } },
+        include: { category: true },
+        orderBy: { date: 'desc' },
+      })
+      const current = rows.filter((row: any) => row.date >= currentStart)
+      const previous = rows.filter((row: any) => row.date < currentStart)
+      const totals = (items: any[]) => items.reduce(
+        (sum, row) => {
+          if (row.type === 'INCOME') sum.income += row.amount
+          if (row.type === 'EXPENSE') sum.expenses += row.amount
+          return sum
+        },
+        { income: 0, expenses: 0 },
+      )
+      const currentTotals = totals(current)
+      const previousTotals = totals(previous)
+      const categories = new Map<string, number>()
+      current.filter((row: any) => row.type === 'EXPENSE').forEach((row: any) => {
+        const name = row.category?.name ?? 'Uncategorized'
+        categories.set(name, (categories.get(name) ?? 0) + row.amount)
+      })
+      const recurring = await ctx.prisma.recurringTransaction.findMany({
+        where: {
+          ...where,
+          isActive: true,
+          nextDate: { lte: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000) },
+        },
+      })
+      const forecastDelta = recurring.reduce((sum: number, row: any) => (
+        row.type === 'INCOME' ? sum + row.amount : row.type === 'EXPENSE' ? sum - row.amount : sum
+      ), 0)
+      const net = currentTotals.income - currentTotals.expenses
+      const previousNet = previousTotals.income - previousTotals.expenses
+      const topCategory = [...categories.entries()].sort((a, b) => b[1] - a[1])[0]
+      return {
+        current: { ...currentTotals, net },
+        previous: { ...previousTotals, net: previousNet },
+        savingsRate: currentTotals.income > 0 ? (net / currentTotals.income) * 100 : 0,
+        projectedBalance: net + forecastDelta,
+        upcomingCount: recurring.length,
+        topCategory: topCategory
+          ? { name: topCategory[0], amount: topCategory[1] }
+          : null,
+      }
+    }),
+
+  listBudgets: protectedProcedure
+    .input(z.object({ scope: z.enum(['PERSONAL', 'COMPANY']).default('PERSONAL') }))
+    .query(async ({ ctx, input }) => {
+      const where = financeWhere(ctx, input.scope)
+      const budgets = await ctx.prisma.budget.findMany({
+        where,
+        include: { categories: { select: { id: true, name: true } } },
+        orderBy: { periodStart: 'desc' },
+      })
+      const now = new Date()
+      return Promise.all(budgets.map(async (budget: any) => {
+        const categoryIds = budget.categories.map((category: any) => category.id)
+        const spent = categoryIds.length === 0
+          ? 0
+          : (await ctx.prisma.transaction.aggregate({
+              where: {
+                ...financeWhere(ctx, input.scope),
+                type: 'EXPENSE',
+                categoryId: { in: categoryIds },
+                date: {
+                  gte: budget.periodStart,
+                  lte: budget.periodEnd ?? now,
+                },
+              },
+              _sum: { amount: true },
+            }))._sum.amount ?? 0
+        return { ...budget, spent, remaining: budget.amount - spent }
+      }))
+    }),
+
+  createBudget: protectedProcedure
+    .input(z.object({
+      name: z.string().trim().min(1).max(100),
+      amount: z.number().positive(),
+      scope: z.enum(['PERSONAL', 'COMPANY']).default('PERSONAL'),
+      categoryIds: z.array(z.string()).min(1),
+      periodStart: z.coerce.date(),
+      periodEnd: z.coerce.date().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      financeWhere(ctx, input.scope)
+      const categories = await ctx.prisma.accountCategory.findMany({
+        where: {
+          id: { in: input.categoryIds },
+          ...(input.scope === 'COMPANY'
+            ? { scope: 'COMPANY' }
+            : { scope: 'PERSONAL', OR: [{ userId: null }, { userId: ctx.user.id! }] }),
+        },
+        select: { id: true },
+      })
+      if (categories.length !== input.categoryIds.length) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'One or more categories are unavailable.' })
+      }
+      const { categoryIds, ...data } = input
+      return ctx.prisma.budget.create({
+        data: {
+          ...data,
+          userId: ctx.user.id!,
+          categories: { connect: categoryIds.map((id) => ({ id })) },
+        },
+      })
+    }),
+
+  deleteBudget: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const budget = await ctx.prisma.budget.findUnique({ where: { id: input.id } })
+      if (!budget) throw new TRPCError({ code: 'NOT_FOUND' })
+      if (budget.scope === 'COMPANY') financeWhere(ctx, 'COMPANY')
+      else if (budget.userId !== ctx.user.id) throw new TRPCError({ code: 'FORBIDDEN' })
+      return ctx.prisma.budget.delete({ where: { id: input.id } })
+    }),
+
   // ----- Recurring transactions -----
-  listRecurring: protectedProcedure.query(async ({ ctx }) => {
+  listRecurring: protectedProcedure
+    .input(z.object({ scope: z.enum(['PERSONAL', 'COMPANY']).default('PERSONAL') }).optional())
+    .query(async ({ ctx, input }) => {
+    const scope = input?.scope ?? 'PERSONAL'
     return ctx.prisma.recurringTransaction.findMany({
-      where: { userId: ctx.user.id! },
+      where: financeWhere(ctx, scope),
       orderBy: { nextDate: 'asc' },
       include: { category: true },
     })
-  }),
+    }),
 
   createRecurring: protectedProcedure
     .input(
@@ -319,6 +492,7 @@ export const financeRouter = router({
         description: z.string().min(1),
         amount: z.number().positive(),
         type: z.enum(['INCOME', 'EXPENSE', 'TRANSFER']),
+        scope: z.enum(['PERSONAL', 'COMPANY']).default('PERSONAL'),
         frequency: z.enum(['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY']),
         categoryId: z.string().optional(),
         nextDate: z.coerce.date(),
@@ -326,6 +500,7 @@ export const financeRouter = router({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      financeWhere(ctx, input.scope)
       return ctx.prisma.recurringTransaction.create({
         data: { ...input, userId: ctx.user.id! },
       })
@@ -338,6 +513,7 @@ export const financeRouter = router({
         description: z.string().min(1).optional(),
         amount: z.number().positive().optional(),
         type: z.enum(['INCOME', 'EXPENSE', 'TRANSFER']).optional(),
+        scope: z.enum(['PERSONAL', 'COMPANY']).optional(),
         frequency: z.enum(['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY']).optional(),
         categoryId: z.string().optional(),
         nextDate: z.coerce.date().optional(),
@@ -346,7 +522,10 @@ export const financeRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       const row = await ctx.prisma.recurringTransaction.findUnique({ where: { id: input.id } })
-      if (!row || row.userId !== ctx.user.id!) throw new TRPCError({ code: 'FORBIDDEN' })
+      if (!row) throw new TRPCError({ code: 'NOT_FOUND' })
+      if (row.scope === 'COMPANY') financeWhere(ctx, 'COMPANY')
+      else if (row.userId !== ctx.user.id!) throw new TRPCError({ code: 'FORBIDDEN' })
+      if (input.scope) financeWhere(ctx, input.scope)
       const { id, ...data } = input
       return ctx.prisma.recurringTransaction.update({ where: { id }, data })
     }),
@@ -355,7 +534,9 @@ export const financeRouter = router({
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const row = await ctx.prisma.recurringTransaction.findUnique({ where: { id: input.id } })
-      if (!row || row.userId !== ctx.user.id!) throw new TRPCError({ code: 'FORBIDDEN' })
+      if (!row) throw new TRPCError({ code: 'NOT_FOUND' })
+      if (row.scope === 'COMPANY') financeWhere(ctx, 'COMPANY')
+      else if (row.userId !== ctx.user.id!) throw new TRPCError({ code: 'FORBIDDEN' })
       return ctx.prisma.recurringTransaction.delete({ where: { id: input.id } })
     }),
 })

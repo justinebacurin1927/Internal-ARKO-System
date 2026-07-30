@@ -1,13 +1,13 @@
 'use client'
 
 import { useState } from 'react'
+import { useSession } from 'next-auth/react'
 import { Card, CardContent, CardHeader, CardTitle, Button } from '@arko/ui'
-import { Plus, ArrowUpRight, ArrowDownRight, AlertCircle, Wallet, Users, CheckCircle2, RefreshCw, Calendar, Trash2, Pencil, TrendingUp } from 'lucide-react'
+import { Plus, ArrowUpRight, ArrowDownRight, AlertCircle, Wallet, Users, CheckCircle2, RefreshCw, Calendar, Trash2, Pencil, TrendingUp, Target, Clock3, Building2, UserRound } from 'lucide-react'
 import { api } from '../../../lib/trpc/client'
 import { formatCurrency } from '@arko/finance'
 import { AddTransactionDialog, type GhostTransaction } from './add-transaction-dialog'
 import { RecurringTransactionDialog } from './recurring-transaction-dialog'
-import { MetricsPanel } from './metrics-panel'
 
 function StatsSkeleton() {
   return (
@@ -27,26 +27,40 @@ function StatsSkeleton() {
 }
 
 export default function FinancePage() {
+  const { data: session } = useSession()
+  const canUseCompany = session?.user?.role === 'ADMIN' || session?.user?.role === 'ACCOUNTANT'
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [scopeFilter, setScopeFilter] = useState<'ALL' | 'PERSONAL' | 'COMPANY'>('ALL')
+  const [scopeFilter, setScopeFilter] = useState<'PERSONAL' | 'COMPANY'>('PERSONAL')
   const [recurringOpen, setRecurringOpen] = useState(false)
   const [editRecurringId, setEditRecurringId] = useState<string | undefined>()
   const [showRecurring, setShowRecurring] = useState(false)
-  const [showMetrics, setShowMetrics] = useState(0) // 0 = collapsed, 1 = show
   const [ghostTransactions, setGhostTransactions] = useState<GhostTransaction[]>([])
+  const [budgetName, setBudgetName] = useState('')
+  const [budgetAmount, setBudgetAmount] = useState('')
+  const [budgetCategoryId, setBudgetCategoryId] = useState('')
 
-  const query = api.finance.getBalance.useQuery(
-    scopeFilter !== 'ALL' ? { scope: scopeFilter } : undefined,
-  )
-  const txQuery = api.finance.getTransactions.useQuery(
-    scopeFilter !== 'ALL' ? { scope: scopeFilter } : undefined,
-  )
+  const query = api.finance.getBalance.useQuery({ scope: scopeFilter })
+  const txQuery = api.finance.getTransactions.useQuery({ scope: scopeFilter })
+  const insightsQuery = api.finance.getInsights.useQuery({ scope: scopeFilter })
+  const budgetsQuery = api.finance.listBudgets.useQuery({ scope: scopeFilter })
+  const categoriesQuery = api.finance.getCategories.useQuery({ scope: scopeFilter })
   const { data: pendingSplits } = api.finance.getPendingSplits.useQuery()
-  const { data: recurringList } = api.finance.listRecurring.useQuery()
+  const { data: recurringList } = api.finance.listRecurring.useQuery({ scope: scopeFilter })
   const utils = api.useUtils()
 
   const deleteRecurringMut = api.finance.deleteRecurring.useMutation({
     onSuccess: () => utils.finance.listRecurring.invalidate(),
+  })
+  const createBudgetMut = api.finance.createBudget.useMutation({
+    onSuccess: () => {
+      setBudgetName('')
+      setBudgetAmount('')
+      setBudgetCategoryId('')
+      utils.finance.listBudgets.invalidate()
+    },
+  })
+  const deleteBudgetMut = api.finance.deleteBudget.useMutation({
+    onSuccess: () => utils.finance.listBudgets.invalidate(),
   })
   const settleSplitMut = api.finance.settleSplit.useMutation({
     onSuccess: () => utils.finance.getPendingSplits.invalidate(),
@@ -60,6 +74,8 @@ export default function FinancePage() {
   })
 
   const balance = query.data
+  const insights = insightsQuery.data
+  const budgets = budgetsQuery.data ?? []
   const transactions = txQuery.data ?? []
   const loading = query.isLoading || txQuery.isLoading
   const hasError = query.isError || txQuery.isError
@@ -76,7 +92,11 @@ export default function FinancePage() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold text-text-primary tracking-tight">Finance</h1>
-          <p className="text-sm text-text-tertiary mt-1">Track your income, expenses, and cashflow</p>
+          <p className="text-sm text-text-tertiary mt-1">
+            {scopeFilter === 'PERSONAL'
+              ? 'Your private budgets, spending, bills, and savings'
+              : 'Shared company cash flow for admins and accountants'}
+          </p>
         </div>
         <Button onClick={() => setDialogOpen(true)}>
           <Plus className="h-4 w-4" />
@@ -115,23 +135,25 @@ export default function FinancePage() {
         <StatsSkeleton />
       ) : (
         <>
-          {/* Scope filter tabs */}
-          <div className="flex items-center gap-2">
-            {(['ALL', 'PERSONAL', 'COMPANY'] as const).map((s) => (
+          {/* Scope tabs */}
+          <div className="inline-flex w-fit items-center gap-1 rounded-xl border border-border-subtle bg-card p-1">
+            {(['PERSONAL', ...(canUseCompany ? ['COMPANY' as const] : [])] as const).map((s) => (
               <button
                 key={s}
-                onClick={() => setScopeFilter(s)}
+                onClick={() => {
+                  setScopeFilter(s)
+                  setBudgetCategoryId('')
+                }}
                 className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
                   scopeFilter === s
-                    ? s === 'ALL'
-                      ? 'bg-primary-500 text-white'
-                      : s === 'PERSONAL'
-                        ? 'bg-primary-100 text-primary-800'
-                        : 'bg-blue-100 text-blue-800'
-                    : 'bg-card text-text-secondary hover:bg-card/[0.04]'
+                    ? 'bg-primary-500 text-white shadow-sm'
+                    : 'text-text-secondary hover:bg-card/[0.04]'
                 }`}
               >
-                {s === 'ALL' ? 'All' : s === 'PERSONAL' ? 'Personal' : 'Company'}
+                <span className="inline-flex items-center gap-1.5">
+                  {s === 'PERSONAL' ? <UserRound className="h-3.5 w-3.5" /> : <Building2 className="h-3.5 w-3.5" />}
+                  {s === 'PERSONAL' ? 'Personal' : 'Company'}
+                </span>
               </button>
             ))}
           </div>
@@ -179,6 +201,141 @@ export default function FinancePage() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Decision support */}
+          <div className="grid gap-4 md:grid-cols-3">
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-medium text-text-tertiary">Savings rate</p>
+                  <Target className="h-4 w-4 text-primary-500" />
+                </div>
+                <p className="mt-2 text-xl font-bold tabular-nums text-text-primary">
+                  {(insights?.savingsRate ?? 0).toFixed(1)}%
+                </p>
+                <p className="mt-1 text-xs text-text-tertiary">Income retained this month</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-medium text-text-tertiary">30-day projection</p>
+                  <TrendingUp className="h-4 w-4 text-blue-500" />
+                </div>
+                <p className="mt-2 text-xl font-bold tabular-nums text-text-primary">
+                  {formatCurrency(insights?.projectedBalance ?? 0)}
+                </p>
+                <p className="mt-1 text-xs text-text-tertiary">After upcoming recurring entries</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-medium text-text-tertiary">Top expense</p>
+                  <Clock3 className="h-4 w-4 text-amber-500" />
+                </div>
+                <p className="mt-2 truncate text-xl font-bold text-text-primary">
+                  {insights?.topCategory?.name ?? 'No spending yet'}
+                </p>
+                <p className="mt-1 text-xs text-text-tertiary">
+                  {insights?.topCategory
+                    ? `${formatCurrency(insights.topCategory.amount)} this month`
+                    : `${insights?.upcomingCount ?? 0} upcoming entries`}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Budgets */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Monthly budgets</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-2 md:grid-cols-[1fr_140px_1fr_auto]">
+                <input
+                  value={budgetName}
+                  onChange={(event) => setBudgetName(event.target.value)}
+                  placeholder="Budget name"
+                  className="h-10 rounded-lg border border-border-subtle bg-card px-3 text-sm text-text-primary placeholder:text-text-tertiary focus:border-primary-500 focus:outline-none"
+                />
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={budgetAmount}
+                  onChange={(event) => setBudgetAmount(event.target.value)}
+                  placeholder="Amount"
+                  className="h-10 rounded-lg border border-border-subtle bg-card px-3 text-sm text-text-primary placeholder:text-text-tertiary focus:border-primary-500 focus:outline-none"
+                />
+                <select
+                  value={budgetCategoryId}
+                  onChange={(event) => setBudgetCategoryId(event.target.value)}
+                  className="h-10 rounded-lg border border-border-subtle bg-card px-3 text-sm text-text-primary focus:border-primary-500 focus:outline-none"
+                >
+                  <option value="">Expense category</option>
+                  {categoriesQuery.data
+                    ?.filter((category) => ['CREDIT_CARD', 'CASH', 'CHECKING', 'SAVINGS'].includes(category.type))
+                    .map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
+                </select>
+                <Button
+                  disabled={!budgetName.trim() || Number(budgetAmount) <= 0 || !budgetCategoryId || createBudgetMut.isPending}
+                  onClick={() => {
+                    const now = new Date()
+                    createBudgetMut.mutate({
+                      name: budgetName.trim(),
+                      amount: Number(budgetAmount),
+                      scope: scopeFilter,
+                      categoryIds: [budgetCategoryId],
+                      periodStart: new Date(now.getFullYear(), now.getMonth(), 1),
+                      periodEnd: new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59),
+                    })
+                  }}
+                >
+                  Add budget
+                </Button>
+              </div>
+              {budgets.length === 0 ? (
+                <p className="py-5 text-center text-sm text-text-tertiary">No budgets for this view yet.</p>
+              ) : (
+                <div className="space-y-3">
+                  {budgets.map((budget) => {
+                    const percent = Math.min(100, (budget.spent / budget.amount) * 100)
+                    return (
+                      <div key={budget.id} className="rounded-xl border border-border-subtle p-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium text-text-primary">{budget.name}</p>
+                            <p className="text-xs text-text-tertiary">
+                              {formatCurrency(budget.spent)} of {formatCurrency(budget.amount)}
+                            </p>
+                          </div>
+                          <button
+                            aria-label={`Delete ${budget.name} budget`}
+                            onClick={() => deleteBudgetMut.mutate({ id: budget.id })}
+                            className="flex h-10 w-10 items-center justify-center rounded-lg text-text-tertiary hover:bg-red-50 hover:text-red-600"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                        <div className="mt-3 h-2 overflow-hidden rounded-full bg-card">
+                          <div
+                            className={`h-full rounded-full ${percent >= 100 ? 'bg-red-500' : percent >= 80 ? 'bg-amber-500' : 'bg-primary-500'}`}
+                            style={{ width: `${percent}%` }}
+                          />
+                        </div>
+                        <p className="mt-2 text-xs text-text-tertiary">
+                          {budget.remaining >= 0
+                            ? `${formatCurrency(budget.remaining)} remaining`
+                            : `${formatCurrency(Math.abs(budget.remaining))} over budget`}
+                        </p>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Transactions list */}
           <Card>
@@ -434,33 +591,13 @@ export default function FinancePage() {
             )}
           </Card>
 
-          {/* Business Metrics */}
-          {showMetrics > 0 ? (
-            <div>
-              <button
-                onClick={() => setShowMetrics(0)}
-                className="flex items-center gap-2 text-sm font-medium text-text-tertiary hover:text-text-secondary transition-colors mb-4"
-              >
-                <TrendingUp className="h-4 w-4" />
-                Hide Metrics
-              </button>
-              <MetricsPanel />
-            </div>
-          ) : (
-            <button
-              onClick={() => setShowMetrics(1)}
-              className="flex items-center gap-2 text-sm font-medium text-text-tertiary hover:text-text-secondary transition-colors"
-            >
-              <TrendingUp className="h-4 w-4" />
-              Show Business Metrics
-            </button>
-          )}
         </>
       )}
 
       <AddTransactionDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
+        defaultScope={scopeFilter}
         onGhostAdd={(transaction) => setGhostTransactions((current) => [transaction, ...current])}
         onGhostRemove={(id) => setGhostTransactions((current) => current.filter((transaction) => transaction.id !== id))}
       />
@@ -468,6 +605,7 @@ export default function FinancePage() {
         open={recurringOpen}
         onOpenChange={setRecurringOpen}
         editId={editRecurringId}
+        scope={scopeFilter}
       />
     </div>
   )

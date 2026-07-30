@@ -20,10 +20,11 @@ interface RecurringTransactionDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   editId?: string
+  scope: 'PERSONAL' | 'COMPANY'
 }
 
-export function RecurringTransactionDialog({ open, onOpenChange, editId }: RecurringTransactionDialogProps) {
-  const { data: categories } = api.finance.getCategories.useQuery()
+export function RecurringTransactionDialog({ open, onOpenChange, editId, scope }: RecurringTransactionDialogProps) {
+  const { data: categories } = api.finance.getCategories.useQuery({ scope })
   const utils = api.useUtils()
 
   const [type, setType] = useState<'INCOME' | 'EXPENSE' | 'TRANSFER'>('EXPENSE')
@@ -35,7 +36,7 @@ export function RecurringTransactionDialog({ open, onOpenChange, editId }: Recur
   const [isActive, setIsActive] = useState(true)
 
   // Load existing data when editing
-  const editQuery = api.finance.listRecurring.useQuery()
+  const editQuery = api.finance.listRecurring.useQuery({ scope })
   const existingRecurring = editQuery.data?.find((r) => r.id === editId)
 
   useEffect(() => {
@@ -97,6 +98,7 @@ export function RecurringTransactionDialog({ open, onOpenChange, editId }: Recur
       categoryId: categoryId || undefined,
       nextDate: new Date(nextDate),
       isActive,
+      scope,
     }
 
     if (editId) {

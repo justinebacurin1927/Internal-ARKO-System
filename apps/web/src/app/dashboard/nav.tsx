@@ -47,7 +47,8 @@ export function DashboardNav() {
 
   // Poll unread messages for the sidebar badge.
   const { data: unread } = api.messages.unreadCount.useQuery(undefined, {
-    refetchInterval: 30_000,
+    refetchInterval: 5_000,
+    refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,
   })
 

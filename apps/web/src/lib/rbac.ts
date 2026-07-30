@@ -17,6 +17,13 @@ export type Permission = string
  */
 const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   ADMIN: ['*'],
+  ACCOUNTANT: [
+    'transactions:create',
+    'transactions:read',
+    'transactions:update',
+    'transactions:delete',
+    'users:read',
+  ],
   MEMBER: [
     'transactions:create',
     'transactions:read',

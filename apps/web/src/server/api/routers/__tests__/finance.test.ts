@@ -12,7 +12,7 @@ const ctx = (over: any = {}) => {
   return {
     user: { id: over.userId ?? 'u1' },
     session: { user: { id: over.userId ?? 'u1' } },
-    userRole: 'USER',
+    userRole: over.userRole ?? 'USER',
     prisma: {
       transaction: {
         findMany: jest.fn().mockImplementation(({ where, take, orderBy, include }: any) => {
@@ -237,6 +237,7 @@ describe('finance router', () => {
 
     it('filters by scope', async () => {
       const c = ctx({
+        userRole: 'ACCOUNTANT',
         _transactions: [
           { id: 't1', userId: 'u1', amount: 100, type: 'INCOME', categoryId: 'c1', date: new Date(), scope: 'PERSONAL', isSplit: false },
           { id: 't2', userId: 'u1', amount: 200, type: 'INCOME', categoryId: 'c2', date: new Date(), scope: 'COMPANY', isSplit: false },
@@ -245,6 +246,26 @@ describe('finance router', () => {
       const res = await financeRouter.createCaller(c).getTransactions({ scope: 'COMPANY' })
       expect(res).toHaveLength(1)
       expect(res[0].amount).toBe(200)
+    })
+
+    it('blocks regular users from company finance', async () => {
+      const c = ctx({ userRole: 'USER' })
+      await expect(
+        financeRouter.createCaller(c).getTransactions({ scope: 'COMPANY' }),
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    })
+
+    it('allows accountants to read shared company finance', async () => {
+      const c = ctx({
+        userId: 'accountant-1',
+        userRole: 'ACCOUNTANT',
+        _transactions: [
+          { id: 'company-1', userId: 'admin-1', amount: 500, type: 'INCOME', categoryId: 'c1', date: new Date(), scope: 'COMPANY' },
+        ],
+      })
+      const result = await financeRouter.createCaller(c).getTransactions({ scope: 'COMPANY' })
+      expect(result).toHaveLength(1)
+      expect(result[0].id).toBe('company-1')
     })
 
     it('respects limit parameter', async () => {

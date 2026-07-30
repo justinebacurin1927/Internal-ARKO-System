@@ -48,6 +48,7 @@ model User {
   fileAttachments   FileAttachment[]
   metrics           BusinessMetric[]
   recurring         RecurringTransaction[]
+  budgets           Budget[]
   clientProjects    ClientProject[] @relation("ClientProjects")
   managedClientProjects ClientProject[] @relation("ManagedClientProjects")
   clientUpdates     ClientUpdate[]
@@ -83,6 +84,7 @@ model Session {
 
 enum Role {
   ADMIN
+  ACCOUNTANT
   MEMBER
   USER
   CLIENT
@@ -129,6 +131,7 @@ model AccountCategory {
   icon     String?
   budgetId String?
   userId   String?
+  scope    TransactionScope @default(PERSONAL)
 
   transactions Transaction[]
   budget       Budget?                @relation(fields: [budgetId], references: [id])
@@ -197,8 +200,13 @@ model Budget {
   periodStart DateTime  @default(now())
   periodEnd   DateTime?
   workspaceId String?
+  scope       TransactionScope @default(PERSONAL)
+  userId      String
 
   categories AccountCategory[]
+  user       User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, scope])
 }
 
 // ===== WORKFLOW MODELS =====
@@ -362,6 +370,7 @@ model ConversationParticipant {
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([conversationId, userId])
+  @@index([userId, lastReadAt])
 }
 
 model Message {
@@ -373,6 +382,9 @@ model Message {
 
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   sender       User         @relation(fields: [senderId], references: [id])
+
+  @@index([conversationId, createdAt])
+  @@index([senderId, createdAt])
 }
 
 // ===== REMINDER MODELS =====
@@ -679,6 +691,7 @@ model RecurringTransaction {
   description String
   amount      Float
   type        TransactionType
+  scope       TransactionScope @default(PERSONAL)
   frequency   String // DAILY | WEEKLY | MONTHLY | YEARLY
   categoryId  String?
   nextDate    DateTime
