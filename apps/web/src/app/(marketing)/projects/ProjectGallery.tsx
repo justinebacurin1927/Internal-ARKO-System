@@ -5,31 +5,46 @@ import { useEffect, useRef, useState } from "react";
 
 const PROJECTS = [
   {
+    number: "01",
     title: "BMW",
+    category: "Automotive",
+    type: "Immersive brand website",
     domain: "unofficial-bmw.vercel.app",
     href: "https://unofficial-bmw.vercel.app",
     image: "/projects/unofficial-bmw-preview.png",
   },
   {
+    number: "02",
     title: "Omniscient Reader's Viewpoint",
+    category: "Entertainment",
+    type: "Interactive story website",
     domain: "unofficial-omniscient-readers-viewpoint.vercel.app",
     href: "https://unofficial-omniscient-readers-viewpoint.vercel.app",
     image: "/projects/unofficial-omniscient-readers-viewpoint-preview.png",
   },
   {
+    number: "03",
     title: "Co-Map",
+    category: "Civic Tech",
+    type: "Community reporting web app",
     domain: "co-map.vercel.app",
     href: "https://co-map.vercel.app",
     image: "/projects/co-map-preview.png",
   },
   {
+    number: "04",
     title: "Yuenansichu Restaurant",
+    category: "Hospitality",
+    type: "Restaurant website",
     domain: "yuenansichu-restaurant.vercel.app",
     href: "https://yuenansichu-restaurant.vercel.app/",
     image: "/projects/yuenansichu-restaurant-preview.png",
   },
   {
+    number: "05",
     title: "Kapet Balay",
+    category: "Hospitality",
+    type: "Cafe website",
     domain: "kapetbalay.vercel.app",
     href: "https://kapetbalay.vercel.app/",
     image: "/projects/kapetbalay-preview.png",
@@ -37,10 +52,23 @@ const PROJECTS = [
 ] as const;
 
 type Project = (typeof PROJECTS)[number];
+const CATEGORIES = [
+  "All",
+  "Automotive",
+  "Entertainment",
+  "Civic Tech",
+  "Hospitality",
+] as const;
+type Category = (typeof CATEGORIES)[number];
 
 export default function ProjectGallery() {
   const [activeProject, setActiveProject] = useState<Project | null>(null);
+  const [activeCategory, setActiveCategory] = useState<Category>("All");
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const visibleProjects =
+    activeCategory === "All"
+      ? PROJECTS
+      : PROJECTS.filter((project) => project.category === activeCategory);
 
   useEffect(() => {
     if (!activeProject) return;
@@ -62,8 +90,34 @@ export default function ProjectGallery() {
 
   return (
     <>
+      <div className="mx-auto mb-8 max-w-6xl border-y border-white/20 py-5">
+        <div className="mb-4 flex items-center justify-between gap-4">
+          <p className="eyebrow text-white/45">Filter by work type</p>
+          <p className="mono text-[0.65rem] uppercase tracking-wider text-acid">
+            {visibleProjects.length} {visibleProjects.length === 1 ? "project" : "projects"}
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2" aria-label="Project categories">
+          {CATEGORIES.map((category) => (
+            <button
+              key={category}
+              type="button"
+              aria-pressed={activeCategory === category}
+              onClick={() => setActiveCategory(category)}
+              className={`mono min-h-11 cursor-pointer border-2 px-4 py-2 text-[0.65rem] font-bold uppercase tracking-wider transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ${
+                activeCategory === category
+                  ? "border-acid bg-acid text-ink"
+                  : "border-white/25 text-white/60 hover:border-acid hover:text-acid"
+              }`}
+            >
+              {category}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="mx-auto grid max-w-6xl gap-6 md:grid-cols-2">
-        {PROJECTS.map((project, index) => (
+        {visibleProjects.map((project) => (
           <button
             key={project.href}
             type="button"
@@ -76,17 +130,24 @@ export default function ProjectGallery() {
                 src={project.image}
                 alt={`${project.title} homepage preview`}
                 fill
-                priority={index < 2}
                 sizes="(min-width: 768px) 560px, calc(100vw - 72px)"
                 className="object-cover transition-transform duration-300 motion-reduce:transition-none group-hover:scale-[1.015]"
               />
             </div>
             <div className="flex min-h-28 items-end justify-between gap-5 px-2 pb-2 pt-5">
               <div className="min-w-0">
-                <p className="eyebrow text-acid/60">Project / 0{index + 1}</p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="eyebrow text-acid/60">Project / {project.number}</p>
+                  <span className="mono border border-white/20 px-2 py-1 text-[0.55rem] uppercase tracking-wider text-white/55">
+                    {project.category}
+                  </span>
+                </div>
                 <h2 className="display mt-2 text-2xl transition-colors group-hover:text-acid md:text-4xl">
                   {project.title}
                 </h2>
+                <p className="mt-2 text-sm font-semibold text-white/65">
+                  {project.type}
+                </p>
                 <p className="mono mt-2 truncate text-xs text-white/45">
                   {project.domain}
                 </p>
@@ -116,7 +177,7 @@ export default function ProjectGallery() {
                   {activeProject.title}
                 </h2>
                 <p className="mono hidden truncate text-[0.65rem] text-white/45 sm:block">
-                  {activeProject.domain}
+                  {activeProject.category} / {activeProject.type}
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-2">
