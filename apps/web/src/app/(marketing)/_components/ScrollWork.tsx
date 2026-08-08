@@ -3,47 +3,44 @@
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import Image from "next/image";
 import { useRef } from "react";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 const WORK = [
   {
-    title: "BMW",
-    domain: "unofficial-bmw.vercel.app",
-    href: "https://unofficial-bmw.vercel.app",
-    image: "/projects/unofficial-bmw.png",
+    kind: "web",
+    title: "Product websites",
+    copy: "Landing pages and marketing sites that load fast and convert.",
+    tags: ["Next.js", "Tailwind", "Framer"],
+    icon: "◇",
   },
   {
-    title: "Omniscient Reader's Viewpoint",
-    domain: "unofficial-omniscient-readers-viewpoint.vercel.app",
-    href: "https://unofficial-omniscient-readers-viewpoint.vercel.app",
-    image: "/projects/unofficial-omniscient-readers-viewpoint.png",
+    kind: "mobile",
+    title: "Cross-platform apps",
+    copy: "One codebase shipped to iOS and Android, store to home screen.",
+    tags: ["React Native", "Expo", "Gesture"],
+    icon: "◎",
   },
   {
-    title: "Co-Map",
-    domain: "co-map.vercel.app",
-    href: "https://co-map.vercel.app",
-    image: "/projects/co-map.png",
+    kind: "automation",
+    title: "Automation pipelines",
+    copy: "Quiet systems that move data and trigger work while you sleep.",
+    tags: ["n8n", "Cron", "Webhooks"],
+    icon: "⚡",
   },
   {
-    title: "Yuenansichu Restaurant",
-    domain: "yuenansichu-restaurant.vercel.app",
-    href: "https://yuenansichu-restaurant.vercel.app/",
-    image: "/projects/yuenansichu-restaurant.png",
-  },
-  {
-    title: "Kapet Balay",
-    domain: "kapetbalay.vercel.app",
-    href: "https://kapetbalay.vercel.app/",
-    image: "/projects/kapetbalay.png",
+    kind: "ai",
+    title: "AI features",
+    copy: "Chat, retrieval and agents built into products people already use.",
+    tags: ["LLMs", "RAG", "Agents"],
+    icon: "◆",
   },
 ];
 
 export default function ScrollWork() {
   const sectionRef = useRef<HTMLElement>(null);
-  const cardRefs = useRef<(HTMLAnchorElement | null)[]>([]);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const cornerRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   useGSAP(
@@ -108,15 +105,12 @@ export default function ScrollWork() {
         {/* cards grid */}
         <div className="grid gap-px overflow-hidden border-4 border-acid bg-acid md:grid-cols-2">
           {WORK.map((item, i) => (
-            <a
+            <div
               key={item.title}
               ref={(el) => {
                 cardRefs.current[i] = el;
               }}
-              href={item.href}
-              target="_blank"
-              rel="noreferrer"
-              className="group relative bg-ink p-4 transition-colors duration-500 focus-visible:z-10 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-[-4px] focus-visible:outline-white md:p-6"
+              className="group relative bg-ink p-8 transition-colors duration-500 md:p-14"
               style={{ opacity: 0, transform: "translateY(60px) scale(0.92)" }}
             >
               {/* corner brackets — decorative */}
@@ -139,32 +133,37 @@ export default function ScrollWork() {
                 </svg>
               </div>
 
-              <div className="relative aspect-[16/10] overflow-hidden border border-acid/20 bg-black">
-                <Image
-                  src={item.image}
-                  alt={`${item.title} homepage, captured from hero to footer`}
-                  fill
-                  sizes="(min-width: 768px) 50vw, 100vw"
-                  className="object-cover object-top transition-transform duration-700 group-hover:scale-[1.02]"
-                />
+              <div className="eyebrow text-acid/60 transition-colors duration-300 group-hover:text-acid">
+                {item.kind}
               </div>
 
-              <div className="mt-6 flex items-end justify-between gap-6">
-                <div>
-                  <div className="eyebrow text-acid/60">Live project / 0{i + 1}</div>
-                  <h3 className="display mt-2 text-3xl text-white transition-colors duration-300 group-hover:text-acid md:text-5xl">
-                    {item.title}
-                  </h3>
-                  <p className="mono mt-2 text-xs text-white/40">{item.domain}</p>
-                </div>
-                <span className="display text-4xl text-acid" aria-hidden="true">
-                  ↗
+              <div className="mt-6 flex items-start gap-4">
+                <span className="display mt-1 text-3xl text-acid/20 transition-colors duration-300 group-hover:text-acid/60 md:text-4xl">
+                  {item.icon}
                 </span>
+                <h3 className="display text-3xl text-white transition-colors duration-300 group-hover:text-acid md:text-5xl">
+                  {item.title}
+                </h3>
+              </div>
+
+              <p className="mt-6 max-w-sm text-sm font-medium leading-relaxed text-white/50 transition-colors duration-300 group-hover:text-white/70">
+                {item.copy}
+              </p>
+
+              <div className="mono mt-8 flex flex-wrap gap-2">
+                {item.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="border border-acid/20 px-3 py-1.5 text-xs font-semibold tracking-wider text-acid/50 transition-all duration-300 group-hover:border-acid/60 group-hover:text-acid"
+                  >
+                    {tag}
+                  </span>
+                ))}
               </div>
 
               {/* hover line — slides in from left */}
               <div className="absolute bottom-0 left-0 h-[3px] w-0 bg-acid transition-all duration-500 group-hover:w-full" />
-            </a>
+            </div>
           ))}
         </div>
 
